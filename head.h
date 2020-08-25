@@ -17,6 +17,8 @@ struct TreeNode {
 class Expr {  // abstract base class
   public:
     virtual string to_string() = 0;
+    virtual bool isLiteral(int *num) { return false; }
+    virtual bool isOpExpr(char *op, Expr **left, Expr **right) { return false; }
 };
 
 class Literal : public Expr {
@@ -24,6 +26,7 @@ class Literal : public Expr {
     int num;
     Literal(int num);
     string to_string() override;
+    bool isLiteral(int *num);
 };
 
 class OpExpr : public Expr {
@@ -32,6 +35,7 @@ class OpExpr : public Expr {
     unique_ptr<Expr> left, right;
     OpExpr(char op, unique_ptr<Expr> left, unique_ptr<Expr> right);
     string to_string() override;
+    bool isOpExpr(char *c, Expr **left, Expr **right);
 };
 
 
@@ -82,5 +86,9 @@ struct Parser {
     unique_ptr<Expr> try_get_expr();
 };
 
-
+class Translator {
+  public:
+    string translate_expr(unique_ptr<Expr> expr);
+    void translate_expr(string *s, Expr *expr);
+};
 #endif

@@ -15,26 +15,32 @@ struct TreeNode {
 
 
 class Expr {  // abstract base class
+  public:
+    virtual string to_string() = 0;
 };
 
 class Literal : public Expr {
   public:
     int num;
     Literal(int num);
+    string to_string() override;
 };
 
 class OpExpr : public Expr {
   public:
     char op;
     unique_ptr<Expr> left, right;
-    OpExpr(char op);
+    OpExpr(char op, unique_ptr<Expr> left, unique_ptr<Expr> right);
+    string to_string() override;
 };
 
 
 class Token {
   public:
     virtual string to_string() = 0;
-    virtual string get_class() = 0;
+    virtual bool isNum(int *num) { return false; }
+    virtual bool isOper(char *op) { return false; }
+    virtual bool isParen(char *p) { return false; }
 };
 
 class NumToken : public Token {
@@ -42,7 +48,7 @@ class NumToken : public Token {
     int num;
     NumToken(int num);
     string to_string() override;
-    string get_class() override;
+    bool isNum(int *num) override;
 };
 
 class OperToken : public Token {
@@ -50,7 +56,7 @@ class OperToken : public Token {
     char op;
     OperToken(char op);
     string to_string() override;
-    string get_class() override;
+    bool isOper(char *op) override;
 };
 
 class ParenToken : public Token {
@@ -58,7 +64,7 @@ class ParenToken : public Token {
     char paren;
     ParenToken(char paren);
     string to_string() override;
-    string get_class() override;
+    bool isParen(char *p) override;
 };
 
 struct Scanner {
@@ -73,6 +79,7 @@ struct Parser {
     unique_ptr<Expr> parse_factor();
     unique_ptr<Expr> parse_term();
     unique_ptr<Expr> parse_expr();
+    unique_ptr<Expr> try_get_expr();
 };
 
 

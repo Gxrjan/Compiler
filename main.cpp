@@ -4,9 +4,6 @@
 int main(int argc, char *argv[])
 {
     Scanner scan;
-    unique_ptr<Token> t;
-    while ((t=scan.next_token())) {
-        cout << t->to_string() <<  endl;
-    }
-    return 0;
+    unique_ptr<Expr> expr = Parser(&scan).try_get_expr();
+    cout << expr->to_string() << endl;
 }

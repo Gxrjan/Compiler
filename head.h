@@ -7,6 +7,7 @@
 #include <curses.h>
 #include <map>
 #include <memory>
+#include <fstream>
 using namespace std;
 
 struct TreeNode {
@@ -88,7 +89,7 @@ struct Parser {
 
 class Translator {
   public:
-    string translate_expr(unique_ptr<Expr> expr);
+    string translate_expr(Expr* expr);
     void translate_expr(string *s, Expr *expr);
 };
 #endif

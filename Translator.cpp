@@ -28,14 +28,14 @@ void Translator::translate_expr(string *s, Expr *e)
             case '*':
                 *s += " pop     rax\n";
                 *s += " pop     rbx\n";
-                *s += " imul     rax, rbx\n";
+                *s += " imul    rax, rbx\n";
                 *s += " push    rax\n";
                 break;
             case '/':
-                *s += " pop     rax\n";
                 *s += " pop     rbx\n";
-                *s += " mov     rdx, 0";
-                *s += " idiv    rax, rbx\n";
+                *s += " pop     rax\n";
+                *s += " mov     rdx, 0\n";
+                *s += " idiv    qword rbx\n";
                 *s += " push    rax\n";
                 break;
             default:
@@ -47,18 +47,18 @@ void Translator::translate_expr(string *s, Expr *e)
 }
 
 
-string Translator::translate_expr(unique_ptr<Expr> expr)
+string Translator::translate_expr(Expr* expr)
 {
     string result = "";
     result += "extern printf\n";
     result += "section .data\n";
-    result += " msg     db      '%d\\n',0\n";
+    result += " msg     db      `%d\\n`,0\n";
     result += "section .text\n";
     result += " global main\n";
     result += "main:\n";
     //result += " push    rbp\n";
     //result ++ " mov     rbp, rsp\n";
-    this->translate_expr(&result, expr.get());
+    this->translate_expr(&result, expr);
     result += " mov     rax, 0\n";
     result += " mov     rdi, msg\n";
     result += " pop     rsi\n";

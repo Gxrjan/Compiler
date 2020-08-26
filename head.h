@@ -10,10 +10,6 @@
 #include <fstream>
 using namespace std;
 
-struct TreeNode {
-    // some 
-};
-
 
 class Expr {  // abstract base class
   public:
@@ -27,7 +23,7 @@ class Literal : public Expr {
     int num;
     Literal(int num);
     string to_string() override;
-    bool isLiteral(int *num);
+    bool isLiteral(int *num) override;
 };
 
 class OpExpr : public Expr {
@@ -36,7 +32,7 @@ class OpExpr : public Expr {
     unique_ptr<Expr> left, right;
     OpExpr(char op, unique_ptr<Expr> left, unique_ptr<Expr> right);
     string to_string() override;
-    bool isOpExpr(char *c, Expr **left, Expr **right);
+    bool isOpExpr(char *c, Expr **left, Expr **right) override;
 };
 
 

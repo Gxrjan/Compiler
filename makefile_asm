@@ -1,4 +1,0 @@
-calc: calc.o
-	gcc -o calc a.o -no-pie
-calc.o: a.asm
-	nasm -f elf64 -g -F dwarf a.asm -l a.lst

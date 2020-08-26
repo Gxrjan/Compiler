@@ -8,9 +8,8 @@ int main(int argc, char *argv[])
     Translator tran;
     unique_ptr<Expr> expr = Parser(&scan).try_get_expr();
     string asm_code = tran.translate_expr(expr.get());
-    cout << asm_code;
+    //cout << asm_code;
     file << asm_code;
     file.close();
-    system("make -f makefile_asm"); 
-     
+    system("make calc");
 }

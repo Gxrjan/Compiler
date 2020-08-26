@@ -10,6 +10,7 @@ int main(int argc, char *argv[])
     string asm_code = tran.translate_expr(expr.get());
     cout << asm_code;
     file << asm_code;
-    
+    file.close();
+    system("make -f makefile_asm"); 
      
 }

@@ -1,9 +1,11 @@
 #include "head.h"
 
 
-Program::Program(vector<unique_ptr<Statement>> statements)
+Program::Program(vector<unique_ptr<Statement>>* statements)
 {
-    this->statements = statements;
+    for (long unsigned int i=0;i<statements->size();i++)
+        this->statements.push_back(move((*statements)[i]));
+    //this->statements = statements;
 }
 string Program::to_string()
 {

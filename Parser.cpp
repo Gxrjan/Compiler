@@ -5,17 +5,16 @@ unique_ptr<Expr> Parser::parse_factor()
 {
     unique_ptr<Token> t = (this->scan)->next_token();
     int num;
-    char c;
     string name;
     if (t->isNum(&num)) {
         return make_unique<Literal>(num);
     }
     if (t->isId(&name))
         return make_unique<Variable>(name);
-    if (t->isParen(&c) && c == '(') {
+    if (t->isSymbol('(')) {
         unique_ptr<Expr> e = parse_expr();
         unique_ptr<Token> next = (this->scan)->next_token();
-        if (!next || !next->isParen(&c) ||  c != ')')
+        if (!next || !next->isSymbol(')'))
             throw runtime_error("')' Expected");
         return e;
     }
@@ -74,7 +73,7 @@ unique_ptr<Program> Parser::parse_program()
             throw runtime_error("';' expected");
         statements.push_back(move(statement));
     }
-    return make_unique<Program>(statements);
+    return make_unique<Program>(&statements);
 }
 
 unique_ptr<Statement> Parser::parse_statement()
@@ -83,18 +82,16 @@ unique_ptr<Statement> Parser::parse_statement()
     unique_ptr<Expr> e;
     unique_ptr<Token> next;
     string name;
-    char c;
-
     if (t && t->isPrint()) {
         t = this->scan->next_token();
 
-        if (t && t->isParen(&c) && c == '(')
+        if (t && t->isSymbol('('))
             e = this->parse_expr();
         else
             throw runtime_error("'(' expected");
 
         t = this->scan->next_token();
-        if (!t || !t->isParen(&c) || c != ')')
+        if (!t || !t->isSymbol(')'))
             throw runtime_error("')' expected");
 
         return make_unique<Print>(move(e));

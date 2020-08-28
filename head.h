@@ -142,7 +142,7 @@ class Print : public Statement {
 class Program {
   public:
     vector<unique_ptr<Statement>> statements;
-    Program(vector<unique_ptr<Statement>> statements);
+    Program(vector<unique_ptr<Statement>>* statements);
     string to_string();
 };
 

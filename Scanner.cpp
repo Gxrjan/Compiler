@@ -27,7 +27,7 @@ unique_ptr<Token> Scanner::next_token() {
             return make_unique<OperToken>(c);
 
         if (c == '(' || c == ')')
-            return make_unique<ParenToken>(c);
+            return make_unique<SymbolToken>(c);
 
         if (isdigit(c)) {
             string num = { c };

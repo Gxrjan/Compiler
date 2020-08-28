@@ -1,14 +1,14 @@
 #include "head.h"
 
-Program::Program(unique_ptr<Statement> statement, unique_ptr<Program> next)
+
+Program::Program(vector<unique_ptr<Statement>> statements)
 {
-    this->statement = move(statement);
-    this->next = move(next); 
+    this->statements = statements;
 }
 string Program::to_string()
 {
-    if (this->next)
-        return "(Prog: " + this->statement->to_string() + " : " + this->next->to_string() + ")";
-    else
-        return "(Prog: " + this->statement->to_string() + ")";
+    string result = "";
+    for (long unsigned int i=0;i<this->statements.size();i++)
+        result += this->statements[i]->to_string() + "\n";
+    return result;
 }

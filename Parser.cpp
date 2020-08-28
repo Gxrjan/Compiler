@@ -67,13 +67,14 @@ unique_ptr<Expr> Parser::try_get_expr()
 
 unique_ptr<Program> Parser::parse_program()
 {
-    unique_ptr<Statement> statement = this->parse_statement();
-    if (!statement)
-        return nullptr;
-    unique_ptr<Token> t = this->scan->next_token();
-    if (t && t->isSymbol(';'))
-        return make_unique<Program>(move(statement), this->parse_program());
-    throw runtime_error("';' expected");
+    unique_ptr<Statement> statement;
+    vector<unique_ptr<Statement>> statements;
+    while (statement=this->parse_statement()) {
+        if (!this->scan->next_token()->isSymbol(';'))
+            throw runtime_error("';' expected");
+        statements.push_back(move(statement));
+    }
+    return make_unique<Program>(statements);
 }
 
 unique_ptr<Statement> Parser::parse_statement()

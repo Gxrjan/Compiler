@@ -8,6 +8,8 @@
 #include <map>
 #include <memory>
 #include <fstream>
+#include <vector>
+
 using namespace std;
 
 
@@ -139,9 +141,8 @@ class Print : public Statement {
 // Program
 class Program {
   public:
-    unique_ptr<Statement> statement;
-    unique_ptr<Program> next;
-    Program(unique_ptr<Statement> statement, unique_ptr<Program> next);
+    vector<unique_ptr<Statement>> statements;
+    Program(vector<unique_ptr<Statement>> statements);
     string to_string();
 };
 

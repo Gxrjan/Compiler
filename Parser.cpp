@@ -16,10 +16,10 @@ unique_ptr<Expr> Parser::parse_factor()
         unique_ptr<Expr> e = parse_expr();
         unique_ptr<Token> next = (this->scan)->next_token();
         if (!next || !next->isParen(&c) ||  c != ')')
-            throw runtime_error("syntax error1");
+            throw runtime_error("')' Expected");
         return e;
     }
-    throw runtime_error("syntax error2");
+    throw runtime_error("syntax error");
 }
 
 
@@ -73,7 +73,7 @@ unique_ptr<Program> Parser::parse_program()
     unique_ptr<Token> t = this->scan->next_token();
     if (t && t->isSymbol(';'))
         return make_unique<Program>(move(statement), this->parse_program());
-    throw runtime_error("Syntax error 4(No semicolon after statement)");
+    throw runtime_error("';' expected");
 }
 
 unique_ptr<Statement> Parser::parse_statement()
@@ -90,11 +90,11 @@ unique_ptr<Statement> Parser::parse_statement()
         if (t && t->isParen(&c) && c == '(')
             e = this->parse_expr();
         else
-            throw runtime_error("Syntax error 6");
+            throw runtime_error("'(' expected");
 
         t = this->scan->next_token();
         if (!t || !t->isParen(&c) || c != ')')
-            throw runtime_error("Syntax error 3");
+            throw runtime_error("')' expected");
 
         return make_unique<Print>(move(e));
     }
@@ -106,11 +106,10 @@ unique_ptr<Statement> Parser::parse_statement()
             if (e)
                 return make_unique<Assignment>(move(t), move(e));
             else
-                throw runtime_error("Syntax error 8");
+                throw runtime_error("Empty expression");
         } else {
-            throw runtime_error("Syntax error 7");
+            throw runtime_error("'=' expected after variable");
         }
     }
     return nullptr;
-    throw runtime_error("Syntax error 5");
 }

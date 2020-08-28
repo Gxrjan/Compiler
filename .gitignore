@@ -1,0 +1,8 @@
+test*
+parse
+.*
+*.asm
+*.o
+*.lst
+calc
+parse

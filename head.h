@@ -13,42 +13,6 @@ using namespace std;
 
 
 
-
-// EXPRESSION
-class Expr {  // abstract base class
-  public:
-    virtual string to_string() = 0;
-    virtual bool isLiteral(int *num) { return false; }
-    virtual bool isOpExpr(char *op, Expr **left, Expr **right) { return false; }
-    virtual bool isVariable(string *name) { return false; }
-};
-
-class Literal : public Expr {
-  public:
-    int num;
-    Literal(int num);
-    string to_string() override;
-    bool isLiteral(int *num) override;
-};
-
-class OpExpr : public Expr {
-  public:
-    char op;
-    unique_ptr<Expr> left, right;
-    OpExpr(char op, unique_ptr<Expr> left, unique_ptr<Expr> right);
-    string to_string() override;
-    bool isOpExpr(char *c, Expr **left, Expr **right) override;
-};
-
-class Variable : public Expr {
-  public:
-    string name;
-    Variable(string name);
-    string to_string() override;
-    bool isVariable(string *name) override;
-};
-
-
 // TOKEN
 class Token {
   public:
@@ -108,6 +72,45 @@ class PrintToken : public Token {
     bool isPrint() override;
     string to_string() override;
 };
+
+// EXPRESSION
+class Expr {  // abstract base class
+  public:
+    virtual string to_string() = 0;
+    virtual bool isLiteral(int *num) { return false; }
+    virtual bool isOpExpr(char *op, Expr **left, Expr **right) { return false; }
+    virtual bool isVariable(string *name) { return false; }
+};
+
+class Literal : public Expr {
+  public:
+    int num;
+    Literal(int num);
+    string to_string() override;
+    bool isLiteral(int *num) override;
+};
+
+class OpExpr : public Expr {
+  public:
+    char op;
+    unique_ptr<Expr> left, right;
+    OpExpr(char op, unique_ptr<Expr> left, unique_ptr<Expr> right);
+    string to_string() override;
+    bool isOpExpr(char *c, Expr **left, Expr **right) override;
+};
+
+class Variable : public Expr {
+  public:
+    string name;
+    Variable(string name);
+    string to_string() override;
+    bool isVariable(string *name) override;
+};
+
+
+
+
+// Statement
 class Statement {
   public:
     virtual string to_string() = 0;

@@ -1,0 +1,26 @@
+Program ->
+        | \epsilon
+        | Statement; Program
+
+
+Statement ->
+        | Id = Expression
+        | print ( Expression )
+
+
+Expression ->
+        | Term
+        | Expression + Term
+        | Expression - Term
+
+
+Term ->
+        | Factor
+        | Term * Factor
+        | Term / Factor
+
+
+Factor ->
+        | number
+        | variable
+        | ( Expression )

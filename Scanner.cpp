@@ -19,10 +19,13 @@ unique_ptr<Token> Scanner::next_token() {
         cin >> ws; // Consume leading whitespace
         if (!(cin>>c))
             return nullptr;
+        
+        if (c == '=' || c == ';')
+            return make_unique<SymbolToken>(c);
 
         if (c == '+' || c == '-' || c == '*' || c == '/')
             return make_unique<OperToken>(c);
-        
+
         if (c == '(' || c == ')')
             return make_unique<ParenToken>(c);
 
@@ -33,6 +36,16 @@ unique_ptr<Token> Scanner::next_token() {
                 num = num + c;
             }
             return make_unique<NumToken>(stoi(num));
+        }
+        if (isalpha(c)) {
+            string name = { c };
+            while (isalnum(cin.peek())) {
+                cin >> c;
+                name = name + c;
+            }
+            if (name == "print")
+                return make_unique<PrintToken>();
+            return make_unique<IdToken>(name);
         }
 
         throw runtime_error("syntax error");

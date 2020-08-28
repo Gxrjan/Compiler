@@ -11,11 +11,16 @@
 using namespace std;
 
 
+
+
+
+// EXPRESSION
 class Expr {  // abstract base class
   public:
     virtual string to_string() = 0;
     virtual bool isLiteral(int *num) { return false; }
     virtual bool isOpExpr(char *op, Expr **left, Expr **right) { return false; }
+    virtual bool isVariable(string *name) { return false; }
 };
 
 class Literal : public Expr {
@@ -35,13 +40,25 @@ class OpExpr : public Expr {
     bool isOpExpr(char *c, Expr **left, Expr **right) override;
 };
 
+class Variable : public Expr {
+  public:
+    string name;
+    Variable(string name);
+    string to_string() override;
+    bool isVariable(string *name) override;
+};
 
+
+// TOKEN
 class Token {
   public:
     virtual string to_string() = 0;
     virtual bool isNum(int *num) { return false; }
     virtual bool isOper(char *op) { return false; }
     virtual bool isParen(char *p) { return false; }
+    virtual bool isId(string *name) { return false; }
+    virtual bool isSymbol(char c) { return false; }
+    virtual bool isPrint() { return false; }
 };
 
 class NumToken : public Token {
@@ -68,12 +85,72 @@ class ParenToken : public Token {
     bool isParen(char *p) override;
 };
 
+class IdToken : public Token {
+  public:
+    string name;
+    IdToken(string name);
+    string to_string() override;
+    bool isId(string *name) override;
+};
+
+
+class SymbolToken : public Token {
+  public:
+    char c;
+    SymbolToken(char c);
+    string to_string() override;
+    bool isSymbol(char c) override;
+};
+
+
+class PrintToken : public Token {
+  public:
+    bool isPrint() override;
+    string to_string() override;
+};
+class Statement {
+  public:
+    virtual string to_string() = 0;
+    virtual bool isAssignment(IdToken* id, Expr* expr) { return false; }
+    virtual bool isPrint(Expr* expr) { return false; }
+};
+
+class Assignment : public Statement {
+  public:
+    unique_ptr<Token> id;
+    unique_ptr<Expr> expr;
+    Assignment(unique_ptr<Token> id, unique_ptr<Expr> expr);
+    string to_string() override;
+    
+};
+
+class Print : public Statement {
+  public:
+    unique_ptr<Expr> expr;
+    Print(unique_ptr<Expr> expr);
+    string to_string() override;
+    bool isPrint();
+};
+
+
+// Program
+class Program {
+  public:
+    unique_ptr<Statement> statement;
+    unique_ptr<Program> next;
+    Program(unique_ptr<Statement> statement, unique_ptr<Program> next);
+    string to_string();
+};
+
+// SCANNER
 struct Scanner {
     unique_ptr<Token> next = nullptr;
     Token *peek_token();
     unique_ptr<Token> next_token();
 };
 
+
+// PRASER
 struct Parser {
     Scanner* scan;
     Parser(Scanner* scan);
@@ -81,11 +158,17 @@ struct Parser {
     unique_ptr<Expr> parse_term();
     unique_ptr<Expr> parse_expr();
     unique_ptr<Expr> try_get_expr();
+    unique_ptr<Program> parse_program();
+    unique_ptr<Statement> parse_statement();
 };
 
+
+// TRANSLATOR
 class Translator {
   public:
     string translate_expr(Expr* expr);
     void translate_expr(string *s, Expr *expr);
 };
+
+
 #endif

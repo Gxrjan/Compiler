@@ -23,3 +23,20 @@ bool ParenToken::isParen(char *p)
     (*p) = this->paren;
     return true;
 }
+
+IdToken::IdToken(string name) { this->name = name; }
+bool IdToken::isId(string *name)
+{
+    *name = this->name;
+    return true;
+}
+string IdToken::to_string() { return "" + this->name; }
+
+
+SymbolToken::SymbolToken(char c) { this->c = c; }
+bool SymbolToken::isSymbol(char c) { return this->c==c; }
+string SymbolToken::to_string() { return "Symbol: " + string(1, this->c); }
+
+
+bool PrintToken::isPrint() { return true; }
+string PrintToken::to_string() { return "Print token: print"; }

@@ -54,7 +54,7 @@ unique_ptr<Expr> Parser::parse_expr()
     return expr;
 }
 
-
+// Unused
 unique_ptr<Expr> Parser::try_get_expr()
 {
     unique_ptr<Expr> expr = this->parse_expr();

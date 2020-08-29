@@ -19,13 +19,13 @@ unique_ptr<Expr> Parser::parse_factor()
         unique_ptr<Expr> e = parse_expr();
         unique_ptr<Token> next = (this->scan)->next_token();
         if (!next || !next->isSymbol(')'))
-            throw runtime_error("line " + std::to_string(this->scan->line)
-                             +  ", col " + std::to_string(this->scan->column)
+            throw runtime_error("line " + std::to_string(this->scan->last_line)
+                             +  ", col " + std::to_string(this->scan->last_column)
                              +  ": ')' expected");
         return e;
     }
-    throw runtime_error("line " + std::to_string(this->scan->line)
-                     +  ", col " + std::to_string(this->scan->column)
+    throw runtime_error("line " + std::to_string(this->scan->last_line)
+                     +  ", col " + std::to_string(this->scan->last_column)
                      +  ": syntax error");
 }
 
@@ -77,9 +77,10 @@ unique_ptr<Program> Parser::parse_program()
     unique_ptr<Statement> statement;
     vector<unique_ptr<Statement>> statements;
     while (statement=this->parse_statement()) {
-        if (!this->scan->next_token()->isSymbol(';'))
-            throw runtime_error("line " + std::to_string(this->scan->line)
-                             +  ", col " + std::to_string(this->scan->column)
+        unique_ptr<Token> t = this->scan->next_token();
+        if (!t || !t->isSymbol(';'))
+            throw runtime_error("line " + std::to_string(this->scan->last_line)
+                             +  ", col " + std::to_string(this->scan->last_column)
                              +  ": ';' expected");
         statements.push_back(move(statement));
         this->line++;
@@ -99,14 +100,14 @@ unique_ptr<Statement> Parser::parse_statement()
         if (t && t->isSymbol('('))
             e = this->parse_expr();
         else
-            throw runtime_error("line " + std::to_string(this->scan->line)
-                             +  ", col " + std::to_string(this->scan->column)
+            throw runtime_error("line " + std::to_string(this->scan->last_line)
+                             +  ", col " + std::to_string(this->scan->last_column)
                              +  ": '(' expected");
 
         t = this->scan->next_token();
         if (!t || !t->isSymbol(')'))
-            throw runtime_error("line " + std::to_string(this->scan->line)
-                             +  ", col " + std::to_string(this->scan->column)
+            throw runtime_error("line " + std::to_string(this->scan->last_line)
+                             +  ", col " + std::to_string(this->scan->last_column)
                              +  ": ')' expected");
 
         return make_unique<Print>(move(e));
@@ -118,15 +119,15 @@ unique_ptr<Statement> Parser::parse_statement()
             e = parse_expr();
             return make_unique<Assignment>(move(t), move(e));
         } else {
-            throw runtime_error("line " + std::to_string(this->scan->line)
-                             +  ", col " + std::to_string(this->scan->column)
+            throw runtime_error("line " + std::to_string(this->scan->last_line)
+                             +  ", col " + std::to_string(this->scan->last_column)
                              +  ": '=' expected after a variable");
         }
     }
 
     if (t)
-        throw runtime_error("line " + std::to_string(this->scan->line)
-                         +  "col " + std::to_string(this->scan->column)
+        throw runtime_error("line " + std::to_string(this->scan->last_line)
+                         +  ", col " + std::to_string(this->scan->last_column)
                          +  ": Id or print token expected");
     return nullptr;
 }

@@ -150,6 +150,8 @@ class Program {
 struct Scanner {
     int line = 1;
     int column = 1;
+    int last_line = 0;
+    int last_column = 0;
     unique_ptr<Token> next = nullptr;
     Token *peek_token();
     unique_ptr<Token> next_token();

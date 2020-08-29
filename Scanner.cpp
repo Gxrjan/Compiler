@@ -11,6 +11,8 @@ Token* Scanner::peek_token()
 
 
 unique_ptr<Token> Scanner::next_token() {
+        this->last_line = this->line;
+        this->last_column = this->column;
         if (this->next) {
             unique_ptr<Token> result = move(this->next);
             return result;
@@ -20,7 +22,7 @@ unique_ptr<Token> Scanner::next_token() {
         while (isspace(cin.peek())) {
             c = cin.get();
             if (c == '\n') {
-                this->column = 1;
+                this->column = 0;
                 this->line++;
             }
             this->column++;
@@ -28,14 +30,17 @@ unique_ptr<Token> Scanner::next_token() {
         if (!(cin>>c))
             return nullptr;
         this->column++;
-        if (c == '=' || c == ';')
+        if (c == '=' || c == ';') {
             return make_unique<SymbolToken>(c);
+        }
 
-        if (c == '+' || c == '-' || c == '*' || c == '/')
+        if (c == '+' || c == '-' || c == '*' || c == '/') {
             return make_unique<OperToken>(c);
+        }
 
-        if (c == '(' || c == ')')
+        if (c == '(' || c == ')') {
             return make_unique<SymbolToken>(c);
+        }
 
         if (isdigit(c)) {
             string num = { c };

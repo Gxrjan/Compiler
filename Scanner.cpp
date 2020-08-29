@@ -5,16 +5,20 @@ Token* Scanner::peek_token()
     if (this->next) {
         return this->next.get();
     }
-    this->next = this->next_token();
+    this->next = this->next_token(true);
     return this->next.get();
 }
 
 
-unique_ptr<Token> Scanner::next_token() {
-        this->last_line = this->line;
-        this->last_column = this->column;
-        if (this->next) {
+unique_ptr<Token> Scanner::next_token(bool peek) {
+        if (!peek) {
+            this->last_line = this->line;
+            this->last_column = this->column;
+        }
+        if (this->next && !peek) {
             unique_ptr<Token> result = move(this->next);
+            this->last_line = this->line;
+            this->last_column = this->column;
             return result;
         }
         char c;

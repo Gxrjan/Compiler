@@ -16,10 +16,18 @@ unique_ptr<Token> Scanner::next_token() {
             return result;
         }
         char c;
-        cin >> ws; // Consume leading whitespace
+        //cin >> ws; // Consume leading whitespace
+        while (isspace(cin.peek())) {
+            c = cin.get();
+            if (c == '\n') {
+                this->column = 1;
+                this->line++;
+            }
+            this->column++;
+        }
         if (!(cin>>c))
             return nullptr;
-        
+        this->column++;
         if (c == '=' || c == ';')
             return make_unique<SymbolToken>(c);
 
@@ -34,6 +42,7 @@ unique_ptr<Token> Scanner::next_token() {
             while (isdigit(cin.peek())) {
                 cin >> c;
                 num = num + c;
+                this->column++;
             }
             return make_unique<NumToken>(stoi(num));
         }
@@ -42,6 +51,7 @@ unique_ptr<Token> Scanner::next_token() {
             while (isalnum(cin.peek())) {
                 cin >> c;
                 name = name + c;
+                this->column++;
             }
             if (name == "print")
                 return make_unique<PrintToken>();

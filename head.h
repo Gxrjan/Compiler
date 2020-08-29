@@ -142,12 +142,14 @@ class Print : public Statement {
 class Program {
   public:
     vector<unique_ptr<Statement>> statements;
-    Program(vector<unique_ptr<Statement>>* statements);
+    Program(vector<unique_ptr<Statement>> statements);
     string to_string();
 };
 
 // SCANNER
 struct Scanner {
+    int line = 1;
+    int column = 1;
     unique_ptr<Token> next = nullptr;
     Token *peek_token();
     unique_ptr<Token> next_token();
@@ -156,6 +158,7 @@ struct Scanner {
 
 // PRASER
 struct Parser {
+    int line;
     Scanner* scan;
     Parser(Scanner* scan);
     unique_ptr<Expr> parse_factor();

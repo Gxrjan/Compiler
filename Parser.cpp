@@ -37,8 +37,8 @@ unique_ptr<Expr> Parser::parse_factor()
 unique_ptr<Expr> Parser::parse_term()
 {
     unique_ptr<Expr> expr = parse_factor();
-    char c;
     while (true) {
+        char c;
         Token* t = (this->scan)->peek_token();
         if (t && t->isOper(&c) && (c=='*' || c=='/')) {
             (this->scan)->next_token();

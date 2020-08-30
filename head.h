@@ -150,11 +150,11 @@ class Program {
 class Scanner {
     char getc();
     void report_error(string message);
-  public:
     int line = 1;
     int column = 1;
-    int last_line = 1;     // Line number of the last token read 
-    int last_column = 1;   // Column number of the last token read
+  public:
+    int last_line = 1;     // Line number of the last token read or peeked 
+    int last_column = 1;   // Column number of the last token read or peeked
     unique_ptr<Token> next = nullptr;
     Token *peek_token();
     unique_ptr<Token> next_token();
@@ -164,15 +164,15 @@ class Scanner {
 // PARSER
 class Parser {
     void report_error(string message);
-  public:
-    Scanner* scan;
-    Parser(Scanner* scan);
     unique_ptr<Expr> parse_factor();
     unique_ptr<Expr> parse_term();
     unique_ptr<Expr> parse_expr();
     unique_ptr<Expr> try_get_expr();
-    unique_ptr<Program> parse_program();
     unique_ptr<Statement> parse_statement();
+  public:
+    Scanner* scan;
+    Parser(Scanner* scan);
+    unique_ptr<Program> parse_program();
 };
 
 

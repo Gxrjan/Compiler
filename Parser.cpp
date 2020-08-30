@@ -52,8 +52,8 @@ unique_ptr<Expr> Parser::parse_term()
 unique_ptr<Expr> Parser::parse_expr()
 {
     unique_ptr<Expr> expr = parse_term();
-    char c;
     while (true) {
+        char c;
         Token* t = (this->scan)->peek_token();
         if (t && t->isOper(&c) && (c=='+' || c=='-')) {
             (this->scan)->next_token();
@@ -62,16 +62,6 @@ unique_ptr<Expr> Parser::parse_expr()
         } else
             break;
     }
-    return expr;
-}
-
-// Unused
-unique_ptr<Expr> Parser::try_get_expr()
-{
-    unique_ptr<Expr> expr = this->parse_expr();
-    unique_ptr<Token> rest = this->scan->next_token();
-    if (rest)
-        throw runtime_error("Extra input error");
     return expr;
 }
 
@@ -93,7 +83,6 @@ unique_ptr<Statement> Parser::parse_statement()
 {
     unique_ptr<Token> t = this->scan->next_token();
     unique_ptr<Expr> e;
-    unique_ptr<Token> next;
     string name;
     if (t && t->isPrint()) {
         t = this->scan->next_token();
@@ -110,7 +99,7 @@ unique_ptr<Statement> Parser::parse_statement()
     }
 
     if (t && t->isId(&name)) {
-        next = this->scan->next_token();
+        unique_ptr<Token> next = this->scan->next_token();
         if (next && next->isSymbol('=')) {
             e = parse_expr();
             return make_unique<Assignment>(move(t), move(e));

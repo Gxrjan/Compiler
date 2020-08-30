@@ -153,8 +153,8 @@ class Scanner {
   public:
     int line = 1;
     int column = 1;
-    int last_line = 1;
-    int last_column = 1;
+    int last_line = 1;     // Line number of the last token read 
+    int last_column = 1;   // Column number of the last token read
     unique_ptr<Token> next = nullptr;
     Token *peek_token();
     unique_ptr<Token> next_token();

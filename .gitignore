@@ -6,3 +6,4 @@ parse
 *.lst
 calc
 parse
+*.out

@@ -147,20 +147,23 @@ class Program {
 };
 
 // SCANNER
-struct Scanner {
+class Scanner {
+    char getc();
+  public:
     int line = 1;
     int column = 1;
     int last_line = 1;
     int last_column = 1;
     unique_ptr<Token> next = nullptr;
     Token *peek_token();
-    unique_ptr<Token> next_token(bool peek);
+    unique_ptr<Token> next_token();
 };
 
 
-// PRASER
-struct Parser {
-    int line;
+// PARSER
+class Parser {
+    void report_error(string message);
+  public:
     Scanner* scan;
     Parser(Scanner* scan);
     unique_ptr<Expr> parse_factor();

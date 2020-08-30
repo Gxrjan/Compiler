@@ -1,5 +1,14 @@
 #include "head.h"
 
+
+void Scanner::report_error(string message)
+{
+    throw runtime_error("Scanner error "
+                        "line " + std::to_string(this->last_line)
+                      + ", col " + std::to_string(this->last_column)
+                      + ": " + message);
+}
+
 Token* Scanner::peek_token()
 {
     if (this->next) {
@@ -54,7 +63,7 @@ unique_ptr<Token> Scanner::next_token() {
                 return make_unique<PrintToken>();
             return make_unique<IdToken>(name);
         }
-
+        this->report_error("unrecognized token");
         throw runtime_error("syntax error");
 }
 

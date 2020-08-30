@@ -149,6 +149,7 @@ class Program {
 // SCANNER
 class Scanner {
     char getc();
+    void report_error(string message);
   public:
     int line = 1;
     int column = 1;

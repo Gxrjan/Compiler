@@ -20,8 +20,13 @@ unique_ptr<Expr> Parser::parse_factor()
     if (t->isNum(&num)) {
         return make_unique<Literal>(num);
     }
-    if (t->isId(&name))
-        return make_unique<Variable>(name);
+    if (t->isId(&name)) {
+        if (this->variables.find(name) != this->variables.end())
+            return make_unique<Variable>(name);
+        else
+            this->report_error("Variable '" + name + "' wasn't declared");
+    }
+
     if (t->isSymbol('(')) {
         unique_ptr<Expr> e = parse_expr();
         unique_ptr<Token> next = (this->scan)->next_token();
@@ -99,7 +104,9 @@ unique_ptr<Statement> Parser::parse_statement()
     }
 
     if (t && t->isId(&name)) {
+        this->variables.insert(name);
         unique_ptr<Token> next = this->scan->next_token();
+
         if (next && next->isSymbol('=')) {
             e = parse_expr();
             return make_unique<Assignment>(move(t), move(e));

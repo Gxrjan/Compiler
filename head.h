@@ -9,6 +9,7 @@
 #include <memory>
 #include <fstream>
 #include <vector>
+#include <set>
 
 using namespace std;
 
@@ -163,6 +164,7 @@ class Scanner {
 
 // PARSER
 class Parser {
+    set<string> variables;
     void report_error(string message);
     unique_ptr<Expr> parse_factor();
     unique_ptr<Expr> parse_term();

@@ -79,6 +79,9 @@ class PrintToken : public Token {
 // EXPRESSION
 class Expr {  // abstract base class
   public:
+    int line, col;
+    Expr();
+    Expr(int line, int col);
     virtual string to_string() = 0;
     virtual bool isLiteral(int *num) { return false; }
     virtual bool isOpExpr(char *op, Expr **left, Expr **right) { return false; }
@@ -105,7 +108,7 @@ class OpExpr : public Expr {
 class Variable : public Expr {
   public:
     string name;
-    Variable(string name);
+    Variable(string name, int line, int col);
     string to_string() override;
     bool isVariable(string *name) override;
 };
@@ -117,8 +120,8 @@ class Variable : public Expr {
 class Statement {
   public:
     virtual string to_string() = 0;
-    virtual bool isAssignment(IdToken* id, Expr* expr) { return false; }
-    virtual bool isPrint(Expr* expr) { return false; }
+    virtual bool isAssignment(IdToken** id, Expr** expr) { return false; }
+    virtual bool isPrint(Expr** expr) { return false; }
 };
 
 class Assignment : public Statement {
@@ -127,6 +130,7 @@ class Assignment : public Statement {
     unique_ptr<Expr> expr;
     Assignment(unique_ptr<Token> id, unique_ptr<Expr> expr);
     string to_string() override;
+    bool isAssignment(IdToken** id, Expr** expr) override;
     
 };
 
@@ -135,7 +139,7 @@ class Print : public Statement {
     unique_ptr<Expr> expr;
     Print(unique_ptr<Expr> expr);
     string to_string() override;
-    bool isPrint();
+    bool isPrint(Expr** expr) override;
 };
 
 
@@ -145,6 +149,13 @@ class Program {
     vector<unique_ptr<Statement>> statements;
     Program(vector<unique_ptr<Statement>> statements);
     string to_string();
+};
+
+
+// Environment
+class Env {
+  public:
+    set<string> variables;
 };
 
 // SCANNER
@@ -166,15 +177,18 @@ class Scanner {
 class Parser {
     set<string> variables;
     void report_error(string message);
+    void report_error(int line, int col, string message);
     unique_ptr<Expr> parse_factor();
     unique_ptr<Expr> parse_term();
     unique_ptr<Expr> parse_expr();
     unique_ptr<Expr> try_get_expr();
     unique_ptr<Statement> parse_statement();
+    void check_expr(Expr *expr);
   public:
     Scanner* scan;
     Parser(Scanner* scan);
     unique_ptr<Program> parse_program();
+    void check_program(Program *p);
 };
 
 

@@ -1,5 +1,15 @@
 #include "head.h"
 
+
+Expr::Expr() {};
+
+
+Expr::Expr(int line, int col)
+{
+    this->line = line;
+    this->col = col;
+}
+
 Literal::Literal(int num) { this->num = num; }
 string Literal::to_string() { return std::to_string(this->num); }
 bool Literal::isLiteral(int *num) 

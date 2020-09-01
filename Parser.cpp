@@ -7,18 +7,12 @@ Parser::Parser(Scanner* scan)
 
 void Parser::report_error(string message)
 {
-    throw runtime_error("line " + std::to_string(this->scan->last_line)
+    throw runtime_error("Parser error line " + std::to_string(this->scan->last_line)
                     +  ", col " + std::to_string(this->scan->last_column)
                     +  ": " + message);
 }
 
 
-void Parser::report_error(int line, int col, string message)
-{
-    throw runtime_error("line " + std::to_string(line)
-                    +  ", col " + std::to_string(col)
-                    +  ": " + message);
-}
 
 unique_ptr<Expr> Parser::parse_factor() 
 {
@@ -123,46 +117,6 @@ unique_ptr<Statement> Parser::parse_statement()
     if (t)
         this->report_error("Id or Print token expected");
     return nullptr;
-}
-
-
-void Parser::check_expr(Expr *expr)
-{
-    int num;
-    if (expr->isLiteral(&num))
-        return;
-
-    string name;
-    if (expr->isVariable(&name)) {
-        if (this->variables.find(name) == this->variables.end())
-            this->report_error(expr->line, expr->col, "Variable not declared");
-    }
-    
-    Expr* left;
-    Expr* right;
-    char c;
-    if (expr->isOpExpr(&c, &left, &right)) {
-        this->check_expr(left);
-        this->check_expr(right);
-    }
-}
-
-void Parser::check_program(Program *p)
-{
-    for (auto &s : p->statements) {
-        string name;
-        Expr *expr;
-        IdToken *id;
-        if (s->isPrint(&expr)) {
-            this->check_expr(expr);
-        }
-
-        if (s->isAssignment(&id, &expr)) {
-            this->check_expr(expr);
-            this->variables.insert(id->name);
-        }
-
-    }
 }
 
 

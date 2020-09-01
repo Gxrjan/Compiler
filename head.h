@@ -175,9 +175,7 @@ class Scanner {
 
 // PARSER
 class Parser {
-    set<string> variables;
     void report_error(string message);
-    void report_error(int line, int col, string message);
     unique_ptr<Expr> parse_factor();
     unique_ptr<Expr> parse_term();
     unique_ptr<Expr> parse_expr();
@@ -192,10 +190,19 @@ class Parser {
 };
 
 
+class Checker {
+    set<string> variables;
+    void check_expr(Expr *expr);
+    void report_error(int line, int col, string message);
+  public:
+    void check_program(Program *p);
+};
+
+
 // TRANSLATOR
 class Translator {
   public:
-    string translate_expr(Expr* expr);
+    string translate_expr(Expr *expr);
     void translate_expr(string *s, Expr *expr);
 };
 

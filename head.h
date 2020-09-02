@@ -12,6 +12,8 @@
 #include <set>
 
 using namespace std;
+using Id = string;
+enum class Type { Bool, Int };
 
 
 
@@ -26,6 +28,7 @@ class Token {
     virtual bool isId(string *name) { return false; }
     virtual bool isSymbol(char c) { return false; }
     virtual bool isPrint() { return false; }
+    virtual bool isType(Type *t) { return false; }
 };
 
 class NumToken : public Token {
@@ -76,6 +79,16 @@ class PrintToken : public Token {
     string to_string() override;
 };
 
+
+class TypeToken : public Token {
+  public:
+    Type type;
+    TypeToken(Type t);
+    bool isType(Type *t) override;
+    string to_string() override;
+};
+
+
 // EXPRESSION
 class Expr {  // abstract base class
   public:
@@ -120,18 +133,19 @@ class Variable : public Expr {
 class Statement {
   public:
     virtual string to_string() = 0;
-    virtual bool isAssignment(IdToken** id, Expr** expr) { return false; }
+    virtual bool isAssignment(Id* id, Expr** expr) { return false; }
     virtual bool isPrint(Expr** expr) { return false; }
+    virtual bool isDeclaration(Type *t, Id *id, Expr **expr) { return false; }
+    virtual bool isBlock(vector<Statement*> statements) { return false; }
 };
 
 class Assignment : public Statement {
   public:
-    unique_ptr<Token> id;
+    Id id;
     unique_ptr<Expr> expr;
-    Assignment(unique_ptr<Token> id, unique_ptr<Expr> expr);
+    Assignment(Id id, unique_ptr<Expr> expr);
     string to_string() override;
-    bool isAssignment(IdToken** id, Expr** expr) override;
-    
+    bool isAssignment(Id* id, Expr** expr) override;
 };
 
 class Print : public Statement {
@@ -142,12 +156,29 @@ class Print : public Statement {
     bool isPrint(Expr** expr) override;
 };
 
+class Declaration : public Statement {
+    Type type;
+    Id id;
+    unique_ptr<Expr> expr;
+    Declaration(Type t, Id id, unique_ptr<Expr> expr);
+    string to_string() override;
+    bool isDeclaration(Type *t, Id *id, Expr **expr) override;
+};
+
+class Block : public Statement {
+  public:
+    vector<unique_ptr<Statement>> statements;
+    Block(vector<unique_ptr<Statement>> statements);
+    bool isBlock(vector<Statement*> statements);
+    string to_string() override;
+};
+
 
 // Program
 class Program {
   public:
-    vector<unique_ptr<Statement>> statements;
-    Program(vector<unique_ptr<Statement>> statements);
+    unique_ptr<Block> block;
+    Program(unique_ptr<Block> block);
     string to_string();
 };
 
@@ -179,8 +210,8 @@ class Parser {
     unique_ptr<Expr> parse_factor();
     unique_ptr<Expr> parse_term();
     unique_ptr<Expr> parse_expr();
-    unique_ptr<Expr> try_get_expr();
     unique_ptr<Statement> parse_statement();
+    unique_ptr<Block> parse_block();
     void check_expr(Expr *expr);
   public:
     Scanner* scan;
@@ -189,10 +220,11 @@ class Parser {
     void check_program(Program *p);
 };
 
-
+// CHECKER
 class Checker {
     set<string> variables;
     void check_expr(Expr *expr);
+    void check_block(Block *b);
     void report_error(int line, int col, string message);
   public:
     void check_program(Program *p);

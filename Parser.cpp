@@ -71,7 +71,7 @@ unique_ptr<Expr> Parser::parse_expr()
 }
 
 
-unique_ptr<Program> Parser::parse_program()
+unique_ptr<Block> Parser::parse_block()
 {
     unique_ptr<Statement> statement;
     vector<unique_ptr<Statement>> statements;
@@ -81,7 +81,13 @@ unique_ptr<Program> Parser::parse_program()
             this->report_error("';' expected");
         statements.push_back(move(statement));
     }
-    return make_unique<Program>(move(statements));
+    return make_unique<Block>(move(statements));
+}
+
+unique_ptr<Program> Parser::parse_program()
+{
+    unique_ptr<Block> block = this->parse_block();
+    return make_unique<Program>(move(block));
 }
 
 unique_ptr<Statement> Parser::parse_statement()
@@ -108,7 +114,7 @@ unique_ptr<Statement> Parser::parse_statement()
 
         if (next && next->isSymbol('=')) {
             e = parse_expr();
-            return make_unique<Assignment>(move(t), move(e));
+            return make_unique<Assignment>(name, move(e));
         } else {
             this->report_error("'=' expected after a variable");
         }

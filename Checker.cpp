@@ -29,22 +29,28 @@ void Checker::check_expr(Expr *expr)
     }
 }
 
-void Checker::check_program(Program *p)
+
+void Checker::check_block(Block *b)
 {
-    for (auto &s : p->statements) {
+    for (auto &s : b->statements) {
         string name;
         Expr *expr;
-        IdToken *id;
+        Id id;
         if (s->isPrint(&expr)) {
             this->check_expr(expr);
         }
 
         if (s->isAssignment(&id, &expr)) {
             this->check_expr(expr);
-            this->variables.insert(id->name);
+            this->variables.insert(id);
         }
 
     }
+}
+
+void Checker::check_program(Program *p)
+{
+    this->check_block(p->block.get());
 }
 
 

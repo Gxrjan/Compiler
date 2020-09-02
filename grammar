@@ -1,26 +1,36 @@
-Program ->
-        | \epsilon
-        | Statement; Program
+Type ->
+        | "int"
+        | "bool"
 
+
+Program ->
+        | Statements
+
+
+Block -> 
+        | \epsilon
+        | Statement ';' Statements
 
 Statement ->
-        | Id = Expression
-        | print ( Expression )
+        | Type Id '=' Expression
+        | Id '=' Expression
+        | "print" '(' Expression ')'
+        | '{' Block '}'
 
 
 Expression ->
         | Term
-        | Expression + Term
-        | Expression - Term
+        | Expression '+' Term
+        | Expression '-' Term
 
 
 Term ->
         | Factor
-        | Term * Factor
-        | Term / Factor
+        | Term '*' Factor
+        | Term '/' Factor
 
 
 Factor ->
         | number
-        | variable
-        | ( Expression )
+        | Id
+        | '(' Expression ')'

@@ -40,3 +40,26 @@ string SymbolToken::to_string() { return "Symbol: " + string(1, this->c); }
 
 bool PrintToken::isPrint() { return true; }
 string PrintToken::to_string() { return "Print token: print"; }
+
+TypeToken::TypeToken(Type t) { this->type = t; }
+bool TypeToken::isType(Type *t) 
+{
+    *t = this->type;
+    return true;
+}
+string TypeToken::to_string()
+{
+    string result = "";
+    switch(this->type) {
+        case Type::Bool:
+            result = "bool";
+            break;
+        case Type::Int:
+            result = "int";
+            break;
+        default:
+            throw runtime_error("Unknown type");
+            break;
+    }
+    return result;
+}

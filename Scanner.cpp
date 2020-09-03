@@ -74,6 +74,8 @@ unique_ptr<Token> Scanner::next_token() {
 char Scanner::getc()
 {
     char c = cin.get();
+    if (c== EOF)
+        return c;
     if (c == '\n') {
         this->line++;
         this->column = 1;

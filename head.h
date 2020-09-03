@@ -47,13 +47,6 @@ class OperToken : public Token {
     bool isOper(char *op) override;
 };
 
-class ParenToken : public Token {
-  public:
-    char paren;
-    ParenToken(char paren);
-    string to_string() override;
-    bool isParen(char *p) override;
-};
 
 class IdToken : public Token {
   public:
@@ -187,7 +180,8 @@ class Program {
 // Environment
 class Env {
   public:
-    set<string> variables;
+    set<Id> variables;
+    Env *parent = nullptr;
 };
 
 // SCANNER
@@ -214,6 +208,7 @@ class Parser {
     unique_ptr<Statement> parse_statement();
     unique_ptr<Block> parse_block();
     void check_expr(Expr *expr);
+    void expect(char c);
   public:
     Scanner* scan;
     Parser(Scanner* scan);

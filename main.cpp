@@ -21,7 +21,7 @@ int main(int argc, char *argv[])
     Scanner scan;
     Parser p { &scan };
     unique_ptr<Program> prog = p.parse_program();
-    Checker c;
-    c.check_program(prog.get());
+    //Checker c;
+    //c.check_program(prog.get());
     cout << prog->to_string() << endl;
 }

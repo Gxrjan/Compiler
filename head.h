@@ -157,6 +157,7 @@ class Print : public Statement {
 };
 
 class Declaration : public Statement {
+  public:
     Type type;
     Id id;
     unique_ptr<Expr> expr;

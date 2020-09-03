@@ -73,12 +73,13 @@ unique_ptr<Expr> Parser::parse_expr()
 
 unique_ptr<Block> Parser::parse_block()
 {
+    Token *next;
     unique_ptr<Statement> statement;
     vector<unique_ptr<Statement>> statements;
-    while (statement=this->parse_statement()) {
-        unique_ptr<Token> t = this->scan->next_token();
-        if (!t || !t->isSymbol(';'))
-            this->report_error("';' expected");
+    while ((next=this->scan->peek_token())) {
+        if (next->isSymbol('}'))
+            break;
+        statement = this->parse_statement();
         statements.push_back(move(statement));
     }
     return make_unique<Block>(move(statements));
@@ -93,8 +94,53 @@ unique_ptr<Program> Parser::parse_program()
 unique_ptr<Statement> Parser::parse_statement()
 {
     unique_ptr<Token> t = this->scan->next_token();
+    unique_ptr<Token> next;
     unique_ptr<Expr> e;
+    Type type;
     string name;
+    
+
+    // Declaration
+    if (t && t->isType(&type)) {
+        t = this->scan->next_token();
+        if (t && t->isId(&name)) {
+            next = this->scan->next_token();
+            if (next && next->isSymbol('=')) {
+                e = this->parse_expr();
+                next = this->scan->next_token();
+                if (next && next->isSymbol(';'))
+                    return make_unique<Declaration>(type, name, move(e));
+                else
+                    this->report_error("';' expected");
+            } else {
+                this->report_error("'=' expected after a variable");
+            }
+        } else {
+            this->report_error("Name of the variable should follow the type");
+        }
+    }
+
+    // Assignment
+    if (t && t->isId(&name)) {
+        next = this->scan->next_token();
+
+        if (next && next->isSymbol('=')) {
+            e = parse_expr();
+            next = this->scan->next_token();
+            if (next && next->isSymbol(';'))
+                return make_unique<Assignment>(name, move(e));
+            else
+                this->report_error("';' expected");
+            
+        } else {
+            this->report_error("'=' expected after a variable");
+        }
+    }
+
+
+
+    
+    // Print
     if (t && t->isPrint()) {
         t = this->scan->next_token();
 
@@ -106,18 +152,25 @@ unique_ptr<Statement> Parser::parse_statement()
         t = this->scan->next_token();
         if (!t || !t->isSymbol(')'))
             this->report_error("')' expected");
-        return make_unique<Print>(move(e));
+        next = this->scan->next_token();
+        if (next && next->isSymbol(';'))
+            return make_unique<Print>(move(e));
+        else
+            this->report_error("';' expected");
     }
 
-    if (t && t->isId(&name)) {
-        unique_ptr<Token> next = this->scan->next_token();
 
-        if (next && next->isSymbol('=')) {
-            e = parse_expr();
-            return make_unique<Assignment>(name, move(e));
-        } else {
-            this->report_error("'=' expected after a variable");
-        }
+    // Block
+    unique_ptr<Block> block;
+    vector<unique_ptr<Statement>> statements;
+    if (t && t->isSymbol('{')) {
+        block = parse_block();
+        next = this->scan->next_token();
+        if (next && next->isSymbol('}'))
+            return block;
+        else
+            this->report_error("'}' expected after a block of code");
+        next = this->scan->next_token();
     }
 
     if (t)

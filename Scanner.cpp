@@ -41,7 +41,7 @@ unique_ptr<Token> Scanner::next_token() {
         return make_unique<OperToken>(c);
     }
 
-    if (c == '(' || c == ')') {
+    if (c == '(' || c == ')' || c == '{' || c == '}') {
         return make_unique<SymbolToken>(c);
     }
 
@@ -61,6 +61,10 @@ unique_ptr<Token> Scanner::next_token() {
         }
         if (name == "print")
             return make_unique<PrintToken>();
+        if (name == "bool")
+            return make_unique<TypeToken>(Type::Bool);
+        if (name == "int")
+            return make_unique<TypeToken>(Type::Int);
         return make_unique<IdToken>(name);
     }
     this->report_error("unrecognized token");

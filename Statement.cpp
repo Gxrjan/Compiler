@@ -59,7 +59,7 @@ string Declaration::to_string()
             break;
     }
     return "(Declaration statement: " + s + " " + this->id + " = " +
-            this->expr->to_string();
+            this->expr->to_string() + ")";
 }
 
 bool Declaration::isDeclaration(Type *t, Id *id, Expr **expr)
@@ -86,8 +86,8 @@ bool Block::isBlock(vector<Statement*> statements)
 
 string Block::to_string()
 {
-    string result = "";
+    string result = "{ Block start\n";
     for (auto &s:this->statements)
         result += s->to_string() + "\n";
-    return result;
+    return result + "} Block ends";
 }

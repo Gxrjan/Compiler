@@ -161,6 +161,8 @@ class Declaration : public Statement {
 
 class Block : public Statement {
   public:
+    set<Id> variables;
+    Block *parent;
     vector<unique_ptr<Statement>> statements;
     Block(vector<unique_ptr<Statement>> statements);
     bool isBlock(vector<Statement*> statements);
@@ -219,7 +221,8 @@ class Parser {
 // CHECKER
 class Checker {
     set<string> variables;
-    void check_expr(Expr *expr);
+    bool look_up(Id id, Block *b);
+    void check_expr(Expr *expr, Block *b);
     void check_block(Block *b);
     void report_error(int line, int col, string message);
   public:

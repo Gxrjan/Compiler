@@ -8,7 +8,14 @@ void Checker::report_error(int line, int col, string message)
                     +  ": " + message);
 }
 
-void Checker::check_expr(Expr *expr)
+bool Checker::look_up(Id id, Block *b)
+{
+    if (!b)
+        return false;
+    return (b->variables.find(id) != b->variables.end()) || this->look_up(id, b->parent);
+}
+
+void Checker::check_expr(Expr *expr, Block *b)
 {
     int num;
     if (expr->isLiteral(&num))
@@ -16,7 +23,7 @@ void Checker::check_expr(Expr *expr)
 
     string name;
     if (expr->isVariable(&name)) {
-        if (this->variables.find(name) == this->variables.end())
+        if (!this->look_up(name, b))
             this->report_error(expr->line, expr->col, "Variable not declared");
     }
     
@@ -24,26 +31,42 @@ void Checker::check_expr(Expr *expr)
     Expr* right;
     char c;
     if (expr->isOpExpr(&c, &left, &right)) {
-        this->check_expr(left);
-        this->check_expr(right);
+        this->check_expr(left, b);
+        this->check_expr(right, b);
     }
 }
 
 
 void Checker::check_block(Block *b)
 {
+
     for (auto &s : b->statements) {
         string name;
         Expr *expr;
         Id id;
-        if (s->isPrint(&expr)) {
-            this->check_expr(expr);
+        Type t;
+
+        if (s->isDeclaration(&t, &id, &expr)) {
+            this->check_expr(expr, b);
+            if (this->look_up(id, b))
+                this->report_error(0, 0, "variable has already been declared");
+            b->variables.insert(id);
         }
 
+
         if (s->isAssignment(&id, &expr)) {
-            this->check_expr(expr);
-            this->variables.insert(id);
+            this->check_expr(expr, b);
         }
+
+        if (s->isPrint(&expr)) {
+            this->check_expr(expr, b);
+        }
+
+        vector<Statement*> statements;
+        if (s->isBlock(statements)) { 
+            this->check_block(s.get());
+        }
+
 
     }
 }

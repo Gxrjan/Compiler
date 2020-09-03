@@ -16,13 +16,6 @@ bool OperToken::isOper(char *op)
     return true;
 }
 
-ParenToken::ParenToken(char paren) { this->paren = paren; }
-string ParenToken::to_string() { return "Paren: " + string(1, this->paren); }
-bool ParenToken::isParen(char *p)
-{
-    (*p) = this->paren;
-    return true;
-}
 
 IdToken::IdToken(string name) { this->name = name; }
 bool IdToken::isId(string *name)

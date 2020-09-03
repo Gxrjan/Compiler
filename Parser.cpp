@@ -170,7 +170,6 @@ unique_ptr<Statement> Parser::parse_statement()
             return block;
         else
             this->report_error("'}' expected after a block of code");
-        next = this->scan->next_token();
     }
 
     if (t)

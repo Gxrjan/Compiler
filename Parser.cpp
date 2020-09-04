@@ -37,8 +37,7 @@ unique_ptr<Expr> Parser::parse_factor()
     if (t->isSymbol('(')) {
         unique_ptr<Expr> e = parse_expr();
         unique_ptr<Token> next = (this->scan)->next_token();
-        if (!next || !next->isSymbol(')'))
-            this->report_error("')' expected");
+        this->expect(')');
         return e;
     }
     this->report_error("syntax error");

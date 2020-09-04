@@ -182,13 +182,6 @@ class Program {
 };
 
 
-// Environment
-class Env {
-  public:
-    set<Id> variables;
-    Env *parent = nullptr;
-};
-
 // SCANNER
 class Scanner {
     char getc();
@@ -223,7 +216,6 @@ class Parser {
 
 // CHECKER
 class Checker {
-    set<string> variables;
     bool look_up(Id id, Block *b);
     void check_expr(Expr *expr, Block *b);
     void check_block(Block *b);

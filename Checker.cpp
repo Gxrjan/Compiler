@@ -15,6 +15,7 @@ bool Checker::look_up(Id id, Block *b)
     return (b->variables.find(id) != b->variables.end()) || this->look_up(id, b->parent);
 }
 
+
 void Checker::check_expr(Expr *expr, Block *b)
 {
     int num;
@@ -24,7 +25,7 @@ void Checker::check_expr(Expr *expr, Block *b)
     string name;
     if (expr->isVariable(&name)) {
         if (!this->look_up(name, b))
-            this->report_error(expr->line, expr->col, "Variable not declared");
+            this->report_error(expr->line, expr->col, "variable hasn't been declared");
     }
     
     Expr* left;
@@ -41,7 +42,6 @@ void Checker::check_block(Block *b)
 {
 
     for (auto &s : b->statements) {
-        string name;
         Expr *expr;
         Id id;
         Type t;

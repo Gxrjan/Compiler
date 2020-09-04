@@ -10,7 +10,12 @@ Expr::Expr(int line, int col)
     this->col = col;
 }
 
-NumLiteral::NumLiteral(int num) { this->num = num; }
+NumLiteral::NumLiteral(int num, int line, int col) 
+{ 
+    this->num = num; 
+    this->line = line;
+    this->col = col;
+}
 string NumLiteral::to_string() { return std::to_string(this->num); }
 bool NumLiteral::isNumLiteral(int *num) 
 { 
@@ -18,7 +23,12 @@ bool NumLiteral::isNumLiteral(int *num)
     return true;
 }
 
-BoolLiteral::BoolLiteral(bool b) { this->b = b; }
+BoolLiteral::BoolLiteral(bool b, int line, int col) 
+{ 
+    this->b = b; 
+    this->line = line;
+    this->col = col;
+}
 string BoolLiteral::to_string() 
 {
     return (this->b) ? "true" : "false"; 
@@ -30,7 +40,10 @@ bool BoolLiteral::isBoolLiteral(bool *b)
 }
 
 
-OpExpr::OpExpr(char op, unique_ptr<Expr> left, unique_ptr<Expr> right) {
+OpExpr::OpExpr
+(char op, unique_ptr<Expr> left, unique_ptr<Expr> right, int line, int col) 
+: Expr(line, col)
+{
     this->op = op;
     this->left = move(left);
     this->right = move(right);

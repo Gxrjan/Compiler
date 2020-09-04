@@ -27,11 +27,13 @@ unique_ptr<Expr> Parser::parse_factor()
     int num;
     bool b;
     string name;
+    int line = this->scan->last_line;
+    int col = this->scan->last_column;
     if (t->isNum(&num)) {
-        return make_unique<NumLiteral>(num);
+        return make_unique<NumLiteral>(num, line, col);
     }
     if (t->isBool(&b))
-        return make_unique<BoolLiteral>(b);
+        return make_unique<BoolLiteral>(b, line, col);
     if (t->isId(&name)) {
         return make_unique<Variable>(name, this->scan->last_line, 
                                     this->scan->last_column);
@@ -39,7 +41,6 @@ unique_ptr<Expr> Parser::parse_factor()
 
     if (t->isSymbol('(')) {
         unique_ptr<Expr> e = parse_expr();
-        unique_ptr<Token> next = (this->scan)->next_token();
         this->expect(')');
         return e;
     }
@@ -51,13 +52,15 @@ unique_ptr<Expr> Parser::parse_factor()
 unique_ptr<Expr> Parser::parse_term()
 {
     unique_ptr<Expr> expr = parse_factor();
+    int line = this->scan->last_line;
+    int col = this->scan->last_column;
     while (true) {
         char c;
         Token* t = (this->scan)->peek_token();
         if (t && t->isOper(&c) && (c=='*' || c=='/')) {
             (this->scan)->next_token();
             unique_ptr<Expr> factor = this->parse_factor();
-            expr = make_unique<OpExpr>(c, move(expr), move(factor));
+            expr = make_unique<OpExpr>(c, move(expr), move(factor), line, col);
         } else
             break;
     }
@@ -66,13 +69,15 @@ unique_ptr<Expr> Parser::parse_term()
 unique_ptr<Expr> Parser::parse_expr()
 {
     unique_ptr<Expr> expr = parse_term();
+    int line = this->scan->last_line;
+    int col = this->scan->last_column;
     while (true) {
         char c;
         Token* t = (this->scan)->peek_token();
         if (t && t->isOper(&c) && (c=='+' || c=='-')) {
             (this->scan)->next_token();
             unique_ptr<Expr> term = this->parse_term();
-            expr = make_unique<OpExpr>(c, move(expr), move(term));
+            expr = make_unique<OpExpr>(c, move(expr), move(term), line, col);
         } else
             break;
     }

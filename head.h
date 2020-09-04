@@ -107,7 +107,7 @@ class Expr {  // abstract base class
 class NumLiteral : public Expr {
   public:
     int num;
-    NumLiteral(int num);
+    NumLiteral(int num, int line, int col);
     string to_string() override;
     bool isNumLiteral(int *num) override;
 };
@@ -115,7 +115,7 @@ class NumLiteral : public Expr {
 class BoolLiteral : public Expr {
   public:
     bool b;
-    BoolLiteral(bool b);
+    BoolLiteral(bool b, int line, int col);
     string to_string() override;
     bool isBoolLiteral(bool *b) override;
 };
@@ -125,7 +125,7 @@ class OpExpr : public Expr {
   public:
     char op;
     unique_ptr<Expr> left, right;
-    OpExpr(char op, unique_ptr<Expr> left, unique_ptr<Expr> right);
+    OpExpr(char op, unique_ptr<Expr> left, unique_ptr<Expr> right, int line, int col);
     string to_string() override;
     bool isOpExpr(char *c, Expr **left, Expr **right) override;
 };
@@ -181,9 +181,19 @@ class Declaration : public Statement {
     bool isDeclaration(Type *t, Id *id, Expr **expr) override;
 };
 
+
+// Comparator for Block's set of variables
+class Comparator {
+  public:
+    bool operator() (Declaration *d1, Declaration *d2)
+    {
+        return d1->id < d2->id;
+    }
+};
+
 class Block : public Statement {
   public:
-    set<Id> variables;
+    set<Declaration *, Comparator> variables;
     Block *parent;
     vector<unique_ptr<Statement>> statements;
     Block(vector<unique_ptr<Statement>> statements);
@@ -235,8 +245,8 @@ class Parser {
 
 // CHECKER
 class Checker {
-    bool look_up(Id id, Block *b);
-    void check_expr(Expr *expr, Block *b);
+    Declaration *look_up(Declaration *dec, Block *b);
+    Type check_expr(Expr *expr, Block *b);
     void check_block(Block *b);
     void report_error(int line, int col, string message);
   public:

@@ -125,6 +125,9 @@ class Variable : public Expr {
 // Statement
 class Statement {
   public:
+    int line, col;
+    Statement();
+    Statement(int line, int col);
     virtual string to_string() = 0;
     virtual bool isAssignment(Id* id, Expr** expr) { return false; }
     virtual bool isPrint(Expr** expr) { return false; }
@@ -136,7 +139,7 @@ class Assignment : public Statement {
   public:
     Id id;
     unique_ptr<Expr> expr;
-    Assignment(Id id, unique_ptr<Expr> expr);
+    Assignment(Id id, unique_ptr<Expr> expr, int line, int col);
     string to_string() override;
     bool isAssignment(Id* id, Expr** expr) override;
 };
@@ -154,7 +157,7 @@ class Declaration : public Statement {
     Type type;
     Id id;
     unique_ptr<Expr> expr;
-    Declaration(Type t, Id id, unique_ptr<Expr> expr);
+    Declaration(Type t, Id id, unique_ptr<Expr> expr, int line, int col);
     string to_string() override;
     bool isDeclaration(Type *t, Id *id, Expr **expr) override;
 };

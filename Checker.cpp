@@ -49,12 +49,14 @@ void Checker::check_block(Block *b)
         if (s->isDeclaration(&t, &id, &expr)) {
             this->check_expr(expr, b);
             if (this->look_up(id, b))
-                this->report_error(0, 0, "variable has already been declared");
+                this->report_error(s->line, s->col, "variable has already been declared");
             b->variables.insert(id);
         }
 
 
         if (s->isAssignment(&id, &expr)) {
+            if (!this->look_up(id, b))
+                this->report_error(s->line, s->col, "variable hasn't been declared");
             this->check_expr(expr, b);
         }
 
@@ -62,11 +64,11 @@ void Checker::check_block(Block *b)
             this->check_expr(expr, b);
         }
 
-        vector<Statement*> statements;
-        if (s->isBlock(statements)) { 
-            this->check_block(s.get());
+        Block *b1 = dynamic_cast<Block *>(s.get());
+        if (b1) {
+            b1->parent = b;
+            this->check_block(b1);
         }
-
 
     }
 }

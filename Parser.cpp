@@ -92,10 +92,12 @@ unique_ptr<Statement> Parser::parse_statement()
     if (t && t->isType(&type)) {
         t = this->scan->next_token();
         if (t && t->isId(&name)) {
+            int line = this->scan->last_line;
+            int col = this->scan->last_column;
             this->expect('=');
             e = this->parse_expr();
             this->expect(';');
-            return make_unique<Declaration>(type, name, move(e));
+            return make_unique<Declaration>(type, name, move(e), line, col);
         } else {
             this->report_error("Name of the variable should follow the type");
         }
@@ -103,10 +105,12 @@ unique_ptr<Statement> Parser::parse_statement()
 
     // Assignment
     if (t && t->isId(&name)) {
+        int line = this->scan->last_line;
+        int col = this->scan->last_column;
         this->expect('=');
         e = this->parse_expr();
         this->expect(';');
-        return make_unique<Assignment>(name, move(e));
+        return make_unique<Assignment>(name, move(e), line, col);
     }
     
     // Print

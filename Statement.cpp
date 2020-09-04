@@ -1,6 +1,16 @@
 #include "head.h"
 
-Assignment::Assignment(Id id, unique_ptr<Expr> expr)
+
+Statement::Statement() {}
+
+Statement::Statement(int line, int col)
+{
+    this->line = line;
+    this->col = col;
+}
+
+Assignment::Assignment(Id id, unique_ptr<Expr> expr, int line, int col)
+: Statement(line, col)
 {
     this->id = id;
     this->expr = move(expr);
@@ -37,7 +47,9 @@ bool Print::isPrint(Expr** expr)
 }
 
 
-Declaration::Declaration(Type t, Id id, unique_ptr<Expr> expr)
+Declaration::Declaration
+(Type t, Id id, unique_ptr<Expr> expr, int line, int col) 
+: Statement(line, col)
 {
     this->type = t;
     this->id = id;

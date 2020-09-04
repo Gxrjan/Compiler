@@ -19,7 +19,7 @@ bool Checker::look_up(Id id, Block *b)
 void Checker::check_expr(Expr *expr, Block *b)
 {
     int num;
-    if (expr->isLiteral(&num))
+    if (expr->isNumLiteral(&num))
         return;
 
     string name;

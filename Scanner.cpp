@@ -65,6 +65,10 @@ unique_ptr<Token> Scanner::next_token() {
             return make_unique<TypeToken>(Type::Bool);
         if (name == "int")
             return make_unique<TypeToken>(Type::Int);
+        if (name == "true")
+            return make_unique<BoolToken>(true);
+        if (name == "false")
+            return make_unique<BoolToken>(false);
         return make_unique<IdToken>(name);
     }
     this->report_error("unrecognized token");

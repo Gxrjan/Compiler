@@ -25,10 +25,13 @@ unique_ptr<Expr> Parser::parse_factor()
 {
     unique_ptr<Token> t = (this->scan)->next_token();
     int num;
+    bool b;
     string name;
     if (t->isNum(&num)) {
-        return make_unique<Literal>(num);
+        return make_unique<NumLiteral>(num);
     }
+    if (t->isBool(&b))
+        return make_unique<BoolLiteral>(b);
     if (t->isId(&name)) {
         return make_unique<Variable>(name, this->scan->last_line, 
                                     this->scan->last_column);

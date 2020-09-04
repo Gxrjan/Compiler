@@ -7,7 +7,7 @@ void Translator::translate_expr(string *s, Expr *e)
     char op;
     Expr *left;
     Expr * right;
-    if (e->isLiteral(&num)) {
+    if (e->isNumLiteral(&num)) {
         *s += " push    " + std::to_string(num) + "\n";
         return;
     }

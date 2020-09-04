@@ -8,6 +8,19 @@ bool NumToken::isNum(int *num)
     return true;
 }
 
+
+BoolToken::BoolToken(bool b) { this->b = b; }
+string BoolToken::to_string() 
+{ 
+    string s = (this->b) ?  "true" : "false";
+    return "Bool: " + s; 
+}
+bool BoolToken::isBool(bool *b)
+{
+    (*b) = this->b;
+    return true;
+}
+
 OperToken::OperToken(char op) { this->op = op; }
 string OperToken::to_string() { return "Operator: " + string(1, this->op); }
 bool OperToken::isOper(char *op) 

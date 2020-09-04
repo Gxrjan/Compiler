@@ -10,13 +10,25 @@ Expr::Expr(int line, int col)
     this->col = col;
 }
 
-Literal::Literal(int num) { this->num = num; }
-string Literal::to_string() { return std::to_string(this->num); }
-bool Literal::isLiteral(int *num) 
+NumLiteral::NumLiteral(int num) { this->num = num; }
+string NumLiteral::to_string() { return std::to_string(this->num); }
+bool NumLiteral::isNumLiteral(int *num) 
 { 
     (*num) = this->num; 
     return true;
 }
+
+BoolLiteral::BoolLiteral(bool b) { this->b = b; }
+string BoolLiteral::to_string() 
+{
+    return (this->b) ? "true" : "false"; 
+}
+bool BoolLiteral::isBoolLiteral(bool *b) 
+{ 
+    (*b) = this->b; 
+    return true;
+}
+
 
 OpExpr::OpExpr(char op, unique_ptr<Expr> left, unique_ptr<Expr> right) {
     this->op = op;

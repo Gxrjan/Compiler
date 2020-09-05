@@ -45,7 +45,7 @@ Type Checker::check_expr(Expr *expr, Block *b)
     if (expr->isOpExpr(&c, &left, &right)) {
         Type left_type = this->check_expr(left, b);
         Type right_type = this->check_expr(right, b);
-        if (left_type != right_type || left_type != Type::Int || right_type != Type::Bool)
+        if (left_type != right_type || left_type != Type::Int || right_type != Type::Int)
             this->report_error(expr->line, expr->col, "operands must be int");
         return left_type;
     }
@@ -62,33 +62,30 @@ void Checker::check_block(Block *b)
         Type t;
 
         if (s->isDeclaration(&t, &id, &expr)) {
-            string t_string = TypeConverter().enum_to_string(t);
+            string t_string = TypeConverter::enum_to_string(t);
             Declaration *dec = dynamic_cast<Declaration *>(s.get());
             if (t != this->check_expr(expr, b))
                 this->report_error(expr->line, expr->col, t_string + " expected");
             if (this->look_up(id, b))
                 this->report_error(s->line, s->col, "variable has already been declared");
             b->variables.insert({id, dec});
-        }
-
-
-        if (s->isAssignment(&id, &expr)) {
+        }else if (s->isAssignment(&id, &expr)) {
             Declaration *result = this->look_up(id, b);
             if (!result)
                 this->report_error(s->line, s->col, "variable hasn't been declared");
-            string t_string = TypeConverter().enum_to_string(result->type);
+            string t_string = TypeConverter::enum_to_string(result->type);
             if (result->type != this->check_expr(expr, b))
                 this->report_error(expr->line, expr->col, t_string + " expected");
-        }
-
-        if (s->isPrint(&expr)) {
+        }else if (s->isPrint(&expr)) {
             this->check_expr(expr, b);
-        }
+        } else {
 
-        Block *b1 = dynamic_cast<Block *>(s.get());
-        if (b1) {
-            b1->parent = b;
-            this->check_block(b1);
+            Block *b1 = dynamic_cast<Block *>(s.get());
+            if (b1) {
+                b1->parent = b;
+                this->check_block(b1);
+            } else
+                throw runtime_error("Unknown statement type");
         }
 
     }

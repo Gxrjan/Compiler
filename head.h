@@ -18,7 +18,7 @@ enum class Type { Bool, Int };
 
 class TypeConverter {
   public:
-    string enum_to_string(Type t)
+    static string enum_to_string(Type t)
     {
         switch(t) {
             case Type::Int:
@@ -199,14 +199,6 @@ class Declaration : public Statement {
 };
 
 
-// Comparator for Block's set of variables
-class Comparator {
-  public:
-    bool operator() (Declaration *d1, Declaration *d2)
-    {
-        return d1->id < d2->id;
-    }
-};
 
 class Block : public Statement {
   public:

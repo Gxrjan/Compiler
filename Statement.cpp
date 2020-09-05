@@ -58,7 +58,7 @@ Declaration::Declaration
 
 string Declaration::to_string() 
 {
-    string s = TypeConverter().enum_to_string(this->type);
+    string s = TypeConverter::enum_to_string(this->type);
     return "(Declaration statement: " + s + " " + this->id + " = " +
             this->expr->to_string() + ")";
 }

@@ -8,16 +8,17 @@ void Checker::report_error(int line, int col, string message)
                     +  ": " + message);
 }
 
-Declaration *Checker::look_up(Declaration *dec, Block *b)
+Declaration *Checker::look_up(Id id, Block *b)
 {
     if (!b)
         return nullptr;
-    auto it = b->variables.find(dec);
+    auto it = b->variables.find(id);
     if (it != b->variables.end())
-        return *it;
+        return it->second;
     else
-        return this->look_up(dec, b->parent);
+        return this->look_up(id, b->parent);
 }
+
 
 
 Type Checker::check_expr(Expr *expr, Block *b)
@@ -32,26 +33,23 @@ Type Checker::check_expr(Expr *expr, Block *b)
     string name;
 
     if (expr->isVariable(&name)) {
-        Declaration to_find{Type::Bool, name, nullptr, 0, 0 };
-        Declaration *result = this->look_up(&to_find, b);
+        Declaration *result = this->look_up(name, b);
         if (!result)
             this->report_error(expr->line, expr->col, "variable hasn't been declared");
         return result->type;
     }
     
     Expr* left;
-    Type left_type;
     Expr* right;
-    Type right_type;
     char c;
     if (expr->isOpExpr(&c, &left, &right)) {
-        left_type = this->check_expr(left, b);
-        right_type = this->check_expr(right, b);
-        if (left_type != right_type)
+        Type left_type = this->check_expr(left, b);
+        Type right_type = this->check_expr(right, b);
+        if (left_type != right_type || left_type != Type::Int || right_type != Type::Bool)
             this->report_error(expr->line, expr->col, "operands must be int");
         return left_type;
     }
-    return Type::Int;
+    throw runtime_error("Unrecognized expression");
 }
 
 
@@ -68,19 +66,18 @@ void Checker::check_block(Block *b)
             Declaration *dec = dynamic_cast<Declaration *>(s.get());
             if (t != this->check_expr(expr, b))
                 this->report_error(expr->line, expr->col, t_string + " expected");
-            if (this->look_up(dec, b))
+            if (this->look_up(id, b))
                 this->report_error(s->line, s->col, "variable has already been declared");
-            b->variables.insert(dec);
+            b->variables.insert({id, dec});
         }
 
 
         if (s->isAssignment(&id, &expr)) {
-            Declaration to_find{Type::Bool, id, nullptr, 0, 0 };
-            Declaration *result = this->look_up(&to_find, b);
+            Declaration *result = this->look_up(id, b);
             if (!result)
                 this->report_error(s->line, s->col, "variable hasn't been declared");
             string t_string = (result->type == Type::Int) ? "int" : "bool";
-            if (result->type !=this->check_expr(expr, b))
+            if (result->type != this->check_expr(expr, b))
                 this->report_error(expr->line, expr->col, t_string + " expected");
         }
 

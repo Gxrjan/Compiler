@@ -193,7 +193,7 @@ class Comparator {
 
 class Block : public Statement {
   public:
-    set<Declaration *, Comparator> variables;
+    map<Id, Declaration *> variables;
     Block *parent;
     vector<unique_ptr<Statement>> statements;
     Block(vector<unique_ptr<Statement>> statements);
@@ -245,7 +245,7 @@ class Parser {
 
 // CHECKER
 class Checker {
-    Declaration *look_up(Declaration *dec, Block *b);
+    Declaration *look_up(Id id, Block *b);
     Type check_expr(Expr *expr, Block *b);
     void check_block(Block *b);
     void report_error(int line, int col, string message);

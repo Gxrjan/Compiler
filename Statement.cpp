@@ -58,18 +58,7 @@ Declaration::Declaration
 
 string Declaration::to_string() 
 {
-    string s;
-    switch (this->type) {
-        case Type::Bool:
-            s = "bool";
-            break;
-        case Type::Int:
-            s = "int";
-            break;
-        default:
-            throw runtime_error("Unknown Type");
-            break;
-    }
+    string s = TypeConverter().enum_to_string(this->type);
     return "(Declaration statement: " + s + " " + this->id + " = " +
             this->expr->to_string() + ")";
 }

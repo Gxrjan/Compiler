@@ -62,7 +62,7 @@ void Checker::check_block(Block *b)
         Type t;
 
         if (s->isDeclaration(&t, &id, &expr)) {
-            string t_string = (t == Type::Int) ? "int" : "bool";
+            string t_string = TypeConverter().enum_to_string(t);
             Declaration *dec = dynamic_cast<Declaration *>(s.get());
             if (t != this->check_expr(expr, b))
                 this->report_error(expr->line, expr->col, t_string + " expected");
@@ -76,7 +76,7 @@ void Checker::check_block(Block *b)
             Declaration *result = this->look_up(id, b);
             if (!result)
                 this->report_error(s->line, s->col, "variable hasn't been declared");
-            string t_string = (result->type == Type::Int) ? "int" : "bool";
+            string t_string = TypeConverter().enum_to_string(result->type);
             if (result->type != this->check_expr(expr, b))
                 this->report_error(expr->line, expr->col, t_string + " expected");
         }

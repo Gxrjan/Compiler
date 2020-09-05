@@ -16,6 +16,23 @@ using Id = string;
 enum class Type { Bool, Int };
 
 
+class TypeConverter {
+  public:
+    string enum_to_string(Type t)
+    {
+        switch(t) {
+            case Type::Int:
+                return "int";
+                break;
+            case Type::Bool:
+                return "bool";
+                break;
+            default:
+                return "unknown";
+                break;
+        }
+    }
+};
 
 
 // TOKEN

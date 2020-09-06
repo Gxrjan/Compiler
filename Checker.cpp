@@ -41,7 +41,7 @@ Type Checker::check_expr(Expr *expr, Block *b)
     
     Expr* left;
     Expr* right;
-    char c;
+    string c;
     if (expr->isOpExpr(&c, &left, &right)) {
         Type left_type = this->check_expr(left, b);
         Type right_type = this->check_expr(right, b);

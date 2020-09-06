@@ -55,9 +55,9 @@ unique_ptr<Expr> Parser::parse_term()
     int line = this->scan->last_line;
     int col = this->scan->last_column;
     while (true) {
-        char c;
+        string c;
         Token* t = (this->scan)->peek_token();
-        if (t && t->isOper(&c) && (c=='*' || c=='/')) {
+        if (t && t->isOper(&c) && (c=="*" || c=="/")) {
             (this->scan)->next_token();
             unique_ptr<Expr> factor = this->parse_factor();
             expr = make_unique<OpExpr>(c, move(expr), move(factor), line, col);
@@ -72,9 +72,9 @@ unique_ptr<Expr> Parser::parse_expr()
     int line = this->scan->last_line;
     int col = this->scan->last_column;
     while (true) {
-        char c;
+        string c;
         Token* t = (this->scan)->peek_token();
-        if (t && t->isOper(&c) && (c=='+' || c=='-')) {
+        if (t && t->isOper(&c) && (c=="+" || c=="-")) {
             (this->scan)->next_token();
             unique_ptr<Expr> term = this->parse_term();
             expr = make_unique<OpExpr>(c, move(expr), move(term), line, col);

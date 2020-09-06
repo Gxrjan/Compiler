@@ -41,7 +41,7 @@ class Token {
     virtual string to_string() = 0;
     virtual bool isNum(int *num) { return false; }
     virtual bool isBool(bool *b) { return false; }
-    virtual bool isOper(char *op) { return false; }
+    virtual bool isOper(string *op) { return false; }
     virtual bool isId(string *name) { return false; }
     virtual bool isSymbol(string c) { return false; }
     virtual bool isPrint() { return false; }
@@ -66,10 +66,10 @@ class BoolToken : public Token {
 
 class OperToken : public Token {
   public:
-    char op;
-    OperToken(char op);
+    string op;
+    OperToken(string op);
     string to_string() override;
-    bool isOper(char *op) override;
+    bool isOper(string *op) override;
 };
 
 
@@ -116,7 +116,7 @@ class Expr {  // abstract base class
     virtual string to_string() = 0;
     virtual bool isNumLiteral(int *num) { return false; }
     virtual bool isBoolLiteral(bool *b) { return false; }
-    virtual bool isOpExpr(char *op, Expr **left, Expr **right) { return false; }
+    virtual bool isOpExpr(string *op, Expr **left, Expr **right) { return false; }
     virtual bool isVariable(string *name) { return false; }
 };
 
@@ -139,11 +139,11 @@ class BoolLiteral : public Expr {
 
 class OpExpr : public Expr {
   public:
-    char op;
+    string op;
     unique_ptr<Expr> left, right;
-    OpExpr(char op, unique_ptr<Expr> left, unique_ptr<Expr> right, int line, int col);
+    OpExpr(string op, unique_ptr<Expr> left, unique_ptr<Expr> right, int line, int col);
     string to_string() override;
-    bool isOpExpr(char *c, Expr **left, Expr **right) override;
+    bool isOpExpr(string *c, Expr **left, Expr **right) override;
 };
 
 class Variable : public Expr {

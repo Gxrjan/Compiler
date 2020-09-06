@@ -41,7 +41,7 @@ bool BoolLiteral::isBoolLiteral(bool *b)
 
 
 OpExpr::OpExpr
-(char op, unique_ptr<Expr> left, unique_ptr<Expr> right, int line, int col) 
+(string op, unique_ptr<Expr> left, unique_ptr<Expr> right, int line, int col) 
 : Expr(line, col)
 {
     this->op = op;
@@ -49,12 +49,12 @@ OpExpr::OpExpr
     this->right = move(right);
 }
 string OpExpr::to_string() { return "(" + (this->left)->to_string() \
-                                    + " " + string(1, this->op) + " "\
+                                    + " " + this->op + " "\
                                     + (this->right)->to_string() + ")"; }
 
 
  
-bool OpExpr::isOpExpr(char *op, Expr **left, Expr **right)
+bool OpExpr::isOpExpr(string *op, Expr **left, Expr **right)
 {
     *op = this->op;
     *left = this->left.get();

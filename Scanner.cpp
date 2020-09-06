@@ -37,7 +37,7 @@ unique_ptr<Token> Scanner::next_token() {
     if (c == '!') {
         if (cin.peek() == '=') {
             this->getc();
-            return make_unique<SymbolToken>(string{c, '='});
+            return make_unique<OperToken>(string{c, '='});
         } else {
             this->report_error("unrecognized token");
         }
@@ -46,26 +46,26 @@ unique_ptr<Token> Scanner::next_token() {
     if (c == '=') {
         if (cin.peek() == '=') {
             this->getc();
-            return make_unique<SymbolToken>(string{c, '='});
+            return make_unique<OperToken>(string{c, '='});
         } else {
             return make_unique<SymbolToken>(string{c});
         }
     }
 
-    if (c == '+' || c == '-' || c == '*' || c == '/' || c == ';') {
-        return make_unique<OperToken>(c);
+    if (c == '+' || c == '-' || c == '*' || c == '/') {
+        return make_unique<OperToken>(string{c});
     }
 
-    if (c == '(' || c == ')' || c == '{' || c == '}') {
+    if (c == '(' || c == ')' || c == '{' || c == '}' || c == ';') {
         return make_unique<SymbolToken>(string{c});
     }
     
     if (c == '<' || c == '>') {
         if (cin.peek() == '=') {
             this->getc();
-            return make_unique<SymbolToken>(string { c, '=' });
+            return make_unique<OperToken>(string { c, '=' });
         } else {
-            return make_unique<SymbolToken>(string{c});
+            return make_unique<OperToken>(string{c});
         }
     }
 

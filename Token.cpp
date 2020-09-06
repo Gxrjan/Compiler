@@ -21,9 +21,9 @@ bool BoolToken::isBool(bool *b)
     return true;
 }
 
-OperToken::OperToken(char op) { this->op = op; }
-string OperToken::to_string() { return "Operator: " + string(1, this->op); }
-bool OperToken::isOper(char *op) 
+OperToken::OperToken(string op) { this->op = op; }
+string OperToken::to_string() { return "Operator: " + this->op; }
+bool OperToken::isOper(string *op) 
 {
     (*op) = this->op;
     return true;

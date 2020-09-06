@@ -55,35 +55,71 @@ unique_ptr<Expr> Parser::parse_term()
     int line = this->scan->last_line;
     int col = this->scan->last_column;
     while (true) {
-        string c;
+        string s;
         Token* t = (this->scan)->peek_token();
-        if (t && t->isOper(&c) && (c=="*" || c=="/")) {
+        if (t && t->isOper(&s) && (s=="*" || s=="/")) {
             (this->scan)->next_token();
             unique_ptr<Expr> factor = this->parse_factor();
-            expr = make_unique<OpExpr>(c, move(expr), move(factor), line, col);
-        } else
-            break;
-    }
-    return expr;
-}
-unique_ptr<Expr> Parser::parse_expr()
-{
-    unique_ptr<Expr> expr = parse_term();
-    int line = this->scan->last_line;
-    int col = this->scan->last_column;
-    while (true) {
-        string c;
-        Token* t = (this->scan)->peek_token();
-        if (t && t->isOper(&c) && (c=="+" || c=="-")) {
-            (this->scan)->next_token();
-            unique_ptr<Expr> term = this->parse_term();
-            expr = make_unique<OpExpr>(c, move(expr), move(term), line, col);
+            expr = make_unique<OpExpr>(s, move(expr), move(factor), line, col);
         } else
             break;
     }
     return expr;
 }
 
+unique_ptr<Expr> Parser::parse_add_expr()
+{
+    unique_ptr<Expr> expr = parse_term();
+    int line = this->scan->last_line;
+    int col = this->scan->last_column;
+    while (true) {
+        string s;
+        Token* t = (this->scan)->peek_token();
+        if (t && t->isOper(&s) && (s=="+" || s=="-")) {
+            (this->scan)->next_token();
+            unique_ptr<Expr> term = this->parse_term();
+            expr = make_unique<OpExpr>(s, move(expr), move(term), line, col);
+        } else
+            break;
+    }
+    return expr;
+}
+
+unique_ptr<Expr> Parser::parse_comp_expr()
+{
+    unique_ptr<Expr> expr = parse_add_expr();
+    int line = this->scan->last_line;
+    int col = this->scan->last_column;
+    while (true) {
+        string s;
+        Token* t = (this->scan)->peek_token();
+        if (t && t->isOper(&s) && (s=="<" || s==">" || s=="<=" || s==">=")) {
+            (this->scan)->next_token();
+            unique_ptr<Expr> term = this->parse_add_expr();
+            expr = make_unique<OpExpr>(s, move(expr), move(term), line, col);
+        } else
+            break;
+    }
+    return expr;
+}
+
+unique_ptr<Expr> Parser::parse_expr()
+{
+    unique_ptr<Expr> expr = parse_comp_expr();
+    int line = this->scan->last_line;
+    int col = this->scan->last_column;
+    while (true) {
+        string s;
+        Token* t = (this->scan)->peek_token();
+        if (t && t->isOper(&s) && (s=="==" || s=="!=")) {
+            (this->scan)->next_token();
+            unique_ptr<Expr> term = this->parse_comp_expr();
+            expr = make_unique<OpExpr>(s, move(expr), move(term), line, col);
+        } else
+            break;
+    }
+    return expr;
+}
 
 
 unique_ptr<Statement> Parser::parse_statement()

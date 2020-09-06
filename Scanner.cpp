@@ -33,24 +33,22 @@ unique_ptr<Token> Scanner::next_token() {
     this->last_column = this->column;
     if ((c=this->getc())==EOF)
         return nullptr;
-    
-    if (c == '!') {
+
+     
+    if (c == '!' || c == '=' || c == '<' || c == '>') {
         if (cin.peek() == '=') {
             this->getc();
             return make_unique<OperToken>(string{c, '='});
         } else {
-            this->report_error("unrecognized token");
+            if (c != '!') {
+                if (c == '=')
+                    return make_unique<SymbolToken>(string{c});
+                return make_unique<OperToken>(string{c});
+            } else
+                this->report_error("unrecognized token");
         }
     }
 
-    if (c == '=') {
-        if (cin.peek() == '=') {
-            this->getc();
-            return make_unique<OperToken>(string{c, '='});
-        } else {
-            return make_unique<SymbolToken>(string{c});
-        }
-    }
 
     if (c == '+' || c == '-' || c == '*' || c == '/') {
         return make_unique<OperToken>(string{c});
@@ -60,14 +58,6 @@ unique_ptr<Token> Scanner::next_token() {
         return make_unique<SymbolToken>(string{c});
     }
     
-    if (c == '<' || c == '>') {
-        if (cin.peek() == '=') {
-            this->getc();
-            return make_unique<OperToken>(string { c, '=' });
-        } else {
-            return make_unique<OperToken>(string{c});
-        }
-    }
 
     if (isdigit(c)) {
         string num = { c };

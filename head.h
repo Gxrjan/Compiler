@@ -43,7 +43,7 @@ class Token {
     virtual bool isBool(bool *b) { return false; }
     virtual bool isOper(string *op) { return false; }
     virtual bool isId(string *name) { return false; }
-    virtual bool isSymbol(string c) { return false; }
+    virtual bool isSymbol(string s) { return false; }
     virtual bool isPrint() { return false; }
     virtual bool isType(Type *t) { return false; }
 };
@@ -84,10 +84,10 @@ class IdToken : public Token {
 
 class SymbolToken : public Token {
   public:
-    string c;
-    SymbolToken(string c);
+    string s;
+    SymbolToken(string s);
     string to_string() override;
-    bool isSymbol(string c) override;
+    bool isSymbol(string s) override;
 };
 
 
@@ -239,6 +239,8 @@ class Parser {
     void report_error(string message);
     unique_ptr<Expr> parse_factor();
     unique_ptr<Expr> parse_term();
+    unique_ptr<Expr> parse_add_expr();
+    unique_ptr<Expr> parse_comp_expr();
     unique_ptr<Expr> parse_expr();
     unique_ptr<Statement> parse_statement();
     unique_ptr<Block> parse_block();

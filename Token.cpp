@@ -39,9 +39,9 @@ bool IdToken::isId(string *name)
 string IdToken::to_string() { return "" + this->name; }
 
 
-SymbolToken::SymbolToken(char c) { this->c = c; }
-bool SymbolToken::isSymbol(char c) { return this->c==c; }
-string SymbolToken::to_string() { return "Symbol: " + string(1, this->c); }
+SymbolToken::SymbolToken(string c) { this->c = c; }
+bool SymbolToken::isSymbol(string c) { return this->c==c; }
+string SymbolToken::to_string() { return "Symbol: " + this->c; }
 
 
 bool PrintToken::isPrint() { return true; }

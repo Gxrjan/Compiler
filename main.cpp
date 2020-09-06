@@ -12,16 +12,16 @@ int main(int argc, char *argv[])
     //file.close();
     //system("make calc");
     
-    //Scanner scan;
-    //unique_ptr<Token> t;
-    //while (t = scan.next_token()) {
-    //    cout << t->to_string() << endl;
-    //}
-    
     Scanner scan;
-    Parser p { &scan };
-    unique_ptr<Program> prog = p.parse_program();
-    Checker c;
-    c.check_program(prog.get());
-    cout << prog->to_string() << endl;
+    unique_ptr<Token> t;
+    while (t = scan.next_token()) {
+        cout << t->to_string() << endl;
+    }
+    
+    //Scanner scan;
+    //Parser p { &scan };
+    //unique_ptr<Program> prog = p.parse_program();
+    //Checker c;
+    //c.check_program(prog.get());
+    //cout << prog->to_string() << endl;
 }

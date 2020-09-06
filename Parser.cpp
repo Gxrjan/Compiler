@@ -13,11 +13,11 @@ void Parser::report_error(string message)
 }
 
 
-void Parser::expect(char c)
+void Parser::expect(string c)
 {
     unique_ptr<Token> next = this->scan->next_token();
     if (!next || !next->isSymbol(c))
-        this->report_error("'" + string(1, c) + "' expected");
+        this->report_error("'" + c + "' expected");
 }
 
 
@@ -39,9 +39,9 @@ unique_ptr<Expr> Parser::parse_factor()
                                     this->scan->last_column);
     }
 
-    if (t->isSymbol('(')) {
+    if (t->isSymbol("(")) {
         unique_ptr<Expr> e = parse_expr();
-        this->expect(')');
+        this->expect(")");
         return e;
     }
     this->report_error("syntax error");
@@ -101,9 +101,9 @@ unique_ptr<Statement> Parser::parse_statement()
         if (t && t->isId(&name)) {
             int line = this->scan->last_line;
             int col = this->scan->last_column;
-            this->expect('=');
+            this->expect("=");
             e = this->parse_expr();
-            this->expect(';');
+            this->expect(";");
             return make_unique<Declaration>(type, name, move(e), line, col);
         } else {
             this->report_error("Name of the variable should follow the type");
@@ -114,27 +114,27 @@ unique_ptr<Statement> Parser::parse_statement()
     if (t && t->isId(&name)) {
         int line = this->scan->last_line;
         int col = this->scan->last_column;
-        this->expect('=');
+        this->expect("=");
         e = this->parse_expr();
-        this->expect(';');
+        this->expect(";");
         return make_unique<Assignment>(name, move(e), line, col);
     }
     
     // Print
     if (t && t->isPrint()) {
-        this->expect('(');
+        this->expect("(");
         e = this->parse_expr();
-        this->expect(')');
-        this->expect(';');
+        this->expect(")");
+        this->expect(";");
         return make_unique<Print>(move(e));
     }
 
     // Block
     unique_ptr<Block> block;
     vector<unique_ptr<Statement>> statements;
-    if (t && t->isSymbol('{')) {
+    if (t && t->isSymbol("{")) {
         block = parse_block();
-        this->expect('}');
+        this->expect("}");
         return block;
     }
 
@@ -150,7 +150,7 @@ unique_ptr<Block> Parser::parse_block()
     unique_ptr<Statement> statement;
     vector<unique_ptr<Statement>> statements;
     while ((next=this->scan->peek_token())) {
-        if (next->isSymbol('}'))
+        if (next->isSymbol("}"))
             break;
         statement = this->parse_statement();
         statements.push_back(move(statement));

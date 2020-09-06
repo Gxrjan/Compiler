@@ -41,13 +41,16 @@ Type Checker::check_expr(Expr *expr, Block *b)
     
     Expr* left;
     Expr* right;
-    string c;
-    if (expr->isOpExpr(&c, &left, &right)) {
+    string op;
+    if (expr->isOpExpr(&op, &left, &right)) {
         Type left_type = this->check_expr(left, b);
         Type right_type = this->check_expr(right, b);
         if (left_type != right_type || left_type != Type::Int || right_type != Type::Int)
             this->report_error(expr->line, expr->col, "operands must be int");
-        return left_type;
+        if (op == "<" || op == ">" || op == "=="
+            || op == "!=" || op == "<=" || op == ">=")
+            return Type::Bool;
+        return Type::Int;
     }
     throw runtime_error("Unrecognized expression");
 }

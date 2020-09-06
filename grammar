@@ -17,12 +17,23 @@ Statement ->
         | "print" '(' Expression ')' ';'
         | '{' Block '}'
 
-
 Expression ->
-        | Term
-        | Expression '+' Term
-        | Expression '-' Term
+        | CompExpr
+        | Expression '==' CompExpr
+        | Expression '!=' CompExpr
 
+
+CompExpr ->
+        | AddExpr
+        | CompExpr '<' AddExpr
+        | CompExpr '>' AddExpr
+        | CompExpr '<=' AddExpr
+        | CompExpr '>=' AddExpr
+
+AddExpr ->
+        | Term
+        | AddExpr '+' Term
+        | AddExpr '-' Term
 
 Term ->
         | Factor

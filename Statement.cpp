@@ -92,3 +92,31 @@ string Block::to_string()
         result += s->to_string() + "\n";
     return result + "} Block ends";
 }
+
+
+
+IfStatement::IfStatement(unique_ptr<Expr> cond, unique_ptr<Statement> if_s,
+        unique_ptr<Statement> else_s)
+{
+    this->cond = move(cond);
+    this->if_s = move(if_s);
+    this->else_s = move(else_s);
+}
+
+bool IfStatement::isIfStatement(Expr **cond, Statement **if_s, Statement **else_s)
+{
+    *cond = this->cond.get();
+    *if_s = this->if_s.get();
+    *else_s = this->else_s.get();
+    return true;
+}
+
+string IfStatement::to_string() 
+{ 
+    string result = "";
+    result += "if " + this->cond->to_string() + "" + 
+    "\n" + this->if_s->to_string();
+    if (this->else_s)
+        result += "\nelse\n" + this->else_s->to_string();
+    return result;
+}

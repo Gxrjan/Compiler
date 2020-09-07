@@ -44,8 +44,6 @@ bool SymbolToken::isSymbol(string s) { return this->s==s; }
 string SymbolToken::to_string() { return "Symbol: " + this->s; }
 
 
-bool PrintToken::isPrint() { return true; }
-string PrintToken::to_string() { return "Print token: print"; }
 
 TypeToken::TypeToken(Type t) { this->type = t; }
 bool TypeToken::isType(Type *t) 
@@ -69,3 +67,8 @@ string TypeToken::to_string()
     }
     return result;
 }
+
+KeywordToken::KeywordToken(string name) { this->name = name; }
+bool KeywordToken::isKeyword(string name) { return this->name == name; }
+string KeywordToken::to_string() { return "Keyword Token: "+ this->name; }
+

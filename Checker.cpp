@@ -56,41 +56,55 @@ Type Checker::check_expr(Expr *expr, Block *b)
 }
 
 
+void Checker::check_statement(Statement *s, Block *b)
+{
+    Statement *if_s;
+    Statement *else_s;
+    Expr *expr;
+    Id id;
+    Type t;
+
+    if (s->isDeclaration(&t, &id, &expr)) {
+        string t_string = TypeConverter::enum_to_string(t);
+        Declaration *dec = dynamic_cast<Declaration *>(s);
+        if (t != this->check_expr(expr, b))
+            this->report_error(expr->line, expr->col, t_string + " expected");
+        if (this->look_up(id, b))
+            this->report_error(s->line, s->col, "variable has already been declared");
+        b->variables.insert({id, dec});
+    }else if (s->isAssignment(&id, &expr)) {
+        Declaration *result = this->look_up(id, b);
+        if (!result)
+            this->report_error(s->line, s->col, "variable hasn't been declared");
+        string t_string = TypeConverter::enum_to_string(result->type);
+        if (result->type != this->check_expr(expr, b))
+            this->report_error(expr->line, expr->col, t_string + " expected");
+    }else if (s->isPrint(&expr)) {
+        this->check_expr(expr, b);
+    } else if (s->isIfStatement(&expr, &if_s, &else_s)) {
+        if (this->check_expr(expr, b) != Type::Bool)
+            this->report_error(expr->line, expr->col, "if statement requires bool");
+        this->check_statement(if_s, b);
+        if (else_s)
+            this->check_statement(else_s, b);
+    } else {
+
+        Block *b1 = dynamic_cast<Block *>(s);
+        if (b1) {
+            b1->parent = b;
+            this->check_block(b1);
+        } else
+            throw runtime_error("Unknown statement type");
+    }
+
+}
+
+
 void Checker::check_block(Block *b)
 {
 
     for (auto &s : b->statements) {
-        Expr *expr;
-        Id id;
-        Type t;
-
-        if (s->isDeclaration(&t, &id, &expr)) {
-            string t_string = TypeConverter::enum_to_string(t);
-            Declaration *dec = dynamic_cast<Declaration *>(s.get());
-            if (t != this->check_expr(expr, b))
-                this->report_error(expr->line, expr->col, t_string + " expected");
-            if (this->look_up(id, b))
-                this->report_error(s->line, s->col, "variable has already been declared");
-            b->variables.insert({id, dec});
-        }else if (s->isAssignment(&id, &expr)) {
-            Declaration *result = this->look_up(id, b);
-            if (!result)
-                this->report_error(s->line, s->col, "variable hasn't been declared");
-            string t_string = TypeConverter::enum_to_string(result->type);
-            if (result->type != this->check_expr(expr, b))
-                this->report_error(expr->line, expr->col, t_string + " expected");
-        }else if (s->isPrint(&expr)) {
-            this->check_expr(expr, b);
-        } else {
-
-            Block *b1 = dynamic_cast<Block *>(s.get());
-            if (b1) {
-                b1->parent = b;
-                this->check_block(b1);
-            } else
-                throw runtime_error("Unknown statement type");
-        }
-
+        this->check_statement(s.get(), b);
     }
 }
 

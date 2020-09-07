@@ -125,7 +125,6 @@ unique_ptr<Expr> Parser::parse_expr()
 unique_ptr<Statement> Parser::parse_statement()
 {
     unique_ptr<Token> t = this->scan->next_token();
-    unique_ptr<Token> next;
     unique_ptr<Expr> e;
     Type type;
     string name;
@@ -157,12 +156,28 @@ unique_ptr<Statement> Parser::parse_statement()
     }
     
     // Print
-    if (t && t->isPrint()) {
+    if (t && t->isKeyword("print")) {
         this->expect("(");
         e = this->parse_expr();
         this->expect(")");
         this->expect(";");
         return make_unique<Print>(move(e));
+    }
+
+    // If Else
+    if (t && t->isKeyword("if")) {
+
+        this->expect("(");
+        unique_ptr<Expr> cond = this->parse_expr();
+        this->expect(")");
+        unique_ptr<Statement> if_s = this->parse_statement();
+        unique_ptr<Statement> else_s;
+        Token *next = this->scan->peek_token();
+        if (next && next->isKeyword("else")) {
+            this->scan->next_token();
+            else_s = this->parse_statement();
+        }
+        return make_unique<IfStatement>(move(cond), move(if_s), move(else_s)); 
     }
 
     // Block

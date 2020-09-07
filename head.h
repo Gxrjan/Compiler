@@ -44,7 +44,7 @@ class Token {
     virtual bool isOper(string *op) { return false; }
     virtual bool isId(string *name) { return false; }
     virtual bool isSymbol(string s) { return false; }
-    virtual bool isPrint() { return false; }
+    virtual bool isKeyword(string name) { return false; }
     virtual bool isType(Type *t) { return false; }
 };
 
@@ -91,11 +91,14 @@ class SymbolToken : public Token {
 };
 
 
-class PrintToken : public Token {
+class KeywordToken : public Token {
   public:
-    bool isPrint() override;
+    string name;
+    KeywordToken(string name);
     string to_string() override;
+    bool isKeyword(string name) override;
 };
+
 
 
 class TypeToken : public Token {
@@ -168,6 +171,7 @@ class Statement {
     virtual bool isPrint(Expr** expr) { return false; }
     virtual bool isDeclaration(Type *t, Id *id, Expr **expr) { return false; }
     virtual bool isBlock(vector<Statement*> statements) { return false; }
+    virtual bool isIfStatement(Expr **cond, Statement **if_s, Statement **else_s) { return false; }
 };
 
 class Assignment : public Statement {
@@ -209,6 +213,15 @@ class Block : public Statement {
     string to_string() override;
 };
 
+class IfStatement : public Statement {
+  public:
+    unique_ptr<Expr> cond;
+    unique_ptr<Statement> if_s;
+    unique_ptr<Statement> else_s;
+    IfStatement(unique_ptr<Expr> cond, unique_ptr<Statement> if_s, unique_ptr<Statement> else_s);
+    string to_string() override;
+    bool isIfStatement(Expr **cond, Statement **if_s, Statement **else_s) override;
+};
 
 // Program
 class Program {
@@ -257,6 +270,7 @@ class Parser {
 class Checker {
     Declaration *look_up(Id id, Block *b);
     Type check_expr(Expr *expr, Block *b);
+    void check_statement(Statement *s, Block *b);
     void check_block(Block *b);
     void report_error(int line, int col, string message);
   public:

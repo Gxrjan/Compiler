@@ -73,8 +73,6 @@ unique_ptr<Token> Scanner::next_token() {
             c = this->getc();
             name = name + c;
         }
-        if (name == "print")
-            return make_unique<PrintToken>();
         if (name == "bool")
             return make_unique<TypeToken>(Type::Bool);
         if (name == "int")
@@ -83,6 +81,8 @@ unique_ptr<Token> Scanner::next_token() {
             return make_unique<BoolToken>(true);
         if (name == "false")
             return make_unique<BoolToken>(false);
+        if (name == "print" || name == "if" || name == "else")
+            return make_unique<KeywordToken>(name);
         return make_unique<IdToken>(name);
     }
     this->report_error("unrecognized token");

@@ -120,3 +120,21 @@ string IfStatement::to_string()
         result += "\n else {\n" + this->else_s->to_string() + "\n}";
     return result;
 }
+
+
+WhileStatement::WhileStatement(unique_ptr<Expr> cond, unique_ptr<Statement> statement)
+{
+    this->cond = move(cond);
+    this->statement = move(statement);
+}
+string WhileStatement::to_string()
+{
+    return "while (" + this->cond->to_string() + ") {\n" +
+            this->statement->to_string() + "\n}";
+}
+bool WhileStatement::isWhileStatement(Expr **cond, Statement **statement)
+{
+    *cond = this->cond.get();
+    *statement = this->statement.get();
+    return true;
+}

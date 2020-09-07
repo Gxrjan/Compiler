@@ -172,6 +172,7 @@ class Statement {
     virtual bool isDeclaration(Type *t, Id *id, Expr **expr) { return false; }
     virtual bool isBlock(vector<Statement*> statements) { return false; }
     virtual bool isIfStatement(Expr **cond, Statement **if_s, Statement **else_s) { return false; }
+    virtual bool isWhileStatement(Expr **cond, Statement **s) { return false; }
 };
 
 class Assignment : public Statement {
@@ -221,6 +222,15 @@ class IfStatement : public Statement {
     IfStatement(unique_ptr<Expr> cond, unique_ptr<Statement> if_s, unique_ptr<Statement> else_s);
     string to_string() override;
     bool isIfStatement(Expr **cond, Statement **if_s, Statement **else_s) override;
+};
+
+class WhileStatement : public Statement {
+  public:
+    unique_ptr<Expr> cond;
+    unique_ptr<Statement> statement;
+    WhileStatement(unique_ptr<Expr> cond, unique_ptr<Statement> s);
+    string to_string() override;
+    bool isWhileStatement(Expr **cond, Statement **statement) override;
 };
 
 // Program

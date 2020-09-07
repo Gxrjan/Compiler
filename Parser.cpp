@@ -164,9 +164,17 @@ unique_ptr<Statement> Parser::parse_statement()
         return make_unique<Print>(move(e));
     }
 
+    // Block
+    unique_ptr<Block> block;
+    vector<unique_ptr<Statement>> statements;
+    if (t && t->isSymbol("{")) {
+        block = parse_block();
+        this->expect("}");
+        return block;
+    }
+
     // If Else
     if (t && t->isKeyword("if")) {
-
         this->expect("(");
         unique_ptr<Expr> cond = this->parse_expr();
         this->expect(")");
@@ -180,15 +188,14 @@ unique_ptr<Statement> Parser::parse_statement()
         return make_unique<IfStatement>(move(cond), move(if_s), move(else_s)); 
     }
 
-    // Block
-    unique_ptr<Block> block;
-    vector<unique_ptr<Statement>> statements;
-    if (t && t->isSymbol("{")) {
-        block = parse_block();
-        this->expect("}");
-        return block;
+    // While
+    if (t && t->isKeyword("while")) {
+        this->expect("(");
+        unique_ptr<Expr> cond = this->parse_expr();
+        this->expect(")");
+        unique_ptr<Statement> statement = this->parse_statement();
+        return make_unique<WhileStatement>(move(cond), move(statement));
     }
-
     if (t)
         this->report_error("Statement expected");
     return nullptr;

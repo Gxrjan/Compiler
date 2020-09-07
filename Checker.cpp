@@ -60,6 +60,7 @@ void Checker::check_statement(Statement *s, Block *b)
 {
     Statement *if_s;
     Statement *else_s;
+    Statement *while_s;
     Expr *expr;
     Id id;
     Type t;
@@ -87,8 +88,12 @@ void Checker::check_statement(Statement *s, Block *b)
         this->check_statement(if_s, b);
         if (else_s)
             this->check_statement(else_s, b);
+    } else if (s->isWhileStatement(&expr, &while_s)) {
+        if (this->check_expr(expr, b) != Type::Bool)
+            this->report_error(expr->line, expr->col, "while statement requires bool");
+        this->check_statement(while_s, b);
+        
     } else {
-
         Block *b1 = dynamic_cast<Block *>(s);
         if (b1) {
             b1->parent = b;

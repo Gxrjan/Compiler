@@ -115,8 +115,8 @@ string IfStatement::to_string()
 { 
     string result = "";
     result += "if " + this->cond->to_string() + "" + 
-    "\n" + this->if_s->to_string();
+    "\n{\n" + this->if_s->to_string() + "\n}";
     if (this->else_s)
-        result += "\nelse\n" + this->else_s->to_string();
+        result += "\n else {\n" + this->else_s->to_string() + "\n}";
     return result;
 }

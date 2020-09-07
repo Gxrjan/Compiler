@@ -16,8 +16,8 @@ Statement ->
         | Id '=' Expression ';'
         | "print" '(' Expression ')' ';'
         | '{' Block '}'
-        | 'if' '(' CompExpr ')' Statement
-        | 'if' '(' CompExpr ')' Statement 'else' Statement
+        | 'if' '(' CompExpr ')' Statement [ 'else' Statement ]
+        | 'while' '(' CompExpr ')' Statement
 
 Expression ->
         | CompExpr

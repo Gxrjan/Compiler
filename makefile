@@ -2,7 +2,7 @@ SOURCES = head.h main.cpp Scanner.cpp Token.cpp Expr.cpp Parser.cpp Translator.c
 
 parse: $(SOURCES)
 	g++ -o parse -Wall -g $(SOURCES)
-calc: calc.o
-	gcc -o calc a.o -no-pie
-calc.o: a.asm
+prog: prog.o
+	gcc -o prog a.o -no-pie
+prog.o: a.asm
 	nasm -f elf64 -g -F dwarf a.asm -l a.lst

@@ -14,7 +14,19 @@
 using namespace std;
 using Id = string;
 enum class Type { Bool, Int };
-
+enum class Operation {
+    Add,
+    Sub,
+    Mul,
+    Div,
+    L,
+    G,
+    Le,
+    Ge,
+    Eq,
+    Neq,
+    Unknown
+};
 
 class TypeConverter {
   public:
@@ -31,6 +43,21 @@ class TypeConverter {
                 return "unknown";
                 break;
         }
+    }
+
+    static Operation string_to_operation(string op)
+    {
+        if (op == "+") return Operation::Add;
+        if (op == "-") return Operation::Sub;
+        if (op == "*") return Operation::Mul;
+        if (op == "/") return Operation::Div;
+        if (op == "<") return Operation::L;
+        if (op == ">") return Operation::G;
+        if (op == "<=")return Operation::Le;
+        if (op == ">=")return Operation::Ge;
+        if (op == "==")return Operation::Eq;
+        if (op == "!=")return Operation::Neq;
+        return Operation::Unknown;
     }
 };
 
@@ -290,9 +317,13 @@ class Checker {
 
 // TRANSLATOR
 class Translator {
-  public:
-    string translate_expr(Expr *expr);
+    int label_id = 0;
+    string bss = "";
     void translate_expr(string *s, Expr *expr);
+    void translate_statement(string *s, Statement *statement);
+    void translate_block(string *s, Block *b);
+  public:
+    string translate_program(Program *p);
 };
 
 

@@ -64,10 +64,10 @@ void Translator::translate_expr(string *s, Expr *e)
                 break;
             case Operation::Mod:
                 *s += 
-                    " pop     rdx\n"
+                    " pop     rbx\n"
                     " pop     rax\n"
-                    " mov     rcx, 1\n"
-                    " idiv    qword rcx\n"
+                    " mov     rdx, 0\n"
+                    " idiv    dword rbx\n"
                     " push    rdx\n";
                 break;
             case Operation::L:

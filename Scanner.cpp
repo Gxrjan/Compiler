@@ -50,7 +50,7 @@ unique_ptr<Token> Scanner::next_token() {
     }
 
 
-    if (c == '+' || c == '-' || c == '*' || c == '/') {
+    if (c == '+' || c == '-' || c == '*' || c == '/' || c == '%') {
         return make_unique<OperToken>(string{c});
     }
 

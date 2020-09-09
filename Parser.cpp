@@ -57,7 +57,7 @@ unique_ptr<Expr> Parser::parse_term()
     while (true) {
         string s;
         Token* t = (this->scan)->peek_token();
-        if (t && t->isOper(&s) && (s=="*" || s=="/")) {
+        if (t && t->isOper(&s) && (s=="*" || s=="/" || s == "%")) {
             (this->scan)->next_token();
             unique_ptr<Expr> factor = this->parse_factor();
             expr = make_unique<OpExpr>(s, move(expr), move(factor), line, col);

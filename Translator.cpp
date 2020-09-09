@@ -62,6 +62,14 @@ void Translator::translate_expr(string *s, Expr *e)
                     " idiv    qword rbx\n"
                     " push    rax\n";
                 break;
+            case Operation::Mod:
+                *s += 
+                    " pop     rdx\n"
+                    " pop     rax\n"
+                    " mov     rcx, 1\n"
+                    " idiv    qword rcx\n"
+                    " push    rdx\n";
+                break;
             case Operation::L:
             case Operation::G:
             case Operation::Le:

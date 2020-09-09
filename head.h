@@ -19,13 +19,13 @@ enum class Operation {
     Sub,
     Mul,
     Div,
+    Mod,
     L,
     G,
     Le,
     Ge,
     E,
-    Ne,
-    Unknown
+    Ne
 };
 
 class TypeConverter {
@@ -51,6 +51,7 @@ class TypeConverter {
         if (op == "-") return Operation::Sub;
         if (op == "*") return Operation::Mul;
         if (op == "/") return Operation::Div;
+        if (op == "%") return Operation::Mod;
         if (op == "<") return Operation::L;
         if (op == ">") return Operation::G;
         if (op == "<=")return Operation::Le;

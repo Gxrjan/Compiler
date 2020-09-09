@@ -41,6 +41,7 @@ Term ->
         | Factor
         | Term '*' Factor
         | Term '/' Factor
+        | Term '%' Factor
 
 
 Factor ->

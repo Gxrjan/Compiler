@@ -40,7 +40,7 @@ class TypeConverter {
                 return "bool";
                 break;
             default:
-                return "unknown";
+                throw runtime_error("Unknown Type");
                 break;
         }
     }
@@ -57,7 +57,7 @@ class TypeConverter {
         if (op == ">=")return Operation::Ge;
         if (op == "==")return Operation::E;
         if (op == "!=")return Operation::Ne;
-        return Operation::Unknown;
+        throw runtime_error("Unknown Operation");
     }
 
     static string operation_to_string(Operation op)

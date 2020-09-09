@@ -145,7 +145,8 @@ void Translator::translate_statement(string *s, Statement *statement)
         this->translate_expr(s, st->cond.get());
         *s +=
             " mov       rcx, 0\n"
-            " cmp       qword [rsp], rcx\n"
+            " pop       rax\n"
+            " cmp       rax, rcx\n"
             " je        loop_end"+label_id+"\n";
         this->translate_statement(s, st->statement.get());
         *s +=
@@ -168,7 +169,7 @@ string Translator::translate_program(Program* prog)
     result += 
         "extern printf\n"
         "section .data\n"
-        " msg     db      `%d\\n`,0\n"
+        " msg     db      `%lld\\n`,0\n"
         "section .text\n"
         " global main\n"
         "main:\n";

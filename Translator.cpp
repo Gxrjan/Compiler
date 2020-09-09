@@ -35,7 +35,8 @@ void Translator::translate_expr(string *s, Expr *e)
     if (e->isOpExpr(&op, &left, &right)) {
         translate_expr(s, left);
         translate_expr(s, right);
-        switch(TypeConverter::string_to_operation(op)) {
+        Operation o;
+        switch((o = TypeConverter::string_to_operation(op))) {
             case Operation::Add:
                 *s += 
                     " pop     rax\n"
@@ -62,51 +63,16 @@ void Translator::translate_expr(string *s, Expr *e)
                     " push    rax\n";
                 break;
             case Operation::L:
-                *s +=
-                    " pop       rax\n"
-                    " mov       rcx, 0\n"
-                    " cmp       qword [rsp], rax\n"
-                    " setl      cl\n"
-                    " mov       [rsp], rcx\n";
-                break;
             case Operation::G:
-                *s +=
-                    " pop       rax\n"
-                    " mov       rcx, 0\n"
-                    " cmp       qword [rsp], rax\n"
-                    " setg      cl\n"
-                    " mov       [rsp], rcx\n";
-                break;
             case Operation::Le:
-                *s +=
-                    " pop       rax\n"
-                    " mov       rcx, 0\n"
-                    " cmp       qword [rsp], rax\n"
-                    " setle     cl\n"
-                    " mov       [rsp], rcx\n";
-                break;
             case Operation::Ge:
+            case Operation::E:
+            case Operation::Ne:
                 *s +=
                     " pop       rax\n"
                     " mov       rcx, 0\n"
                     " cmp       qword [rsp], rax\n"
-                    " setge     cl\n"
-                    " mov       [rsp], rcx\n";
-                break;
-            case Operation::Eq:
-                *s +=
-                    " pop       rax\n"
-                    " mov       rcx, 0\n"
-                    " cmp       qword [rsp], rax\n"
-                    " sete      cl\n"
-                    " mov       [rsp], rcx\n";
-                break;
-            case Operation::Neq:
-                *s +=
-                    " pop       rax\n"
-                    " mov       rcx, 0\n"
-                    " cmp       qword [rsp], rax\n"
-                    " setne     cl\n"
+                    " set"+TypeConverter::operation_to_string(o) +"     cl\n"
                     " mov       [rsp], rcx\n";
                 break;
             default:
@@ -121,16 +87,28 @@ void Translator::translate_expr(string *s, Expr *e)
 void Translator::translate_statement(string *s, Statement *statement)
 {
     if (auto dec = dynamic_cast<Declaration *>(statement)) {
+        // comment
+        *s +=
+            "; " + dec->to_string() + "\n";
+
         this->bss += 
             " "+dec->id+"      resq 1\n";
         this->translate_expr(s, dec->expr.get());
         *s +=
            " pop        qword ["+dec->id+"]\n";
     } else if (auto asg = dynamic_cast<Assignment *>(statement)) {
+        // comment
+        *s +=
+            "; " + asg->to_string() + "\n";
+
         this->translate_expr(s, asg->expr.get());
         *s +=
            " pop        qword ["+asg->id+"]\n";
     } else if (auto p = dynamic_cast<Print *>(statement)) {
+        // comment
+        *s += 
+            "; " + p->to_string() + "\n";
+
         this->translate_expr(s, p->expr.get());
         *s +=
             " mov       rax, 0\n"
@@ -140,35 +118,44 @@ void Translator::translate_statement(string *s, Statement *statement)
     } else if (auto b = dynamic_cast<Block *>(statement)) {
         this->translate_block(s, b);
     } else if (auto st = dynamic_cast<IfStatement *>(statement)) {
-        int curr_id = this->label_id++;
+        string label_id = std::to_string(this->label_id++);
+        // comment 
+        *s +=
+            "; if " + st->cond->to_string() + "\n";
+
         this->translate_expr(s, st->cond.get());
         *s +=
             " pop       rax\n"
             " cmp       rax, 0\n"
-            " je        else_s"+std::to_string(curr_id)+"\n";
+            " je        else_s"+label_id+"\n";
         this->translate_statement(s, st->if_s.get());
         if (!st->else_s) {
             *s +=
-                "else_s"+std::to_string(curr_id)+":\n";
+                "else_s"+label_id+":\n";
         } else {
             *s +=
-                " jmp   end_s"+std::to_string(curr_id)+"\n"
-                "else_s"+std::to_string(curr_id)+":\n";
+                " jmp   end_s"+label_id+"\n"
+                "else_s"+label_id+":\n";
             this->translate_statement(s, st->else_s.get());
             *s +=
-                "end_s"+std::to_string(curr_id)+":\n";
+                "end_s"+label_id+":\n";
         }
     } else if (auto st = dynamic_cast<WhileStatement *>(statement)) {
-        int curr_id = this->label_id++;
+        string label_id = std::to_string(this->label_id++);
         *s += 
-            "loop"+std::to_string(curr_id)+":\n";
+            "loop" + label_id + ":\n";
+        // comment 
+        *s +=
+            "; while " + st->cond->to_string() + "\n";
         this->translate_expr(s, st->cond.get());
         *s +=
-            " je        loop_end"+std::to_string(curr_id)+"\n";
+            " mov       rcx, 0\n"
+            " cmp       qword [rsp], rcx\n"
+            " je        loop_end"+label_id+"\n";
         this->translate_statement(s, st->statement.get());
         *s +=
-            " jmp       loop"+std::to_string(curr_id)+"\n"
-            "loop_end"+std::to_string(curr_id)+":\n";
+            " jmp       loop"+label_id+"\n"
+            "loop_end"+label_id+":\n";
     } else {
         throw runtime_error("Unknown statement");
     }

@@ -8,3 +8,5 @@ calc
 parse
 *.out
 prog
+*.g
+gc

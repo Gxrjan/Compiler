@@ -23,8 +23,8 @@ enum class Operation {
     G,
     Le,
     Ge,
-    Eq,
-    Neq,
+    E,
+    Ne,
     Unknown
 };
 
@@ -55,9 +55,36 @@ class TypeConverter {
         if (op == ">") return Operation::G;
         if (op == "<=")return Operation::Le;
         if (op == ">=")return Operation::Ge;
-        if (op == "==")return Operation::Eq;
-        if (op == "!=")return Operation::Neq;
+        if (op == "==")return Operation::E;
+        if (op == "!=")return Operation::Ne;
         return Operation::Unknown;
+    }
+
+    static string operation_to_string(Operation op)
+    {
+        switch (op) {
+            case Operation::L:
+                return "l";
+                break;
+            case Operation::G:
+                return "g";
+                break;
+            case Operation::Le:
+                return "le";
+                break;
+            case Operation::Ge:
+                return "ge";
+                break;
+            case Operation::E:
+                return "e";
+                break;
+            case Operation::Ne:
+                return "ne";
+                break;
+            default:
+                throw runtime_error("Uknown comparing operation");
+                break;
+        }
     }
 };
 

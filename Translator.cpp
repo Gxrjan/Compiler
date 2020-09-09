@@ -87,8 +87,7 @@ void Translator::translate_expr(string *s, Expr *e)
 void Translator::translate_statement(string *s, Statement *statement)
 {
     if (auto dec = dynamic_cast<Declaration *>(statement)) {
-        // comment
-        *s +=
+        *s += // asm comment
             "; " + dec->to_string() + "\n";
 
         this->bss += 
@@ -97,16 +96,14 @@ void Translator::translate_statement(string *s, Statement *statement)
         *s +=
            " pop        qword ["+dec->id+"]\n";
     } else if (auto asg = dynamic_cast<Assignment *>(statement)) {
-        // comment
-        *s +=
+        *s += // asm comment
             "; " + asg->to_string() + "\n";
 
         this->translate_expr(s, asg->expr.get());
         *s +=
            " pop        qword ["+asg->id+"]\n";
     } else if (auto p = dynamic_cast<Print *>(statement)) {
-        // comment
-        *s += 
+        *s += // asm comment 
             "; " + p->to_string() + "\n";
 
         this->translate_expr(s, p->expr.get());
@@ -119,8 +116,7 @@ void Translator::translate_statement(string *s, Statement *statement)
         this->translate_block(s, b);
     } else if (auto st = dynamic_cast<IfStatement *>(statement)) {
         string label_id = std::to_string(this->label_id++);
-        // comment 
-        *s +=
+        *s += // asm comment
             "; if " + st->cond->to_string() + "\n";
 
         this->translate_expr(s, st->cond.get());
@@ -144,8 +140,7 @@ void Translator::translate_statement(string *s, Statement *statement)
         string label_id = std::to_string(this->label_id++);
         *s += 
             "loop" + label_id + ":\n";
-        // comment 
-        *s +=
+        *s += // asm comment
             "; while " + st->cond->to_string() + "\n";
         this->translate_expr(s, st->cond.get());
         *s +=

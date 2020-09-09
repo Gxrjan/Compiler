@@ -346,7 +346,7 @@ class Checker {
 // TRANSLATOR
 class Translator {
     int label_id = 0;
-    string bss = "";
+    set<Id> variables;
     void translate_expr(string *s, Expr *expr);
     void translate_statement(string *s, Statement *statement);
     void translate_block(string *s, Block *b);

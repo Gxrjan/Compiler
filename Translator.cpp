@@ -97,9 +97,8 @@ void Translator::translate_statement(string *s, Statement *statement)
     if (auto dec = dynamic_cast<Declaration *>(statement)) {
         *s += // asm comment
             "; " + dec->to_string() + "\n";
-
-        this->bss += 
-            " "+dec->id+"      resq 1\n";
+        
+        this->variables.insert(dec->id);
         this->translate_expr(s, dec->expr.get());
         *s +=
            " pop        qword ["+dec->id+"]\n";
@@ -152,9 +151,8 @@ void Translator::translate_statement(string *s, Statement *statement)
             "; while " + st->cond->to_string() + "\n";
         this->translate_expr(s, st->cond.get());
         *s +=
-            " mov       rcx, 0\n"
             " pop       rax\n"
-            " cmp       rax, rcx\n"
+            " cmp       rax, 0\n"
             " je        loop_end"+label_id+"\n";
         this->translate_statement(s, st->statement.get());
         *s +=
@@ -191,7 +189,9 @@ string Translator::translate_program(Program* prog)
         " pop     rbp\n"
         " ret\n";
     result +=
-        "section .bss\n" +
-        this->bss;
+        "section .bss\n";
+    for (auto &id : this->variables)
+        result +=
+            " "+id+"      resq 1\n";
     return result;
 }

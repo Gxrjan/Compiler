@@ -5,7 +5,7 @@
 
 void Translator::translate_expr(string *s, Expr *e)
 {
-    int num;
+    long int num;
     bool b;
     string op;
     Id id;
@@ -67,7 +67,7 @@ void Translator::translate_expr(string *s, Expr *e)
                     " pop     rbx\n"
                     " pop     rax\n"
                     " mov     rdx, 0\n"
-                    " idiv    dword rbx\n"
+                    " idiv    qword rbx\n"
                     " push    rdx\n";
                 break;
             case Operation::L:

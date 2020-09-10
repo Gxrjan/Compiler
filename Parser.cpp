@@ -24,7 +24,7 @@ void Parser::expect(string c)
 unique_ptr<Expr> Parser::parse_factor() 
 {
     unique_ptr<Token> t = (this->scan)->next_token();
-    int num;
+    long int num;
     bool b;
     string name;
     int line = this->scan->last_line;

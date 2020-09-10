@@ -23,7 +23,7 @@ Declaration *Checker::look_up(Id id, Block *b)
 
 Type Checker::check_expr(Expr *expr, Block *b)
 {
-    int num;
+    long int num;
     bool bl;
     if (expr->isNumLiteral(&num))
         return Type::Int;

@@ -1,8 +1,8 @@
 #include "head.h"
 
-NumToken::NumToken(int num) { this->num = num; }
+NumToken::NumToken(long int num) { this->num = num; }
 string NumToken::to_string() { return "Number: " + std::to_string(this->num); }
-bool NumToken::isNum(int *num)
+bool NumToken::isNum(long int *num)
 {
     (*num) = this->num;
     return true;

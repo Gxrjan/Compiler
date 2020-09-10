@@ -65,7 +65,7 @@ unique_ptr<Token> Scanner::next_token() {
             c = this->getc();
             num = num + c;
         }
-        return make_unique<NumToken>(stoi(num));
+        return make_unique<NumToken>(stol(num));
     }
     if (isalpha(c)) {
         string name = { c };

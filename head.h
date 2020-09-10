@@ -94,7 +94,7 @@ class TypeConverter {
 class Token {
   public:
     virtual string to_string() = 0;
-    virtual bool isNum(long int *num) { return false; }
+    virtual bool isNum(long long *num) { return false; }
     virtual bool isBool(bool *b) { return false; }
     virtual bool isOper(string *op) { return false; }
     virtual bool isId(string *name) { return false; }
@@ -105,10 +105,10 @@ class Token {
 
 class NumToken : public Token {
   public:
-    long int num;
-    NumToken(long int num);
+    long long num;
+    NumToken(long long num);
     string to_string() override;
-    bool isNum(long int *num) override;
+    bool isNum(long long *num) override;
 };
 
 class BoolToken : public Token {
@@ -172,7 +172,7 @@ class Expr {  // abstract base class
     Expr();
     Expr(int line, int col);
     virtual string to_string() = 0;
-    virtual bool isNumLiteral(long int *num) { return false; }
+    virtual bool isNumLiteral(long long *num) { return false; }
     virtual bool isBoolLiteral(bool *b) { return false; }
     virtual bool isOpExpr(string *op, Expr **left, Expr **right) { return false; }
     virtual bool isVariable(string *name) { return false; }
@@ -180,10 +180,10 @@ class Expr {  // abstract base class
 
 class NumLiteral : public Expr {
   public:
-    long int num;
-    NumLiteral(long int num, int line, int col);
+    long long num;
+    NumLiteral(long long num, int line, int col);
     string to_string() override;
-    bool isNumLiteral(long int *num) override;
+    bool isNumLiteral(long long *num) override;
 };
 
 class BoolLiteral : public Expr {

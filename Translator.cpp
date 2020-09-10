@@ -5,15 +5,16 @@
 
 void Translator::translate_expr(string *s, Expr *e)
 {
-    long int num;
+    long long num;
     bool b;
     string op;
     Id id;
     Expr *left;
     Expr * right;
     if (e->isNumLiteral(&num)) {
-        *s += 
-            " push    " + std::to_string(num) + "\n";
+        *s +=
+            " mov       rax, "+std::to_string(num)+"\n" 
+            " push      rax\n";
         return;
     }
     if (e->isBoolLiteral(&b)) {

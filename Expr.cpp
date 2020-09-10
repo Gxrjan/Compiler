@@ -10,14 +10,14 @@ Expr::Expr(int line, int col)
     this->col = col;
 }
 
-NumLiteral::NumLiteral(long int num, int line, int col) 
+NumLiteral::NumLiteral(long long num, int line, int col) 
 { 
     this->num = num; 
     this->line = line;
     this->col = col;
 }
 string NumLiteral::to_string() { return std::to_string(this->num); }
-bool NumLiteral::isNumLiteral(long int *num) 
+bool NumLiteral::isNumLiteral(long long *num) 
 { 
     (*num) = this->num; 
     return true;

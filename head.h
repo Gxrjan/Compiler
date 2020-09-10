@@ -327,6 +327,7 @@ class Parser {
     unique_ptr<WhileStatement> parse_while();
     unique_ptr<Statement> parse_statement();
     unique_ptr<Block> parse_block();
+    unique_ptr<Block> parse_outer_block();
     void check_expr(Expr *expr);
     void expect(string c);
   public:

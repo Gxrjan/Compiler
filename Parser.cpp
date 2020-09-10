@@ -228,14 +228,8 @@ unique_ptr<Statement> Parser::parse_statement()
     }
     
     // Block
-    Token *t = this->scan->peek_token();
-    unique_ptr<Block> block;
-    if (t && t->isSymbol("{")) {
-        this->scan->next_token();
-        block = parse_block();
-        this->expect("}");
-        return block;
-    }
+    if ((s=this->parse_block()))
+        return s;
 
     // If Else
     if ((s=this->parse_if()))
@@ -245,21 +239,34 @@ unique_ptr<Statement> Parser::parse_statement()
     if ((s=this->parse_while()))
         return s;
 
-    if (t)
-        this->report_error("Statement expected");
     return nullptr;
 }
 
 
 unique_ptr<Block> Parser::parse_block()
 {
-    Token *next;
+    Token *next = this->scan->peek_token();
     unique_ptr<Statement> statement;
     vector<unique_ptr<Statement>> statements;
-    while ((next=this->scan->peek_token())) {
-        if (next->isSymbol("}"))
-            break;
-        statement = this->parse_statement();
+    if (next && next->isSymbol("{")) {
+        this->scan->next_token();
+        while ((next=this->scan->peek_token())) {
+            if (next->isSymbol("}"))
+                break;
+            statement = this->parse_statement();
+            statements.push_back(move(statement));
+        }
+        this->expect("}");
+        return make_unique<Block>(move(statements));
+    }
+    return nullptr;
+}
+
+unique_ptr<Block> Parser::parse_outer_block()
+{
+    unique_ptr<Statement> statement;
+    vector<unique_ptr<Statement>> statements;
+    while ((statement = this->parse_statement())) {
         statements.push_back(move(statement));
     }
     return make_unique<Block>(move(statements));
@@ -267,6 +274,6 @@ unique_ptr<Block> Parser::parse_block()
 
 unique_ptr<Program> Parser::parse_program()
 {
-    unique_ptr<Block> block = this->parse_block();
+    unique_ptr<Block> block = this->parse_outer_block();
     return make_unique<Program>(move(block));
 }

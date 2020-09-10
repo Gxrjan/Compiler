@@ -12,12 +12,23 @@ Block ->
         | Statement Block
 
 Statement ->
-        | Type Id '=' Expression ';'
-        | Id '=' Expression ';'
-        | "print" '(' Expression ')' ';'
+        | Declaration ';'
+        | Assignment ';'
+        | Print ';'
         | '{' Block '}'
         | 'if' '(' CompExpr ')' Statement [ 'else' Statement ]
         | 'while' '(' CompExpr ')' Statement
+        | 'for' '(' Declaration ';' Expression ';' Assignment ')' Statement
+
+
+Declaration ->
+        | Type Id '=' Expression
+
+Assignment ->
+        | Id '=' Expression
+       
+Print -> 
+        | "print" '(' Expression ')'
 
 Expression ->
         | CompExpr

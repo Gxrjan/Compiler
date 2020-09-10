@@ -121,60 +121,61 @@ unique_ptr<Expr> Parser::parse_expr()
     return expr;
 }
 
-
-unique_ptr<Statement> Parser::parse_statement()
+unique_ptr<Declaration> Parser::parse_declaration()
 {
-    unique_ptr<Token> t = this->scan->next_token();
-    unique_ptr<Expr> e;
     Type type;
-    string name;
-    
-
-    // Declaration
+    Token *t = this->scan->peek_token();
+    Id name;
     if (t && t->isType(&type)) {
-        t = this->scan->next_token();
-        if (t && t->isId(&name)) {
+        this->scan->next_token();
+        unique_ptr<Token> next = this->scan->next_token();
+        if (next && next->isId(&name)) {
             int line = this->scan->last_line;
             int col = this->scan->last_column;
             this->expect("=");
-            e = this->parse_expr();
-            this->expect(";");
+            unique_ptr<Expr> e = this->parse_expr();
             return make_unique<Declaration>(type, name, move(e), line, col);
         } else {
             this->report_error("Name of the variable should follow the type");
         }
     }
+    return nullptr;
+}
 
-    // Assignment
+
+unique_ptr<Assignment> Parser::parse_assignment()
+{
+    Token *t = this->scan->peek_token();
+    Id name;
     if (t && t->isId(&name)) {
+        this->scan->next_token();
         int line = this->scan->last_line;
         int col = this->scan->last_column;
         this->expect("=");
-        e = this->parse_expr();
-        this->expect(";");
+        unique_ptr<Expr> e = this->parse_expr();
         return make_unique<Assignment>(name, move(e), line, col);
     }
-    
-    // Print
+    return nullptr;
+}
+
+unique_ptr<Print> Parser::parse_print()
+{
+    Token *t = this->scan->peek_token();
     if (t && t->isKeyword("print")) {
+        this->scan->next_token();
         this->expect("(");
-        e = this->parse_expr();
+        unique_ptr<Expr> e = this->parse_expr();
         this->expect(")");
-        this->expect(";");
         return make_unique<Print>(move(e));
     }
+    return nullptr;
+}
 
-    // Block
-    unique_ptr<Block> block;
-    vector<unique_ptr<Statement>> statements;
-    if (t && t->isSymbol("{")) {
-        block = parse_block();
-        this->expect("}");
-        return block;
-    }
-
-    // If Else
+unique_ptr<IfStatement> Parser::parse_if()
+{
+    Token *t = this->scan->peek_token();
     if (t && t->isKeyword("if")) {
+        this->scan->next_token();
         this->expect("(");
         unique_ptr<Expr> cond = this->parse_expr();
         this->expect(")");
@@ -187,15 +188,63 @@ unique_ptr<Statement> Parser::parse_statement()
         }
         return make_unique<IfStatement>(move(cond), move(if_s), move(else_s)); 
     }
+    return nullptr;
+}
 
-    // While
+unique_ptr<WhileStatement> Parser::parse_while()
+{
+    Token *t = this->scan->peek_token();
     if (t && t->isKeyword("while")) {
+        this->scan->next_token();
         this->expect("(");
         unique_ptr<Expr> cond = this->parse_expr();
         this->expect(")");
         unique_ptr<Statement> statement = this->parse_statement();
         return make_unique<WhileStatement>(move(cond), move(statement));
     }
+    return nullptr;
+}
+
+unique_ptr<Statement> Parser::parse_statement()
+{
+    unique_ptr<Statement> s;
+
+    // Declaration
+    if ((s=this->parse_declaration())) {
+        this->expect(";");
+        return s;
+    }
+
+    // Assignment
+    if ((s=this->parse_assignment())) {
+        this->expect(";");
+        return s;
+    }
+
+    // Print
+    if ((s=this->parse_print())) {
+        this->expect(";");
+        return s;
+    }
+    
+    // Block
+    Token *t = this->scan->peek_token();
+    unique_ptr<Block> block;
+    if (t && t->isSymbol("{")) {
+        this->scan->next_token();
+        block = parse_block();
+        this->expect("}");
+        return block;
+    }
+
+    // If Else
+    if ((s=this->parse_if()))
+        return s;
+
+    // While
+    if ((s=this->parse_while()))
+        return s;
+
     if (t)
         this->report_error("Statement expected");
     return nullptr;

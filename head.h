@@ -320,6 +320,11 @@ class Parser {
     unique_ptr<Expr> parse_add_expr();
     unique_ptr<Expr> parse_comp_expr();
     unique_ptr<Expr> parse_expr();
+    unique_ptr<Declaration> parse_declaration();
+    unique_ptr<Assignment> parse_assignment();
+    unique_ptr<Print> parse_print();
+    unique_ptr<IfStatement> parse_if();
+    unique_ptr<WhileStatement> parse_while();
     unique_ptr<Statement> parse_statement();
     unique_ptr<Block> parse_block();
     void check_expr(Expr *expr);

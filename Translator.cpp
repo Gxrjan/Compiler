@@ -92,75 +92,123 @@ void Translator::translate_expr(string *s, Expr *e)
 }
 
 
+void Translator::translate_declaration(string *s, Declaration *dec)
+{
+    *s += // asm comment
+        "; " + dec->to_string() + "\n";
+    
+    this->variables.insert(dec->id);
+    this->translate_expr(s, dec->expr.get());
+    *s +=
+       " pop        qword ["+dec->id+"]\n";
+}
+
+void Translator::translate_assignment(string *s, Assignment *asgn)
+{
+    *s += // asm comment
+        "; " + asgn->to_string() + "\n";
+
+    this->translate_expr(s, asgn->expr.get());
+    *s +=
+       " pop        qword ["+asgn->id+"]\n";
+}
+
+void Translator::translate_print(string *s, Print *p)
+{
+    *s += // asm comment 
+        "; " + p->to_string() + "\n";
+
+    this->translate_expr(s, p->expr.get());
+    *s +=
+        " mov       rax, 0\n"
+        " mov       rdi, msg\n"
+        " pop       rsi\n"
+        " call      printf\n";
+}
+
+void Translator::translate_if_statement(string *s, IfStatement *st)
+{
+    string label_id = std::to_string(this->label_id++);
+    *s += // asm comment
+        "; if " + st->cond->to_string() + "\n";
+
+    this->translate_expr(s, st->cond.get());
+    *s +=
+        " pop       rax\n"
+        " cmp       rax, 0\n"
+        " je        else_s"+label_id+"\n";
+    this->translate_statement(s, st->if_s.get());
+    if (!st->else_s) {
+        *s +=
+            "else_s"+label_id+":\n";
+    } else {
+        *s +=
+            " jmp   end_s"+label_id+"\n"
+            "else_s"+label_id+":\n";
+        this->translate_statement(s, st->else_s.get());
+        *s +=
+            "end_s"+label_id+":\n";
+    }
+}
+
+void Translator::translate_while_statement(string *s, WhileStatement *st)
+{
+    string label_id = std::to_string(this->label_id++);
+    *s += 
+        "loop" + label_id + ":\n";
+    *s += // asm comment
+        "; while " + st->cond->to_string() + "\n";
+    this->translate_expr(s, st->cond.get());
+    *s +=
+        " pop       rax\n"
+        " cmp       rax, 0\n"
+        " je        loop_end"+label_id+"\n";
+    this->translate_statement(s, st->statement.get());
+    *s +=
+        " jmp       loop"+label_id+"\n"
+        "loop_end"+label_id+":\n";
+}
+
+void Translator::translate_for_statement(string *s, ForStatement *for_s)
+{
+    string label_id = std::to_string(this->label_id++);
+
+    this->translate_declaration(s, for_s->init.get());
+
+    *s +=
+        "loop" + label_id + ":\n";
+    *s +=
+        "; for " + for_s->cond->to_string() + "\n";
+
+    this->translate_expr(s, for_s->cond.get());
+    *s +=
+        " pop       rax\n"
+        " cmp       rax, 0\n"
+        " je        loop_end"+label_id+"\n";
+    this->translate_statement(s, for_s->body.get());
+    this->translate_assignment(s, for_s->iter.get());
+    *s +=
+        " jmp       loop"+label_id+"\n"
+        "loop_end"+label_id+":\n";
+    
+}
 
 void Translator::translate_statement(string *s, Statement *statement)
 {
     if (auto dec = dynamic_cast<Declaration *>(statement)) {
-        *s += // asm comment
-            "; " + dec->to_string() + "\n";
-        
-        this->variables.insert(dec->id);
-        this->translate_expr(s, dec->expr.get());
-        *s +=
-           " pop        qword ["+dec->id+"]\n";
-    } else if (auto asg = dynamic_cast<Assignment *>(statement)) {
-        *s += // asm comment
-            "; " + asg->to_string() + "\n";
-
-        this->translate_expr(s, asg->expr.get());
-        *s +=
-           " pop        qword ["+asg->id+"]\n";
+        this->translate_declaration(s, dec);
+    } else if (auto asgn = dynamic_cast<Assignment *>(statement)) {
+        this->translate_assignment(s, asgn);
     } else if (auto p = dynamic_cast<Print *>(statement)) {
-        *s += // asm comment 
-            "; " + p->to_string() + "\n";
-
-        this->translate_expr(s, p->expr.get());
-        *s +=
-            " mov       rax, 0\n"
-            " mov       rdi, msg\n"
-            " pop       rsi\n"
-            " call      printf\n";
+        this->translate_print(s, p);
     } else if (auto b = dynamic_cast<Block *>(statement)) {
         this->translate_block(s, b);
     } else if (auto st = dynamic_cast<IfStatement *>(statement)) {
-        string label_id = std::to_string(this->label_id++);
-        *s += // asm comment
-            "; if " + st->cond->to_string() + "\n";
-
-        this->translate_expr(s, st->cond.get());
-        *s +=
-            " pop       rax\n"
-            " cmp       rax, 0\n"
-            " je        else_s"+label_id+"\n";
-        this->translate_statement(s, st->if_s.get());
-        if (!st->else_s) {
-            *s +=
-                "else_s"+label_id+":\n";
-        } else {
-            *s +=
-                " jmp   end_s"+label_id+"\n"
-                "else_s"+label_id+":\n";
-            this->translate_statement(s, st->else_s.get());
-            *s +=
-                "end_s"+label_id+":\n";
-        }
+        this->translate_if_statement(s, st);
     } else if (auto st = dynamic_cast<WhileStatement *>(statement)) {
-        string label_id = std::to_string(this->label_id++);
-        *s += 
-            "loop" + label_id + ":\n";
-        *s += // asm comment
-            "; while " + st->cond->to_string() + "\n";
-        this->translate_expr(s, st->cond.get());
-        *s +=
-            " pop       rax\n"
-            " cmp       rax, 0\n"
-            " je        loop_end"+label_id+"\n";
-        this->translate_statement(s, st->statement.get());
-        *s +=
-            " jmp       loop"+label_id+"\n"
-            "loop_end"+label_id+":\n";
+        this->translate_while_statement(s, st);
     } else if (auto for_s = dynamic_cast<ForStatement *>(statement)) {
-        //Translating goes here
+        this->translate_for_statement(s, for_s);
     } else {
         throw runtime_error("Unknown statement");
     }

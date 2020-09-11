@@ -222,13 +222,6 @@ class Statement {
     Statement();
     Statement(int line, int col);
     virtual string to_string() = 0;
-    virtual bool isAssignment(Id* id, Expr** expr) { return false; }
-    virtual bool isPrint(Expr** expr) { return false; }
-    virtual bool isDeclaration(Type *t, Id *id, Expr **expr) { return false; }
-    virtual bool isBlock(vector<Statement*> statements) { return false; }
-    virtual bool isIfStatement(Expr **cond, Statement **if_s, Statement **else_s) { return false; }
-    virtual bool isWhileStatement(Expr **cond, Statement **s) { return false; }
-    //virtual bool isForStatement(Statement **init, Expr **cond, Statement **iter) { return false; };
 };
 
 class Assignment : public Statement {
@@ -237,7 +230,6 @@ class Assignment : public Statement {
     unique_ptr<Expr> expr;
     Assignment(Id id, unique_ptr<Expr> expr, int line, int col);
     string to_string() override;
-    bool isAssignment(Id* id, Expr** expr) override;
 };
 
 class Print : public Statement {
@@ -245,7 +237,6 @@ class Print : public Statement {
     unique_ptr<Expr> expr;
     Print(unique_ptr<Expr> expr);
     string to_string() override;
-    bool isPrint(Expr** expr) override;
 };
 
 class Declaration : public Statement {
@@ -255,7 +246,6 @@ class Declaration : public Statement {
     unique_ptr<Expr> expr;
     Declaration(Type t, Id id, unique_ptr<Expr> expr, int line, int col);
     string to_string() override;
-    bool isDeclaration(Type *t, Id *id, Expr **expr) override;
 };
 
 
@@ -266,7 +256,6 @@ class Block : public Statement {
     Block *parent;
     vector<unique_ptr<Statement>> statements;
     Block(vector<unique_ptr<Statement>> statements);
-    bool isBlock(vector<Statement*> statements);
     string to_string() override;
 };
 
@@ -277,7 +266,6 @@ class IfStatement : public Statement {
     unique_ptr<Statement> else_s;
     IfStatement(unique_ptr<Expr> cond, unique_ptr<Statement> if_s, unique_ptr<Statement> else_s);
     string to_string() override;
-    bool isIfStatement(Expr **cond, Statement **if_s, Statement **else_s) override;
 };
 
 class WhileStatement : public Statement {
@@ -286,7 +274,6 @@ class WhileStatement : public Statement {
     unique_ptr<Statement> statement;
     WhileStatement(unique_ptr<Expr> cond, unique_ptr<Statement> s);
     string to_string() override;
-    bool isWhileStatement(Expr **cond, Statement **statement) override;
 };
 
 class ForStatement : public Statement {
@@ -297,7 +284,6 @@ class ForStatement : public Statement {
     unique_ptr<Statement> body;
     ForStatement(unique_ptr<Declaration> init, unique_ptr<Expr> cond, unique_ptr<Assignment> iter, unique_ptr<Statement> body);
     string to_string() override;
-    //bool isForStatement(Declaration **init, Expr **cond, Assignment **iter, Statement **body) override;
 };
 
 
@@ -375,6 +361,12 @@ class Translator {
     int label_id = 0;
     set<Id> variables;
     void translate_expr(string *s, Expr *expr);
+    void translate_declaration(string *s, Declaration *dec);
+    void translate_assignment(string *s, Assignment *asgn);
+    void translate_print(string *s, Print *p);
+    void translate_if_statement(string *s, IfStatement *st);
+    void translate_while_statement(string *s, WhileStatement *st);
+    void translate_for_statement(string *s, ForStatement *for_s);
     void translate_statement(string *s, Statement *statement);
     void translate_block(string *s, Block *b);
   public:

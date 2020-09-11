@@ -357,6 +357,11 @@ class Parser {
 class Checker {
     Declaration *look_up(Id id, Block *b);
     Type check_expr(Expr *expr, Block *b);
+    void check_declaration(Declaration *dec, Block *b);
+    void check_assignment(Assignment *asgn, Block *b);
+    void check_if_statement(IfStatement *st, Block *b);
+    void check_while_statement(WhileStatement *st, Block *b);
+    void check_for_statement(ForStatement *for_s, Block *b);
     void check_statement(Statement *s, Block *b);
     void check_block(Block *b);
     void report_error(int line, int col, string message);

@@ -7,6 +7,8 @@ int main(int argc, char *argv[])
     Scanner scan;
     Translator tran;
     unique_ptr<Program> prog = Parser(&scan).parse_program();
+    Checker c;
+    c.check_program(prog.get());
     string asm_code = tran.translate_program(prog.get());
     file << asm_code;
     file.close();

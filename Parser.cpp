@@ -276,6 +276,7 @@ unique_ptr<Statement> Parser::parse_statement()
     if ((s=this->try_parse_for()))
         return s;
     this->report_error("Statement expected");
+    return nullptr; // Unreached
 }
 
 

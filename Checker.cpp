@@ -93,8 +93,40 @@ void Checker::check_statement(Statement *s, Block *b)
             this->report_error(expr->line, expr->col, "while statement requires bool");
         this->check_statement(while_s, b);
         
-    } else if (auto statement = dynamic_cast<ForStatement *>(s)) { 
+    } else if (auto for_s = dynamic_cast<ForStatement *>(s)) {
         // Checking goes here
+
+        // Checking init
+        string t_string = TypeConverter::enum_to_string(for_s->init->type);
+        if (for_s->init->type != this->check_expr(for_s->init->expr.get(), b))
+            this->report_error(for_s->init->expr->line,
+                               for_s->init->expr->col,
+                               t_string + " expected");
+        if (this->look_up(for_s->init->id, b))
+            this->report_error(s->line, s->col, "variable has already been declared");
+        b->variables.insert({for_s->init->id, for_s->init.get()});
+        
+        // Checking cond
+        if (this->check_expr(for_s->cond.get(), b) != Type::Bool)
+            this->report_error(for_s->cond->line, 
+                               for_s->cond->col,
+                               "Bool expression expected");
+
+        // Checking iter
+        Declaration *result = this->look_up(for_s->iter->id, b);
+        if (!result)
+            this->report_error(for_s->iter->line, for_s->iter->col, "variable hasn't been declared");
+        t_string = TypeConverter::enum_to_string(result->type);
+        if (result->type != this->check_expr(for_s->iter->expr.get(), b))
+            this->report_error(expr->line, expr->col, t_string + " expected");
+
+        // Checking body
+        this->check_statement(for_s->body.get(), b);
+
+        // Removing id after for statement is over
+        b->variables.erase(id);
+
+        
     } else{
         Block *b1 = dynamic_cast<Block *>(s);
         if (b1) {

@@ -138,3 +138,29 @@ bool WhileStatement::isWhileStatement(Expr **cond, Statement **statement)
     *statement = this->statement.get();
     return true;
 }
+
+
+ForStatement::ForStatement(unique_ptr<Declaration> init, unique_ptr<Expr> cond, unique_ptr<Assignment> iter, unique_ptr<Statement> body)
+{
+    this->init = move(init);
+    this->cond = move(cond);
+    this->iter = move(iter);
+    this->body = move(body);
+}
+string ForStatement::to_string()
+{
+    return "for (" + 
+        this->init->to_string() + ";" +
+        this->cond->to_string() + ";" + 
+        this->iter->to_string() + ") {\n" +
+            this->body->to_string() + "\n}";
+}
+//bool ForStatement::isForStatement(Declaration **init, Expr **cond, Assignment **iter, Statement **body)
+//{
+//    *init = this->init.get();
+//    *cond = this->cond.get();
+//    *iter = this->iter.get();
+//    *body = this->body.get();
+//    return true;
+//}
+

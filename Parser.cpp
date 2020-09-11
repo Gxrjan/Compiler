@@ -121,7 +121,7 @@ unique_ptr<Expr> Parser::parse_expr()
     return expr;
 }
 
-unique_ptr<Declaration> Parser::parse_declaration()
+unique_ptr<Declaration> Parser::try_parse_declaration()
 {
     Type type;
     Token *t = this->scan->peek_token();
@@ -142,8 +142,15 @@ unique_ptr<Declaration> Parser::parse_declaration()
     return nullptr;
 }
 
+unique_ptr<Declaration> Parser::parse_declaration()
+{
+    unique_ptr<Declaration> dec = this->try_parse_declaration();
+    if (!dec)
+        this->report_error("Declaration expected");
+    return dec;
+}
 
-unique_ptr<Assignment> Parser::parse_assignment()
+unique_ptr<Assignment> Parser::try_parse_assignment()
 {
     Token *t = this->scan->peek_token();
     Id name;
@@ -158,7 +165,15 @@ unique_ptr<Assignment> Parser::parse_assignment()
     return nullptr;
 }
 
-unique_ptr<Print> Parser::parse_print()
+unique_ptr<Assignment> Parser::parse_assignment()
+{
+    unique_ptr<Assignment> asgn = this->try_parse_assignment();
+    if (!asgn)
+        this->report_error("Assignment expected");
+    return asgn;
+}
+
+unique_ptr<Print> Parser::try_parse_print()
 {
     Token *t = this->scan->peek_token();
     if (t && t->isKeyword("print")) {
@@ -171,7 +186,7 @@ unique_ptr<Print> Parser::parse_print()
     return nullptr;
 }
 
-unique_ptr<IfStatement> Parser::parse_if()
+unique_ptr<IfStatement> Parser::try_parse_if()
 {
     Token *t = this->scan->peek_token();
     if (t && t->isKeyword("if")) {
@@ -191,7 +206,7 @@ unique_ptr<IfStatement> Parser::parse_if()
     return nullptr;
 }
 
-unique_ptr<WhileStatement> Parser::parse_while()
+unique_ptr<WhileStatement> Parser::try_parse_while()
 {
     Token *t = this->scan->peek_token();
     if (t && t->isKeyword("while")) {
@@ -205,45 +220,66 @@ unique_ptr<WhileStatement> Parser::parse_while()
     return nullptr;
 }
 
+unique_ptr<ForStatement> Parser::try_parse_for()
+{
+    Token *t = this->scan->peek_token();
+    if (t && t->isKeyword("for")) {
+        this->scan->next_token();
+        this->expect("(");
+        unique_ptr<Declaration> init = this->parse_declaration();
+        this->expect(";");
+        unique_ptr<Expr> cond = this->parse_expr();
+        this->expect(";");
+        unique_ptr<Assignment> iter = this->parse_assignment();
+        this->expect(")");
+        unique_ptr<Statement> body = this->parse_statement();
+        return make_unique<ForStatement>(move(init), move(cond), 
+                                        move(iter), move(body));
+    }
+    return nullptr;
+}
+
 unique_ptr<Statement> Parser::parse_statement()
 {
     unique_ptr<Statement> s;
 
     // Declaration
-    if ((s=this->parse_declaration())) {
+    if ((s=this->try_parse_declaration())) {
         this->expect(";");
         return s;
     }
 
     // Assignment
-    if ((s=this->parse_assignment())) {
+    if ((s=this->try_parse_assignment())) {
         this->expect(";");
         return s;
     }
 
     // Print
-    if ((s=this->parse_print())) {
+    if ((s=this->try_parse_print())) {
         this->expect(";");
         return s;
     }
     
     // Block
-    if ((s=this->parse_block()))
+    if ((s=this->try_parse_block()))
         return s;
 
     // If Else
-    if ((s=this->parse_if()))
+    if ((s=this->try_parse_if()))
         return s;
 
     // While
-    if ((s=this->parse_while()))
+    if ((s=this->try_parse_while()))
         return s;
 
-    return nullptr;
+    if ((s=this->try_parse_for()))
+        return s;
+    this->report_error("Statement expected");
 }
 
 
-unique_ptr<Block> Parser::parse_block()
+unique_ptr<Block> Parser::try_parse_block()
 {
     Token *next = this->scan->peek_token();
     unique_ptr<Statement> statement;
@@ -266,7 +302,8 @@ unique_ptr<Block> Parser::parse_outer_block()
 {
     unique_ptr<Statement> statement;
     vector<unique_ptr<Statement>> statements;
-    while ((statement = this->parse_statement())) {
+    while (this->scan->peek_token()) {
+        statement = this->parse_statement();
         statements.push_back(move(statement));
     }
     return make_unique<Block>(move(statements));

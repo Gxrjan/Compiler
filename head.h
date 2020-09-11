@@ -228,6 +228,7 @@ class Statement {
     virtual bool isBlock(vector<Statement*> statements) { return false; }
     virtual bool isIfStatement(Expr **cond, Statement **if_s, Statement **else_s) { return false; }
     virtual bool isWhileStatement(Expr **cond, Statement **s) { return false; }
+    //virtual bool isForStatement(Statement **init, Expr **cond, Statement **iter) { return false; };
 };
 
 class Assignment : public Statement {
@@ -288,6 +289,18 @@ class WhileStatement : public Statement {
     bool isWhileStatement(Expr **cond, Statement **statement) override;
 };
 
+class ForStatement : public Statement {
+  public:
+    unique_ptr<Declaration> init;
+    unique_ptr<Expr> cond;
+    unique_ptr<Assignment> iter;
+    unique_ptr<Statement> body;
+    ForStatement(unique_ptr<Declaration> init, unique_ptr<Expr> cond, unique_ptr<Assignment> iter, unique_ptr<Statement> body);
+    string to_string() override;
+    //bool isForStatement(Declaration **init, Expr **cond, Assignment **iter, Statement **body) override;
+};
+
+
 // Program
 class Program {
   public:
@@ -320,13 +333,16 @@ class Parser {
     unique_ptr<Expr> parse_add_expr();
     unique_ptr<Expr> parse_comp_expr();
     unique_ptr<Expr> parse_expr();
+    unique_ptr<Declaration> try_parse_declaration();
     unique_ptr<Declaration> parse_declaration();
+    unique_ptr<Assignment> try_parse_assignment();
     unique_ptr<Assignment> parse_assignment();
-    unique_ptr<Print> parse_print();
-    unique_ptr<IfStatement> parse_if();
-    unique_ptr<WhileStatement> parse_while();
+    unique_ptr<Print> try_parse_print();
+    unique_ptr<IfStatement> try_parse_if();
+    unique_ptr<WhileStatement> try_parse_while();
+    unique_ptr<ForStatement> try_parse_for();
     unique_ptr<Statement> parse_statement();
-    unique_ptr<Block> parse_block();
+    unique_ptr<Block> try_parse_block();
     unique_ptr<Block> parse_outer_block();
     void check_expr(Expr *expr);
     void expect(string c);

@@ -159,6 +159,8 @@ void Translator::translate_statement(string *s, Statement *statement)
         *s +=
             " jmp       loop"+label_id+"\n"
             "loop_end"+label_id+":\n";
+    } else if (auto for_s = dynamic_cast<ForStatement *>(statement)) {
+        //Translating goes here
     } else {
         throw runtime_error("Unknown statement");
     }

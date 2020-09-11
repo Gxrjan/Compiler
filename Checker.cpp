@@ -93,7 +93,9 @@ void Checker::check_statement(Statement *s, Block *b)
             this->report_error(expr->line, expr->col, "while statement requires bool");
         this->check_statement(while_s, b);
         
-    } else {
+    } else if (auto statement = dynamic_cast<ForStatement *>(s)) { 
+        // Checking goes here
+    } else{
         Block *b1 = dynamic_cast<Block *>(s);
         if (b1) {
             b1->parent = b;

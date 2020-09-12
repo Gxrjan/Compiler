@@ -30,32 +30,15 @@ Assignment ->
 Print -> 
         | "print" '(' Expression ')'
 
+
 Expression ->
-        | CompExpr
-        | Expression '==' CompExpr
-        | Expression '!=' CompExpr
+        | Primary
+        | Expression BinaryOp Expression
 
+Primary ->
+        | '(' Expression ')' 
+        | number 
+        | Id 
+        | '!' Primary
 
-CompExpr ->
-        | AddExpr
-        | CompExpr '<' AddExpr
-        | CompExpr '>' AddExpr
-        | CompExpr '<=' AddExpr
-        | CompExpr '>=' AddExpr
-
-AddExpr ->
-        | Term
-        | AddExpr '+' Term
-        | AddExpr '-' Term
-
-Term ->
-        | Factor
-        | Term '*' Factor
-        | Term '/' Factor
-        | Term '%' Factor
-
-
-Factor ->
-        | number
-        | Id
-        | '(' Expression ')'
+BinaryOp -> '&&' | '||' | '==' | '!=' | '<' | '>' | '<=' | '>=' | '+' | '-' | '*' | '/' | '%';

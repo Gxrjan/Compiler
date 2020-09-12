@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <iostream>
+#include <sstream>
 #include <curses.h>
 #include <map>
 #include <memory>
@@ -313,11 +314,11 @@ class Scanner {
 
 // PARSER
 class Parser {
+    map<string, int> precedence;
     void report_error(string message);
-    unique_ptr<Expr> parse_factor();
-    unique_ptr<Expr> parse_term();
-    unique_ptr<Expr> parse_add_expr();
-    unique_ptr<Expr> parse_comp_expr();
+    bool isBinary(string op);
+    unique_ptr<Expr> parse_primary();
+    unique_ptr<Expr> parse_expression(unique_ptr<Expr> lhs, int prec);
     unique_ptr<Expr> parse_expr();
     unique_ptr<Declaration> try_parse_declaration();
     unique_ptr<Declaration> parse_declaration();

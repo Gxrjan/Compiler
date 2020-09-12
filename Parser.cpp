@@ -2,7 +2,14 @@
 
 Parser::Parser(Scanner* scan)
 { 
-    this->scan = scan; 
+    this->scan = scan;
+    ifstream file{ "precedence", ios::in };
+    string op;
+    int prec;
+    while (file >> op >> prec) {
+        this->precedence.insert({op, prec });
+    } 
+
 }
 
 void Parser::report_error(string message)
@@ -12,6 +19,7 @@ void Parser::report_error(string message)
                     +  ": " + message);
 }
 
+bool Parser::isBinary(string op) { return op != "!"; }
 
 void Parser::expect(string c)
 {
@@ -20,105 +28,57 @@ void Parser::expect(string c)
         this->report_error("'" + c + "' expected");
 }
 
-
-unique_ptr<Expr> Parser::parse_factor() 
-{
-    unique_ptr<Token> t = (this->scan)->next_token();
-    long long num;
+unique_ptr<Expr> Parser::parse_primary() {
+    long long int num;
     bool b;
-    string name;
+    Id id;
     int line = this->scan->last_line;
     int col = this->scan->last_column;
-    if (t->isNum(&num)) {
-        return make_unique<NumLiteral>(num, line, col);
-    }
-    if (t->isBool(&b))
-        return make_unique<BoolLiteral>(b, line, col);
-    if (t->isId(&name)) {
-        return make_unique<Variable>(name, this->scan->last_line, 
-                                    this->scan->last_column);
-    }
-
+    unique_ptr<Token> t = this->scan->next_token();
     if (t->isSymbol("(")) {
-        unique_ptr<Expr> e = parse_expr();
+        unique_ptr<Expr> expr = this->parse_expr();
         this->expect(")");
-        return e;
-    }
-    this->report_error("syntax error");
-    return nullptr;
+        return expr;
+    } else if (t->isNum(&num)) {
+        return make_unique<NumLiteral>(num, line, col);
+    } else if (t->isBool(&b)) {
+        return make_unique<BoolLiteral>(b, line, col);
+    } else if (t->isId(&id)) {
+        return make_unique<Variable>(id, line, col);
+    } else if (t->isSymbol("!")) {
+        unique_ptr<Expr> expr = this->parse_primary();
+        return make_unique<OpExpr>("!", move(expr), nullptr, line, col);
+    } else
+        this->report_error("Syntax error");
+    return nullptr; // Not reached
 }
 
-
-unique_ptr<Expr> Parser::parse_term()
+unique_ptr<Expr> Parser::parse_expression(unique_ptr<Expr> lhs, 
+                                            int min_precedence)
 {
-    unique_ptr<Expr> expr = parse_factor();
-    int line = this->scan->last_line;
-    int col = this->scan->last_column;
-    while (true) {
-        string s;
-        Token* t = (this->scan)->peek_token();
-        if (t && t->isOper(&s) && (s=="*" || s=="/" || s == "%")) {
-            (this->scan)->next_token();
-            unique_ptr<Expr> factor = this->parse_factor();
-            expr = make_unique<OpExpr>(s, move(expr), move(factor), line, col);
-        } else
-            break;
+    Token *t = this->scan->peek_token();
+    string op_1;
+    while (t && t->isOper(&op_1) && 
+            isBinary(op_1) && precedence[op_1] >= min_precedence) {
+        int line = this->scan->last_line;
+        int col = this->scan->last_column;
+        this->scan->next_token();
+        unique_ptr<Expr> rhs = this->parse_primary();
+        t = this->scan->peek_token();
+        string op_2;
+        while (t && t->isOper(&op_2) &&
+                isBinary(op_2) && precedence[op_2] > precedence[op_1]) {
+            rhs = this->parse_expression(move(rhs), precedence[op_2]);
+            t = this->scan->peek_token();
+        }
+        lhs = make_unique<OpExpr>(op_1, move(lhs), move(rhs), line, col);
     }
-    return expr;
-}
-
-unique_ptr<Expr> Parser::parse_add_expr()
-{
-    unique_ptr<Expr> expr = parse_term();
-    int line = this->scan->last_line;
-    int col = this->scan->last_column;
-    while (true) {
-        string s;
-        Token* t = (this->scan)->peek_token();
-        if (t && t->isOper(&s) && (s=="+" || s=="-")) {
-            (this->scan)->next_token();
-            unique_ptr<Expr> term = this->parse_term();
-            expr = make_unique<OpExpr>(s, move(expr), move(term), line, col);
-        } else
-            break;
-    }
-    return expr;
-}
-
-unique_ptr<Expr> Parser::parse_comp_expr()
-{
-    unique_ptr<Expr> expr = parse_add_expr();
-    int line = this->scan->last_line;
-    int col = this->scan->last_column;
-    while (true) {
-        string s;
-        Token* t = (this->scan)->peek_token();
-        if (t && t->isOper(&s) && (s=="<" || s==">" || s=="<=" || s==">=")) {
-            (this->scan)->next_token();
-            unique_ptr<Expr> term = this->parse_add_expr();
-            expr = make_unique<OpExpr>(s, move(expr), move(term), line, col);
-        } else
-            break;
-    }
-    return expr;
+    return lhs;
 }
 
 unique_ptr<Expr> Parser::parse_expr()
 {
-    unique_ptr<Expr> expr = parse_comp_expr();
-    int line = this->scan->last_line;
-    int col = this->scan->last_column;
-    while (true) {
-        string s;
-        Token* t = (this->scan)->peek_token();
-        if (t && t->isOper(&s) && (s=="==" || s=="!=")) {
-            (this->scan)->next_token();
-            unique_ptr<Expr> term = this->parse_comp_expr();
-            expr = make_unique<OpExpr>(s, move(expr), move(term), line, col);
-        } else
-            break;
-    }
-    return expr;
+    return move(this->parse_expression(move(parse_primary()), 0));
 }
 
 unique_ptr<Declaration> Parser::try_parse_declaration()

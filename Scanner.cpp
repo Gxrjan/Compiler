@@ -33,19 +33,25 @@ unique_ptr<Token> Scanner::next_token() {
     this->last_column = this->column;
     if ((c=this->getc())==EOF)
         return nullptr;
-
+    
+    if (c == '&' || c == '|') {
+        char nc = cin.peek();
+        if (nc == '&' || nc == '|')
+            return make_unique<OperToken>(string{c, nc});       // &&, ||
+        this->report_error("Unknown token");
+    }
      
     if (c == '!' || c == '=' || c == '<' || c == '>') {
         if (cin.peek() == '=') {
             this->getc();
-            return make_unique<OperToken>(string{c, '='});
+            return make_unique<OperToken>(string{c, '='});      // !=, ==, <=, >=
         } else {
             if (c != '!') {
                 if (c == '=')
-                    return make_unique<SymbolToken>(string{c});
-                return make_unique<OperToken>(string{c});
+                    return make_unique<SymbolToken>(string{c}); // =
+                return make_unique<OperToken>(string{c});       // <, >
             } else
-                this->report_error("unrecognized token");
+                return make_unique<SymbolToken>(string{c});     // !
         }
     }
 

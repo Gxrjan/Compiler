@@ -3,41 +3,70 @@
 
 
 
-void Translator::translate_expr(string *s, Expr *e)
+void Translator::translate_num_literal(string *s, NumLiteral *l)
 {
-    long long num;
-    bool b;
-    string op;
-    Id id;
-    Expr *left;
-    Expr * right;
-    if (e->isNumLiteral(&num)) {
-        *s +=
-            " mov       rax, "+std::to_string(num)+"\n" 
-            " push      rax\n";
-        return;
-    }
-    if (e->isBoolLiteral(&b)) {
-        if (b)
-            *s += 
-                " push        1\n";
-        else
-            *s += 
-                " push        0\n";
-        return;
-    }
-    if (e->isVariable(&id)) {
+    *s +=
+        " mov       rax, "+std::to_string(l->num)+"\n" 
+        " push      rax\n";
+    return;
+}
+
+
+void Translator::translate_bool_literal(string *s, BoolLiteral *l)
+{
+    if (l->b)
         *s += 
-            " push     qword ["+id+"]\n";
-        return;
-    }
+            " push        1\n";
+    else
+        *s += 
+            " push        0\n";
+    return;
+}
 
+void Translator::translate_variable(string *s, Variable *v) 
+{
+    *s += 
+        " push     qword ["+v->name+"]\n";
+    return;
+}
 
-    if (e->isOpExpr(&op, &left, &right) && op != "&&" && op != "||") {
-        this->translate_expr(s, left);
-        this->translate_expr(s, right);
+void Translator::translate_op_expr(string *s, OpExpr *expr) 
+{
+    if (expr->op == "&&" || expr->op == "||") {
         Operation o;
-        switch((o = TypeConverter::string_to_operation(op))) {
+        string label_id = std::to_string(this->label_id++);
+        switch((o = TypeConverter::string_to_operation(expr->op))) {
+            case Operation::And:
+                // translating goes here
+                this->translate_expr(s, expr->left.get());
+                *s +=
+                    " cmp       qword [rsp], 0\n"
+                    " je        end"+label_id+"\n"
+                    " pop       rax\n";
+                this->translate_expr(s, expr->right.get());
+                break;
+            case Operation::Or:
+                // translating goes here
+                this->translate_expr(s, expr->left.get());
+                *s +=
+                    " cmp       qword [rsp], 1\n"
+                    " je        end"+label_id+"\n"
+                    " pop       rax\n";
+                this->translate_expr(s, expr->right.get());
+                break;
+            default:
+                throw runtime_error("Unknown operator");
+                break;
+            
+        }
+        *s +=
+            "end"+label_id+":\n";
+
+    } else {
+        this->translate_expr(s, expr->left.get());
+        this->translate_expr(s, expr->right.get());
+        Operation o;
+        switch((o = TypeConverter::string_to_operation(expr->op))) {
             case Operation::Add:
                 *s += 
                     " pop     rax\n"
@@ -88,62 +117,22 @@ void Translator::translate_expr(string *s, Expr *e)
                 throw runtime_error("Unknown operator");
                 break;
         }
-    } else {
-        Operation o;
-        string label_id = std::to_string(this->label_id++);
-        switch((o = TypeConverter::string_to_operation(op))) {
-            case Operation::And:
-                // translating goes here
-                this->translate_expr(s, left);
-                *s +=
-                    " pop       rax\n"
-                    " mov       rcx, 1\n"
-                    " cmp       rax, rcx\n"
-                    " jl        ret"+label_id+"\n";
 
-                    this->translate_expr(s, right);
-
-                    *s +=
-                        " pop       rax\n"
-                        " mov       rcx, 1\n"
-                        " cmp       rax, rcx\n"
-                        " jl        ret"+label_id+"\n"
-                        " push      1\n"
-                        " jmp       end"+label_id+"\n";
-
-                    *s +=
-                        "ret"+label_id+":\n"
-                        " push      0\n";
-
-                break;
-            case Operation::Or:
-                // translating goes here
-                this->translate_expr(s, left);
-                *s +=
-                    " pop       rax\n"
-                    " mov       rcx, 0\n"
-                    " cmp       rax, rcx\n"
-                    " jg        ret"+label_id+"\n";
-                this->translate_expr(s, right);
-                *s +=
-                    " pop       rax\n"
-                    " mov       rcx, 0\n"
-                    " cmp       rax, rcx\n"
-                    " jg        ret"+label_id+"\n"
-                    " push      0\n"
-                    " jmp       end"+label_id+"\n";
-                *s +=
-                    "ret"+label_id+":\n"
-                    " push      1\n";
-                break;
-            default:
-                throw runtime_error("Unknown operator");
-                break;
-            
-        }
-        *s +=
-            "end"+label_id+":\n";
     }
+} 
+
+void Translator::translate_expr(string *s, Expr *e)
+{
+    if (auto expr = dynamic_cast<NumLiteral *>(e)) {
+        this->translate_num_literal(s, expr);
+    } else if (auto expr = dynamic_cast<BoolLiteral *>(e)) {
+        this->translate_bool_literal(s, expr);
+    } else if (auto var = dynamic_cast<Variable *>(e)) {
+        this->translate_variable(s, var);
+    } else if (auto expr = dynamic_cast<OpExpr *>(e)) {
+        this->translate_op_expr(s, expr);
+    } else
+        throw runtime_error("Unknown type of expression");
 }
 
 

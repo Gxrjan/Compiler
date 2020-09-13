@@ -35,9 +35,12 @@ unique_ptr<Token> Scanner::next_token() {
         this->getc();
         if (cin.peek() == '/') {
             this->getc();
-            while (this->getc()!='\n') {}
-                
-        }
+            while ((c=this->getc())!='\n' && c != EOF) {}
+            while (isspace(cin.peek())) {
+                this->getc();
+            }
+        } else 
+            return make_unique<OperToken>("/");
     }
 
     this->last_line = this->line;

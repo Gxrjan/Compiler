@@ -367,6 +367,10 @@ class Checker {
 class Translator {
     int label_id = 0;
     set<Id> variables;
+    void translate_num_literal(string *s, NumLiteral *l);
+    void translate_bool_literal(string *s, BoolLiteral *l);
+    void translate_variable(string *s, Variable *var);
+    void translate_op_expr(string *s, OpExpr *expr);
     void translate_expr(string *s, Expr *expr);
     void translate_declaration(string *s, Declaration *dec);
     void translate_assignment(string *s, Assignment *asgn);

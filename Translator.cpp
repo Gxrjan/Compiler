@@ -8,7 +8,6 @@ void Translator::translate_num_literal(string *s, NumLiteral *l)
     *s +=
         " mov       rax, "+std::to_string(l->num)+"\n" 
         " push      rax\n";
-    return;
 }
 
 
@@ -20,14 +19,12 @@ void Translator::translate_bool_literal(string *s, BoolLiteral *l)
     else
         *s += 
             " push        0\n";
-    return;
 }
 
 void Translator::translate_variable(string *s, Variable *v) 
 {
     *s += 
         " push     qword ["+v->name+"]\n";
-    return;
 }
 
 void Translator::translate_op_expr(string *s, OpExpr *expr) 

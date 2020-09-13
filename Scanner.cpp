@@ -31,14 +31,13 @@ unique_ptr<Token> Scanner::next_token() {
         return result;
     }
     char c;
-    //cin >> ws; // Consume leading whitespace
     this->consume_ws();
     if (cin.peek() == '/') {
         this->getc();
         if (cin.peek() == '/') {
             this->getc();
             while ((c=this->getc())!='\n' && c != EOF) {}
-            this->consume_ws();
+            return this->next_token();
         } else 
             return make_unique<OperToken>("/");
     }

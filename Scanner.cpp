@@ -19,6 +19,7 @@ Token* Scanner::peek_token()
 }
 
 
+
 unique_ptr<Token> Scanner::next_token() {
     if (this->next) {
         unique_ptr<Token> result = move(this->next);
@@ -29,11 +30,22 @@ unique_ptr<Token> Scanner::next_token() {
     while (isspace(cin.peek())) {
         this->getc();
     }
+
+    if (cin.peek() == '/') {
+        this->getc();
+        if (cin.peek() == '/') {
+            this->getc();
+            while (this->getc()!='\n') {}
+                
+        }
+    }
+
     this->last_line = this->line;
     this->last_column = this->column;
     if ((c=this->getc())==EOF)
         return nullptr;
     
+     
     if (c == '&' || c == '|') {
         char nc = cin.peek();
         if (nc == '&' || nc == '|') {

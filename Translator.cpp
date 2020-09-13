@@ -37,6 +37,7 @@ void Translator::translate_expr(string *s, Expr *e)
         translate_expr(s, left);
         translate_expr(s, right);
         Operation o;
+        string label_id;
         switch((o = TypeConverter::string_to_operation(op))) {
             case Operation::Add:
                 *s += 
@@ -86,9 +87,37 @@ void Translator::translate_expr(string *s, Expr *e)
                 break;
             case Operation::And:
                 // translating goes here
+                label_id = std::to_string(this->label_id++);
+                *s +=
+                    " pop       rax\n"
+                    " mov       rcx, 1\n"
+                    " cmp       rax, rcx\n"
+                    " jl        ret"+label_id+"\n"
+                    " pop       rax\n"
+                    " cmp       rax, rcx\n"
+                    " jl        ret"+label_id+"\n"
+                    " push      1\n"
+                    " jmp       end"+label_id+"\n"
+                    "ret"+label_id+":\n"
+                    " push      0\n"
+                    "end"+label_id+":\n";
                 break;
             case Operation::Or:
                 // translating goes here
+                label_id = std::to_string(this->label_id++);
+                *s +=
+                    " pop       rax\n"
+                    " mov       rcx, 0\n"
+                    " cmp       rax, rcx\n"
+                    " jg        ret"+label_id+"\n"
+                    " pop       rax\n"
+                    " cmp       rax, rcx\n"
+                    " jg        ret"+label_id+"\n"
+                    " push      0\n"
+                    " jmp       end"+label_id+"\n"
+                    "ret"+label_id+":\n"
+                    " push      1\n"
+                    "end"+label_id+":\n";
                 break;
             default:
                 throw runtime_error("Unknown operator");

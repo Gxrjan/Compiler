@@ -36,9 +36,10 @@ unique_ptr<Token> Scanner::next_token() {
     
     if (c == '&' || c == '|') {
         char nc = cin.peek();
-        if (nc == '&' || nc == '|')
-            return make_unique<OperToken>(string{c, nc});       // &&, ||
-        this->report_error("Unknown token");
+        if (nc == '&' || nc == '|') {
+            this->getc();
+            return make_unique<OperToken>(string{c, nc});
+        }      
     }
      
     if (c == '!' || c == '=' || c == '<' || c == '>') {

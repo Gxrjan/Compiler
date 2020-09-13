@@ -45,12 +45,19 @@ Type Checker::check_expr(Expr *expr, Block *b)
     if (expr->isOpExpr(&op, &left, &right)) {
         Type left_type = this->check_expr(left, b);
         Type right_type = this->check_expr(right, b);
-        if (left_type != right_type || left_type != Type::Int || right_type != Type::Int)
-            this->report_error(expr->line, expr->col, "operands must be int");
-        if (op == "<" || op == ">" || op == "=="
-            || op == "!=" || op == "<=" || op == ">=")
+        
+        if (op == "&&" || op == "||") {
+            if (left_type != Type::Bool || right_type != Type::Bool)
+                this->report_error(expr->line, expr->col, "operands must e bool");
             return Type::Bool;
-        return Type::Int;
+        } else {
+            if (left_type != Type::Int || right_type != Type::Int)
+                this->report_error(expr->line, expr->col, "operands must be int");
+            if (op == "<" || op == ">" || op == "=="
+                || op == "!=" || op == "<=" || op == ">=")
+                return Type::Bool;
+            return Type::Int;
+        }
     }
     throw runtime_error("Unrecognized expression");
 }

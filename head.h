@@ -26,7 +26,9 @@ enum class Operation {
     Le,
     Ge,
     E,
-    Ne
+    Ne,
+    And,
+    Or
 };
 
 class TypeConverter {
@@ -59,6 +61,8 @@ class TypeConverter {
         if (op == ">=")return Operation::Ge;
         if (op == "==")return Operation::E;
         if (op == "!=")return Operation::Ne;
+        if (op == "&&")return Operation::And;
+        if (op == "||")return Operation::Or;
         throw runtime_error("Unknown Operation");
     }
 
@@ -102,6 +106,7 @@ class Token {
     virtual bool isSymbol(string s) { return false; }
     virtual bool isKeyword(string name) { return false; }
     virtual bool isType(Type *t) { return false; }
+    virtual bool isOper(string op) { return false; }
 };
 
 class NumToken : public Token {
@@ -126,6 +131,7 @@ class OperToken : public Token {
     OperToken(string op);
     string to_string() override;
     bool isOper(string *op) override;
+    bool isOper(string op) override;
 };
 
 

@@ -28,6 +28,7 @@ bool OperToken::isOper(string *op)
     (*op) = this->op;
     return true;
 }
+bool OperToken::isOper(string op) { return this->op == op; }
 
 
 IdToken::IdToken(string name) { this->name = name; }

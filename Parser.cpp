@@ -48,7 +48,11 @@ unique_ptr<Expr> Parser::parse_primary() {
     } else if (t->isSymbol("!")) {
         unique_ptr<Expr> expr = this->parse_primary();
         return make_unique<OpExpr>("!", move(expr), nullptr, line, col);
-    } else
+    } else if (t->isOper("-")) {
+        unique_ptr<Expr> expr = this->parse_primary();
+        unique_ptr<Expr> zero = make_unique<NumLiteral>(0, -1, -1);
+        return make_unique<OpExpr>("-", move(zero), move(expr), line, col);
+    }else
         this->report_error("Syntax error");
     return nullptr; // Not reached
 }

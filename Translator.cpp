@@ -84,6 +84,12 @@ void Translator::translate_expr(string *s, Expr *e)
                     " set"+TypeConverter::operation_to_string(o) +"     cl\n"
                     " mov       [rsp], rcx\n";
                 break;
+            case Operation::And:
+                // translating goes here
+                break;
+            case Operation::Or:
+                // translating goes here
+                break;
             default:
                 throw runtime_error("Unknown operator");
                 break;

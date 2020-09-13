@@ -306,6 +306,7 @@ class Program {
 // SCANNER
 class Scanner {
     char getc();
+    void consume_ws();
     void report_error(string message);
     int line = 1;
     int column = 1;

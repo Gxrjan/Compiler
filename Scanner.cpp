@@ -18,7 +18,12 @@ Token* Scanner::peek_token()
     return this->next.get();
 }
 
-
+void Scanner::consume_ws()
+{
+    while (isspace(cin.peek())) {
+        this->getc();
+    }
+}
 
 unique_ptr<Token> Scanner::next_token() {
     if (this->next) {
@@ -27,18 +32,13 @@ unique_ptr<Token> Scanner::next_token() {
     }
     char c;
     //cin >> ws; // Consume leading whitespace
-    while (isspace(cin.peek())) {
-        this->getc();
-    }
-
+    this->consume_ws();
     if (cin.peek() == '/') {
         this->getc();
         if (cin.peek() == '/') {
             this->getc();
             while ((c=this->getc())!='\n' && c != EOF) {}
-            while (isspace(cin.peek())) {
-                this->getc();
-            }
+            this->consume_ws();
         } else 
             return make_unique<OperToken>("/");
     }
@@ -72,7 +72,7 @@ unique_ptr<Token> Scanner::next_token() {
     }
 
 
-    if (c == '+' || c == '-' || c == '*' || c == '/' || c == '%') {
+    if (c == '+' || c == '-' || c == '*' || c == '%') {
         return make_unique<OperToken>(string{c});
     }
 

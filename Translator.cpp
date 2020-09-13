@@ -37,21 +37,28 @@ void Translator::translate_op_expr(string *s, OpExpr *expr)
         string label_id = std::to_string(this->label_id++);
         switch((o = TypeConverter::string_to_operation(expr->op))) {
             case Operation::And:
-                // translating goes here
+                *s += // asm comment 
+                    "; " + expr->left->to_string() + "\n";
                 this->translate_expr(s, expr->left.get());
                 *s +=
                     " cmp       qword [rsp], 0\n"
                     " je        end"+label_id+"\n"
                     " pop       rax\n";
+                *s += // asm comment 
+                    "; " + expr->right->to_string() + "\n";
                 this->translate_expr(s, expr->right.get());
                 break;
             case Operation::Or:
                 // translating goes here
+                *s += // asm comment 
+                    "; " + expr->left->to_string() + "\n";
                 this->translate_expr(s, expr->left.get());
                 *s +=
                     " cmp       qword [rsp], 1\n"
                     " je        end"+label_id+"\n"
                     " pop       rax\n";
+                *s += // asm comment 
+                    "; " + expr->right->to_string() + "\n";
                 this->translate_expr(s, expr->right.get());
                 break;
             default:
@@ -63,7 +70,11 @@ void Translator::translate_op_expr(string *s, OpExpr *expr)
             "end"+label_id+":\n";
 
     } else {
+        *s += // asm comment 
+            "; " + expr->left->to_string() + "\n";
         this->translate_expr(s, expr->left.get());
+        *s += // asm comment 
+            "; " + expr->right->to_string() + "\n";
         this->translate_expr(s, expr->right.get());
         Operation o;
         switch((o = TypeConverter::string_to_operation(expr->op))) {

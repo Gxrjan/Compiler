@@ -33,11 +33,10 @@ void Translator::translate_expr(string *s, Expr *e)
     }
 
 
-    if (e->isOpExpr(&op, &left, &right)) {
-        translate_expr(s, left);
-        translate_expr(s, right);
+    if (e->isOpExpr(&op, &left, &right) && op != "&&" && op != "||") {
+        this->translate_expr(s, left);
+        this->translate_expr(s, right);
         Operation o;
-        string label_id;
         switch((o = TypeConverter::string_to_operation(op))) {
             case Operation::Add:
                 *s += 
@@ -85,44 +84,65 @@ void Translator::translate_expr(string *s, Expr *e)
                     " set"+TypeConverter::operation_to_string(o) +"     cl\n"
                     " mov       [rsp], rcx\n";
                 break;
+            default:
+                throw runtime_error("Unknown operator");
+                break;
+        }
+    } else {
+        Operation o;
+        string label_id = std::to_string(this->label_id++);
+        switch((o = TypeConverter::string_to_operation(op))) {
             case Operation::And:
                 // translating goes here
-                label_id = std::to_string(this->label_id++);
+                this->translate_expr(s, left);
                 *s +=
                     " pop       rax\n"
                     " mov       rcx, 1\n"
                     " cmp       rax, rcx\n"
-                    " jl        ret"+label_id+"\n"
-                    " pop       rax\n"
-                    " cmp       rax, rcx\n"
-                    " jl        ret"+label_id+"\n"
-                    " push      1\n"
-                    " jmp       end"+label_id+"\n"
-                    "ret"+label_id+":\n"
-                    " push      0\n"
-                    "end"+label_id+":\n";
+                    " jl        ret"+label_id+"\n";
+
+                    this->translate_expr(s, right);
+
+                    *s +=
+                        " pop       rax\n"
+                        " mov       rcx, 1\n"
+                        " cmp       rax, rcx\n"
+                        " jl        ret"+label_id+"\n"
+                        " push      1\n"
+                        " jmp       end"+label_id+"\n";
+
+                    *s +=
+                        "ret"+label_id+":\n"
+                        " push      0\n";
+
                 break;
             case Operation::Or:
                 // translating goes here
-                label_id = std::to_string(this->label_id++);
+                this->translate_expr(s, left);
+                *s +=
+                    " pop       rax\n"
+                    " mov       rcx, 0\n"
+                    " cmp       rax, rcx\n"
+                    " jg        ret"+label_id+"\n";
+                this->translate_expr(s, right);
                 *s +=
                     " pop       rax\n"
                     " mov       rcx, 0\n"
                     " cmp       rax, rcx\n"
                     " jg        ret"+label_id+"\n"
-                    " pop       rax\n"
-                    " cmp       rax, rcx\n"
-                    " jg        ret"+label_id+"\n"
                     " push      0\n"
-                    " jmp       end"+label_id+"\n"
+                    " jmp       end"+label_id+"\n";
+                *s +=
                     "ret"+label_id+":\n"
-                    " push      1\n"
-                    "end"+label_id+":\n";
+                    " push      1\n";
                 break;
             default:
                 throw runtime_error("Unknown operator");
                 break;
+            
         }
+        *s +=
+            "end"+label_id+":\n";
     }
 }
 

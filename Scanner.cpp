@@ -74,9 +74,9 @@ unique_ptr<Token> Scanner::next_token() {
         }
         return make_unique<NumToken>(stol(num));
     }
-    if (isalpha(c)) {
+    if (isalpha(c) || c == '_') {
         string name = { c };
-        while (isalnum(cin.peek())) {
+        while (isalnum(cin.peek()) || cin.peek() == '_') {
             c = this->getc();
             name = name + c;
         }

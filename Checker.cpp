@@ -48,7 +48,7 @@ Type Checker::check_expr(Expr *expr, Block *b)
         
         if (op == "&&" || op == "||") {
             if (left_type != Type::Bool || right_type != Type::Bool)
-                this->report_error(expr->line, expr->col, "operands must e bool");
+                this->report_error(expr->line, expr->col, "operands must be bool");
             return Type::Bool;
         } else {
             if (left_type != Type::Int || right_type != Type::Int)

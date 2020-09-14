@@ -73,3 +73,10 @@ KeywordToken::KeywordToken(string name) { this->name = name; }
 bool KeywordToken::isKeyword(string name) { return this->name == name; }
 string KeywordToken::to_string() { return "Keyword Token: "+ this->name; }
 
+
+CharToken::CharToken(char16_t c) { this->c = c; }
+string CharToken::to_string() { return "char token"; }
+bool CharToken::isChar(char16_t *c) {
+    *c = this->c;
+    return true;
+}

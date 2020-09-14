@@ -47,6 +47,17 @@ unique_ptr<Token> Scanner::next_token() {
     if ((c=this->getc())==EOF)
         return nullptr;
     
+    if (c == '\'') {
+        char16_t wc = (char16_t)this->getc();
+        if (wc && wc != '\n' && wc != '\'') {
+            c = this->getc();
+            if (c != '\'')
+                this->report_error("' expected after character");
+            return make_unique<CharToken>(wc);
+        } else {
+            this->report_error("char syntax error");
+        }
+    }
      
     if (c == '&' || c == '|') {
         char nc = cin.peek();
@@ -69,7 +80,7 @@ unique_ptr<Token> Scanner::next_token() {
                 return make_unique<SymbolToken>(string{c});     // !
         }
     }
-
+    
 
     if (c == '+' || c == '-' || c == '*' || c == '%') {
         return make_unique<OperToken>(string{c});
@@ -86,7 +97,7 @@ unique_ptr<Token> Scanner::next_token() {
             c = this->getc();
             num = num + c;
         }
-        return make_unique<NumToken>(stol(num));
+        return make_unique<NumToken>(stoll(num));
     }
     if (isalpha(c) || c == '_') {
         string name = { c };
@@ -98,6 +109,8 @@ unique_ptr<Token> Scanner::next_token() {
             return make_unique<TypeToken>(Type::Bool);
         if (name == "int")
             return make_unique<TypeToken>(Type::Int);
+        if (name == "char")
+            return make_unique<TypeToken>(Type::Char);
         if (name == "true")
             return make_unique<BoolToken>(true);
         if (name == "false")

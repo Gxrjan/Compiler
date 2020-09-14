@@ -1,6 +1,7 @@
 Type ->
         | "int"
         | "bool"
+        | "char"
 
 
 Program ->
@@ -38,9 +39,13 @@ Expression ->
 
 Primary ->
         | '(' Expression ')' 
-        | number 
+        | number
+        | ''' character ''' 
         | Id 
         | '!' Primary
         | '-' Primary
 
 BinaryOp -> '&&' | '||' | '==' | '!=' | '<' | '>' | '<=' | '>=' | '+' | '-' | '*' | '/' | '%';
+
+character ->
+        | any character other than a single quote or new line

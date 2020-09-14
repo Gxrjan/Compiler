@@ -14,7 +14,7 @@
 
 using namespace std;
 using Id = string;
-enum class Type { Bool, Int };
+enum class Type { Bool, Int, Char };
 enum class Operation {
     Add,
     Sub,
@@ -41,6 +41,9 @@ class TypeConverter {
                 break;
             case Type::Bool:
                 return "bool";
+                break;
+            case Type::Char:
+                return "char";
                 break;
             default:
                 throw runtime_error("Unknown Type");
@@ -107,6 +110,7 @@ class Token {
     virtual bool isKeyword(string name) { return false; }
     virtual bool isType(Type *t) { return false; }
     virtual bool isOper(string op) { return false; }
+    virtual bool isChar(char16_t *c) { return false; }
 };
 
 class NumToken : public Token {
@@ -171,6 +175,14 @@ class TypeToken : public Token {
     string to_string() override;
 };
 
+class CharToken : public Token {
+  public:
+    char16_t c;
+    CharToken(char16_t c);
+    string to_string();
+    bool isChar(char16_t *c) override;
+};
+
 
 // EXPRESSION
 class Expr {  // abstract base class
@@ -199,6 +211,13 @@ class BoolLiteral : public Expr {
     BoolLiteral(bool b, int line, int col);
     string to_string() override;
     bool isBoolLiteral(bool *b) override;
+};
+
+class CharLiteral : public Expr {
+  public:
+    char16_t c;
+    CharLiteral(char16_t, int line, int col);
+    string to_string() override;
 };
 
 

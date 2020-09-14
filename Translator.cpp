@@ -263,6 +263,8 @@ void Translator::translate_statement(string *s, Statement *statement, string loo
         this->translate_for_statement(s, for_s);
     } else if (dynamic_cast<BreakStatement *>(statement)) {
         // Translation
+        *s += // asm comment
+            ";break;\n";
         *s +=
             " jmp       loop_end"+loop_end_label+"\n";
     } else {

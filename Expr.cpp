@@ -39,6 +39,16 @@ bool BoolLiteral::isBoolLiteral(bool *b)
     return true;
 }
 
+CharLiteral::CharLiteral(char16_t c, int line, int col) 
+{ 
+    this->c = c; 
+    this->line = line;
+    this->col = col;
+}
+string CharLiteral::to_string() 
+{
+    return "char"; 
+}
 
 OpExpr::OpExpr
 (string op, unique_ptr<Expr> left, unique_ptr<Expr> right, int line, int col) 

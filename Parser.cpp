@@ -34,7 +34,7 @@ unique_ptr<Expr> Parser::parse_primary() {
     Id id;
     int line = this->scan->last_line;
     int col = this->scan->last_column;
-    char16_t wc;
+    char wc;
     unique_ptr<Token> t = this->scan->next_token();
     if (t->isSymbol("(")) {
         unique_ptr<Expr> expr = this->parse_expr();

@@ -39,7 +39,7 @@ bool BoolLiteral::isBoolLiteral(bool *b)
     return true;
 }
 
-CharLiteral::CharLiteral(char16_t c, int line, int col) 
+CharLiteral::CharLiteral(char c, int line, int col) 
 { 
     this->c = c; 
     this->line = line;
@@ -47,7 +47,7 @@ CharLiteral::CharLiteral(char16_t c, int line, int col)
 }
 string CharLiteral::to_string() 
 {
-    return "char"; 
+    return "'"+string{this->c}+"'"; 
 }
 
 OpExpr::OpExpr

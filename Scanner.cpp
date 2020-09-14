@@ -48,7 +48,7 @@ unique_ptr<Token> Scanner::next_token() {
         return nullptr;
     
     if (c == '\'') {
-        char16_t wc = (char16_t)this->getc();
+        char wc = this->getc();
         if (wc && wc != '\n' && wc != '\'') {
             c = this->getc();
             if (c != '\'')

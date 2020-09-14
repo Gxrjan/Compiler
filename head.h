@@ -110,7 +110,7 @@ class Token {
     virtual bool isKeyword(string name) { return false; }
     virtual bool isType(Type *t) { return false; }
     virtual bool isOper(string op) { return false; }
-    virtual bool isChar(char16_t *c) { return false; }
+    virtual bool isChar(char *c) { return false; }
 };
 
 class NumToken : public Token {
@@ -177,10 +177,10 @@ class TypeToken : public Token {
 
 class CharToken : public Token {
   public:
-    char16_t c;
-    CharToken(char16_t c);
+    char c;
+    CharToken(char c);
     string to_string();
-    bool isChar(char16_t *c) override;
+    bool isChar(char *c) override;
 };
 
 
@@ -215,8 +215,8 @@ class BoolLiteral : public Expr {
 
 class CharLiteral : public Expr {
   public:
-    char16_t c;
-    CharLiteral(char16_t, int line, int col);
+    char c;
+    CharLiteral(char, int line, int col);
     string to_string() override;
 };
 

@@ -54,16 +54,19 @@ Type Checker::check_expr(Expr *expr, Block *b)
                 this->report_error(expr->line, expr->col, "operands must be bool");
             return Type::Bool;
         } else if (op == "==" || op == "!=") {
-            if (left_type != right_type)
-                this->report_error(expr->line, expr->col, "operands must be of the same type");
+            if (left_type == Type::Bool || right_type == Type::Bool)
+                this->report_error(expr->line, expr->col, "operands must be int or char");
             return Type::Bool;
                 
         } else if (op == "<" || op == ">" || op == "<=" || op == ">="){
             if (left_type == Type::Bool || right_type == Type::Bool)
                 this->report_error(expr->line, expr->col, "operands must be int or char");
             return Type::Bool;
-        } else 
+        } else { 
+            if (left_type == Type::Bool || right_type == Type::Bool)
+                this->report_error(expr->line, expr->col, "operands must int or char");
             return Type::Int;
+        }
     }
     throw runtime_error("Unrecognized expression");
 }

@@ -119,3 +119,6 @@ string ForStatement::to_string()
             this->body->to_string() + "\n}";
 }
 
+
+BreakStatement::BreakStatement(int line, int col) : Statement(line, col) {}
+string BreakStatement::to_string() { return "break"; }

@@ -293,6 +293,11 @@ class ForStatement : public Statement {
     string to_string() override;
 };
 
+class BreakStatement : public Statement {
+    BreakStatement(int line, int col);
+    string to_string() override;
+};
+
 
 // Program
 class Program {

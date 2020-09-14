@@ -236,9 +236,12 @@ unique_ptr<Statement> Parser::parse_statement()
     // While
     if ((s=this->try_parse_while()))
         return s;
-
+    
+    // For
     if ((s=this->try_parse_for()))
         return s;
+
+
     this->report_error("Statement expected");
     return nullptr; // Unreached
 }

@@ -84,20 +84,20 @@ void Checker::check_assignment(Assignment *asgn, Block *b)
         this->report_error(asgn->expr->line, asgn->expr->col, t_string + " expected");
 }
 
-void Checker::check_if_statement(IfStatement *st, Block *b)
+void Checker::check_if_statement(IfStatement *st, Block *b, bool in_loop)
 {
     if (this->check_expr(st->cond.get(), b) != Type::Bool)
         this->report_error(st->cond->line, st->cond->col, "if statement requires bool");
-    this->check_statement(st->if_s.get(), b);
+    this->check_statement(st->if_s.get(), b, in_loop);
     if (st->else_s)
-        this->check_statement(st->else_s.get(), b);
+        this->check_statement(st->else_s.get(), b, in_loop);
 }
 
 void Checker::check_while_statement(WhileStatement *st, Block *b)
 {
     if (this->check_expr(st->cond.get(), b) != Type::Bool)
         this->report_error(st->cond->line, st->cond->col, "while statement requires bool");
-    this->check_statement(st->statement.get(), b);
+    this->check_statement(st->statement.get(), b, true);
 }
 
 void Checker::check_for_statement(ForStatement *for_s, Block *b)
@@ -115,13 +115,13 @@ void Checker::check_for_statement(ForStatement *for_s, Block *b)
     this->check_assignment(for_s->iter.get(), b);
 
     // Checking body
-    this->check_statement(for_s->body.get(), b);
+    this->check_statement(for_s->body.get(), b, true);
 
     // Removing id after for statement is over
     b->variables.erase(for_s->init->id);
 }
 
-void Checker::check_statement(Statement *s, Block *b)
+void Checker::check_statement(Statement *s, Block *b, bool in_loop)
 {
     if (auto dec = dynamic_cast<Declaration *>(s)) {
         this->check_declaration(dec, b);
@@ -130,16 +130,19 @@ void Checker::check_statement(Statement *s, Block *b)
     }else if (auto print = dynamic_cast<Print *>(s)) {
         this->check_expr(print->expr.get(), b);
     } else if (auto st = dynamic_cast<IfStatement *>(s)) {
-        this->check_if_statement(st, b);
+        this->check_if_statement(st, b, in_loop);
     } else if (auto st = dynamic_cast<WhileStatement *>(s)) {
         this->check_while_statement(st, b); 
     } else if (auto for_s = dynamic_cast<ForStatement *>(s)) {
         this->check_for_statement(for_s, b);
-    } else{
+    } else if (auto br = dynamic_cast<BreakStatement *>(s)) { 
+        if (!in_loop)
+            this->report_error(br->line, br->col, "break outside of loop");
+    } else {
         Block *b1 = dynamic_cast<Block *>(s);
         if (b1) {
             b1->parent = b;
-            this->check_block(b1);
+            this->check_block(b1, in_loop);
         } else
             throw runtime_error("Unknown statement type");
     }
@@ -147,17 +150,17 @@ void Checker::check_statement(Statement *s, Block *b)
 }
 
 
-void Checker::check_block(Block *b)
+void Checker::check_block(Block *b, bool in_loop)
 {
 
     for (auto &s : b->statements) {
-        this->check_statement(s.get(), b);
+        this->check_statement(s.get(), b, in_loop);
     }
 }
 
 void Checker::check_program(Program *p)
 {
-    this->check_block(p->block.get());
+    this->check_block(p->block.get(), false);
 }
 
 

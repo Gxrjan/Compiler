@@ -261,6 +261,8 @@ void Translator::translate_statement(string *s, Statement *statement)
         this->translate_while_statement(s, st);
     } else if (auto for_s = dynamic_cast<ForStatement *>(statement)) {
         this->translate_for_statement(s, for_s);
+    } else if (auto br = dynamic_cast<BreakStatement *>(statement)) {
+        // Translation
     } else {
         throw runtime_error("Unknown statement");
     }

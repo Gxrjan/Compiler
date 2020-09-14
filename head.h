@@ -294,6 +294,7 @@ class ForStatement : public Statement {
 };
 
 class BreakStatement : public Statement {
+  public:
     BreakStatement(int line, int col);
     string to_string() override;
 };
@@ -342,6 +343,7 @@ class Parser {
     unique_ptr<ForStatement> try_parse_for();
     unique_ptr<Statement> parse_statement();
     unique_ptr<Block> try_parse_block();
+    unique_ptr<BreakStatement> try_parse_break();
     unique_ptr<Block> parse_outer_block();
     void check_expr(Expr *expr);
     void expect(string c);
@@ -358,11 +360,11 @@ class Checker {
     Type check_expr(Expr *expr, Block *b);
     void check_declaration(Declaration *dec, Block *b);
     void check_assignment(Assignment *asgn, Block *b);
-    void check_if_statement(IfStatement *st, Block *b);
+    void check_if_statement(IfStatement *st, Block *b, bool in_loop);
     void check_while_statement(WhileStatement *st, Block *b);
     void check_for_statement(ForStatement *for_s, Block *b);
-    void check_statement(Statement *s, Block *b);
-    void check_block(Block *b);
+    void check_statement(Statement *s, Block *b, bool in_loop);
+    void check_block(Block *b, bool in_loop);
     void report_error(int line, int col, string message);
   public:
     void check_program(Program *p);

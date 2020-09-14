@@ -203,6 +203,19 @@ unique_ptr<ForStatement> Parser::try_parse_for()
     return nullptr;
 }
 
+unique_ptr<BreakStatement> Parser::try_parse_break()
+{
+    Token *t = this->scan->peek_token();
+    if (t && t->isKeyword("break")) {
+        this->scan->next_token();
+        int line = this->scan->last_line;
+        int col = this->scan->last_column;
+        this->expect(";");
+        return make_unique<BreakStatement>(line, col);
+    }
+    return nullptr;
+}
+
 unique_ptr<Statement> Parser::parse_statement()
 {
     unique_ptr<Statement> s;
@@ -239,6 +252,10 @@ unique_ptr<Statement> Parser::parse_statement()
     
     // For
     if ((s=this->try_parse_for()))
+        return s;
+
+    // Break
+    if ((s=this->try_parse_break()))
         return s;
 
 

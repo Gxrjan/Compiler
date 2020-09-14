@@ -19,6 +19,7 @@ Statement ->
         | 'if' '(' CompExpr ')' Statement [ 'else' Statement ]
         | 'while' '(' CompExpr ')' Statement
         | 'for' '(' Declaration ';' Expression ';' Assignment ')' Statement
+        | 'break' ';'
 
 
 Declaration ->

@@ -383,11 +383,11 @@ class Translator {
     void translate_declaration(string *s, Declaration *dec);
     void translate_assignment(string *s, Assignment *asgn);
     void translate_print(string *s, Print *p);
-    void translate_if_statement(string *s, IfStatement *st);
+    void translate_if_statement(string *s, IfStatement *st, string loop_end_label);
     void translate_while_statement(string *s, WhileStatement *st);
     void translate_for_statement(string *s, ForStatement *for_s);
-    void translate_statement(string *s, Statement *statement);
-    void translate_block(string *s, Block *b);
+    void translate_statement(string *s, Statement *statement, string loop_end_label);
+    void translate_block(string *s, Block *b, string loop_end_label);
   public:
     string translate_program(Program *p);
 };

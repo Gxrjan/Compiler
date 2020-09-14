@@ -178,7 +178,7 @@ void Translator::translate_print(string *s, Print *p)
         " call      printf\n";
 }
 
-void Translator::translate_if_statement(string *s, IfStatement *st)
+void Translator::translate_if_statement(string *s, IfStatement *st, string loop_end_label)
 {
     string label_id = std::to_string(this->label_id++);
     *s += // asm comment
@@ -189,7 +189,7 @@ void Translator::translate_if_statement(string *s, IfStatement *st)
         " pop       rax\n"
         " cmp       rax, 0\n"
         " je        else_s"+label_id+"\n";
-    this->translate_statement(s, st->if_s.get());
+    this->translate_statement(s, st->if_s.get(), loop_end_label);
     if (!st->else_s) {
         *s +=
             "else_s"+label_id+":\n";
@@ -197,7 +197,7 @@ void Translator::translate_if_statement(string *s, IfStatement *st)
         *s +=
             " jmp   end_s"+label_id+"\n"
             "else_s"+label_id+":\n";
-        this->translate_statement(s, st->else_s.get());
+        this->translate_statement(s, st->else_s.get(), loop_end_label);
         *s +=
             "end_s"+label_id+":\n";
     }
@@ -215,7 +215,7 @@ void Translator::translate_while_statement(string *s, WhileStatement *st)
         " pop       rax\n"
         " cmp       rax, 0\n"
         " je        loop_end"+label_id+"\n";
-    this->translate_statement(s, st->statement.get());
+    this->translate_statement(s, st->statement.get(), label_id);
     *s +=
         " jmp       loop"+label_id+"\n"
         "loop_end"+label_id+":\n";
@@ -237,7 +237,7 @@ void Translator::translate_for_statement(string *s, ForStatement *for_s)
         " pop       rax\n"
         " cmp       rax, 0\n"
         " je        loop_end"+label_id+"\n";
-    this->translate_statement(s, for_s->body.get());
+    this->translate_statement(s, for_s->body.get(), label_id);
     this->translate_assignment(s, for_s->iter.get());
     *s +=
         " jmp       loop"+label_id+"\n"
@@ -245,7 +245,7 @@ void Translator::translate_for_statement(string *s, ForStatement *for_s)
     
 }
 
-void Translator::translate_statement(string *s, Statement *statement)
+void Translator::translate_statement(string *s, Statement *statement, string loop_end_label)
 {
     if (auto dec = dynamic_cast<Declaration *>(statement)) {
         this->translate_declaration(s, dec);
@@ -254,24 +254,26 @@ void Translator::translate_statement(string *s, Statement *statement)
     } else if (auto p = dynamic_cast<Print *>(statement)) {
         this->translate_print(s, p);
     } else if (auto b = dynamic_cast<Block *>(statement)) {
-        this->translate_block(s, b);
+        this->translate_block(s, b, loop_end_label);
     } else if (auto st = dynamic_cast<IfStatement *>(statement)) {
-        this->translate_if_statement(s, st);
+        this->translate_if_statement(s, st, loop_end_label);
     } else if (auto st = dynamic_cast<WhileStatement *>(statement)) {
         this->translate_while_statement(s, st);
     } else if (auto for_s = dynamic_cast<ForStatement *>(statement)) {
         this->translate_for_statement(s, for_s);
-    } else if (auto br = dynamic_cast<BreakStatement *>(statement)) {
+    } else if (dynamic_cast<BreakStatement *>(statement)) {
         // Translation
+        *s +=
+            " jmp       loop_end"+loop_end_label+"\n";
     } else {
         throw runtime_error("Unknown statement");
     }
 } 
 
-void Translator::translate_block(string *s, Block *b)
+void Translator::translate_block(string *s, Block *b, string loop_end_label)
 {
     for (auto &statement : b->statements)
-        this->translate_statement(s, statement.get());
+        this->translate_statement(s, statement.get(), loop_end_label);
 }
 
 string Translator::translate_program(Program* prog)
@@ -287,7 +289,7 @@ string Translator::translate_program(Program* prog)
     result += " push    rbp\n";
     result += " mov     rbp, rsp\n";
 
-    this->translate_block(&result, prog->block.get());
+    this->translate_block(&result, prog->block.get(), "");
 
     result += 
         " mov     rsp, rbp\n"

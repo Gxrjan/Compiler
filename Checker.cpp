@@ -20,19 +20,19 @@ Declaration *Checker::look_up(Id id, Block *b)
 }
 
 
-
 Type Checker::check_expr(Expr *expr, Block *b)
+{
+    return expr->type = this->check_expr_type(expr, b);
+}
+
+Type Checker::check_expr_type(Expr *expr, Block *b)
 {
     long long num;
     bool bl;
-    if (expr->isNumLiteral(&num)) {
-        expr->type = Type::Int;
-        return expr->type;
-    }
-    if (expr->isBoolLiteral(&bl)) {
-        expr->type = Type::Bool;
-        return expr->type;
-    }
+    if (expr->isNumLiteral(&num))
+        return Type::Int;
+    if (expr->isBoolLiteral(&bl))
+        return Type::Bool;
 
     string name;
 
@@ -40,14 +40,11 @@ Type Checker::check_expr(Expr *expr, Block *b)
         Declaration *result = this->look_up(name, b);
         if (!result)
             this->report_error(expr->line, expr->col, "variable hasn't been declared");
-        expr->type = result->type;
         return result->type;
     }
 
-    if (dynamic_cast<CharLiteral *>(expr)) {
-        expr->type = Type::Char;
-        return expr->type;
-    }
+    if (dynamic_cast<CharLiteral *>(expr))
+        return Type::Char;
     
     Expr* left;
     Expr* right;
@@ -59,23 +56,19 @@ Type Checker::check_expr(Expr *expr, Block *b)
         if (op == "&&" || op == "||") {
             if (left_type != Type::Bool || right_type != Type::Bool)
                 this->report_error(expr->line, expr->col, "operands must be bool");
-            expr->type = Type::Bool;
-            return expr->type;
+            return Type::Bool;
         } else if (op == "==" || op == "!=") {
             if (left_type == Type::Bool || right_type == Type::Bool)
                 this->report_error(expr->line, expr->col, "operands must be int or char");
-            expr->type =  Type::Bool;
-            return expr->type;
+            return Type::Bool;
         } else if (op == "<" || op == ">" || op == "<=" || op == ">="){
             if (left_type == Type::Bool || right_type == Type::Bool)
                 this->report_error(expr->line, expr->col, "operands must be int or char");
-            expr->type =  Type::Bool;
-            return expr->type;
+            return Type::Bool;
         } else { 
             if (left_type == Type::Bool || right_type == Type::Bool)
                 this->report_error(expr->line, expr->col, "operands must int or char");
-            expr->type =  Type::Int;
-            return expr->type;
+            return Type::Int;
         }
     }
     throw runtime_error("Unrecognized expression");
@@ -108,8 +101,17 @@ void Checker::check_assignment(Assignment *asgn, Block *b)
     if (!result)
         this->report_error(asgn->line, asgn->col, "variable hasn't been declared");
     string t_string = TypeConverter::enum_to_string(result->type);
-    if (result->type != this->check_expr(asgn->expr.get(), b))
-        this->report_error(asgn->expr->line, asgn->expr->col, t_string + " expected");
+    Type expr_type = this->check_expr(asgn->expr.get(), b);
+    switch (result->type) {
+        case Type::Int:
+            if (expr_type != Type::Int && expr_type != Type::Char)
+                this->report_error(asgn->expr->line, asgn->expr->col, "int or char expected");
+            break;
+        default:
+            if (result->type != this->check_expr(asgn->expr.get(), b))
+                this->report_error(asgn->expr->line, asgn->expr->col, t_string + " expected");
+            break;
+    }
 }
 
 void Checker::check_if_statement(IfStatement *st, Block *b, bool in_loop)

@@ -1,7 +1,44 @@
 #include "head.h"
 
 
+string Translator::operation_to_cc(Operation op)
+{
+    switch (op) {
+        case Operation::L:
+            return "l";
+            break;
+        case Operation::G:
+            return "g";
+            break;
+        case Operation::Le:
+            return "le";
+            break;
+        case Operation::Ge:
+            return "ge";
+            break;
+        case Operation::E:
+            return "e";
+            break;
+        case Operation::Ne:
+            return "ne";
+            break;
+        default:
+            throw runtime_error("Uknown comparing operation");
+            break;
+    }
+}
 
+string Translator::type_to_cc(Type t)
+{
+    switch (t) {
+        case Type::Char:
+            return "c";
+            break;
+        default:
+            return "i";
+            break;
+        }
+}
 
 void Translator::translate_num_literal(string *s, NumLiteral *l)
 {
@@ -124,7 +161,7 @@ void Translator::translate_op_expr(string *s, OpExpr *expr)
                     " pop       rax\n"
                     " mov       rcx, 0\n"
                     " cmp       qword [rsp], rax\n"
-                    " set"+TypeConverter::operation_to_string(o) +"     cl\n"
+                    " set"+this->operation_to_cc(o) +"     cl\n"
                     " mov       [rsp], rcx\n";
                 break;
             default:
@@ -180,7 +217,7 @@ void Translator::translate_print(string *s, Print *p)
     this->translate_expr(s, p->expr.get());
     *s +=
         " mov       rax, 0\n"
-        " mov       rdi, msg"+TypeConverter::type_to_cc(p->expr->type)+"\n"
+        " mov       rdi, msg"+this->type_to_cc(p->expr->type)+"\n"
         " pop       rsi\n"
         " call      printf\n";
 }

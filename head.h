@@ -69,44 +69,7 @@ class TypeConverter {
         throw runtime_error("Unknown Operation");
     }
 
-    static string operation_to_string(Operation op)
-    {
-        switch (op) {
-            case Operation::L:
-                return "l";
-                break;
-            case Operation::G:
-                return "g";
-                break;
-            case Operation::Le:
-                return "le";
-                break;
-            case Operation::Ge:
-                return "ge";
-                break;
-            case Operation::E:
-                return "e";
-                break;
-            case Operation::Ne:
-                return "ne";
-                break;
-            default:
-                throw runtime_error("Uknown comparing operation");
-                break;
-        }
-    }
     
-    static string type_to_cc(Type t)
-    {
-        switch (t) {
-            case Type::Char:
-                return "c";
-                break;
-            default:
-                return "i";
-                break;
-            }
-    }
 };
 
 
@@ -390,6 +353,7 @@ class Parser {
 class Checker {
     Declaration *look_up(Id id, Block *b);
     Type check_expr(Expr *expr, Block *b);
+    Type check_expr_type(Expr *expr, Block *b);
     void check_declaration(Declaration *dec, Block *b);
     void check_assignment(Assignment *asgn, Block *b);
     void check_if_statement(IfStatement *st, Block *b, bool in_loop);
@@ -421,6 +385,8 @@ class Translator {
     void translate_for_statement(string *s, ForStatement *for_s);
     void translate_statement(string *s, Statement *statement, string loop_end_label);
     void translate_block(string *s, Block *b, string loop_end_label);
+    string type_to_cc(Type t);
+    string operation_to_cc(Operation op);
   public:
     string translate_program(Program *p);
 };

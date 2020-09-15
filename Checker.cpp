@@ -1,5 +1,20 @@
 #include "head.h"
 
+void Checker::verify_assignment(Declaration *dec, Expr *expr, Block *b)
+{
+    string t_string = TypeConverter::enum_to_string(dec->type);
+    Type expr_type = this->check_expr(expr, b);
+    switch (dec->type) {
+        case Type::Int:
+            if (expr_type != Type::Int && expr_type != Type::Char)
+                this->report_error(expr->line, expr->col, "int or char expected");
+            break;
+        default:
+            if (dec->type != this->check_expr(dec->expr.get(), b))
+                this->report_error(expr->line, expr->col, t_string + " expected");
+            break;
+    }
+}
 
 void Checker::report_error(int line, int col, string message)
 {
@@ -77,20 +92,9 @@ Type Checker::check_expr_type(Expr *expr, Block *b)
 
 void Checker::check_declaration(Declaration *dec, Block *b)
 {
-    string t_string = TypeConverter::enum_to_string(dec->type);
-    Type expr_type = this->check_expr(dec->expr.get(), b);
-    switch (dec->type) {
-        case Type::Int:
-            if (expr_type != Type::Int && expr_type != Type::Char)
-                this->report_error(dec->expr->line, dec->expr->col, "int or char expected");
-            break;
-        default:
-            if (dec->type != this->check_expr(dec->expr.get(), b))
-                this->report_error(dec->expr->line, dec->expr->col, t_string + " expected");
-            break;
-    }
     if (this->look_up(dec->id, b))
         this->report_error(dec->line, dec->col, "variable has already been declared");
+    this->verify_assignment(dec, dec->expr.get(), b);
     b->variables.insert({dec->id, dec});
 }
 
@@ -100,18 +104,7 @@ void Checker::check_assignment(Assignment *asgn, Block *b)
     Declaration *result = this->look_up(asgn->id, b);
     if (!result)
         this->report_error(asgn->line, asgn->col, "variable hasn't been declared");
-    string t_string = TypeConverter::enum_to_string(result->type);
-    Type expr_type = this->check_expr(asgn->expr.get(), b);
-    switch (result->type) {
-        case Type::Int:
-            if (expr_type != Type::Int && expr_type != Type::Char)
-                this->report_error(asgn->expr->line, asgn->expr->col, "int or char expected");
-            break;
-        default:
-            if (result->type != this->check_expr(asgn->expr.get(), b))
-                this->report_error(asgn->expr->line, asgn->expr->col, t_string + " expected");
-            break;
-    }
+    this->verify_assignment(result, asgn->expr.get(), b);
 }
 
 void Checker::check_if_statement(IfStatement *st, Block *b, bool in_loop)

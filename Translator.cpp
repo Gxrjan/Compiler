@@ -177,20 +177,12 @@ void Translator::translate_print(string *s, Print *p)
 {
     *s += // asm comment 
         "; " + p->to_string() + "\n";
-    if (auto ch = dynamic_cast<CharLiteral *>(p->expr.get())) {
-        *s +=
-            " mov       rax, 0\n"
-            " mov       rdi, msgc\n"
-            " mov       rsi, \""+string{ch->c}+"\"\n"
-            " call      printf\n";
-    } else {
-        this->translate_expr(s, p->expr.get());
-        *s +=
-            " mov       rax, 0\n"
-            " mov       rdi, msgi\n"
-            " pop       rsi\n"
-            " call      printf\n";
-    }
+    this->translate_expr(s, p->expr.get());
+    *s +=
+        " mov       rax, 0\n"
+        " mov       rdi, msg"+TypeConverter::type_to_cc(p->expr->type)+"\n"
+        " pop       rsi\n"
+        " call      printf\n";
 }
 
 void Translator::translate_if_statement(string *s, IfStatement *st, string loop_end_label)

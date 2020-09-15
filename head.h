@@ -95,6 +95,18 @@ class TypeConverter {
                 break;
         }
     }
+    
+    static string type_to_cc(Type t)
+    {
+        switch (t) {
+            case Type::Char:
+                return "c";
+                break;
+            default:
+                return "i";
+                break;
+            }
+    }
 };
 
 
@@ -187,6 +199,7 @@ class CharToken : public Token {
 // EXPRESSION
 class Expr {  // abstract base class
   public:
+    Type type;
     int line, col;
     Expr();
     Expr(int line, int col);

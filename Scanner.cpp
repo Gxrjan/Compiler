@@ -1,6 +1,13 @@
 #include "head.h"
 
 
+Scanner::Scanner() {}
+
+Scanner::Scanner(char *file_name) {
+    file = ifstream(file_name, ios::in);
+}
+
+
 void Scanner::report_error(string message)
 {
     throw runtime_error("Scanner error "
@@ -20,7 +27,7 @@ Token* Scanner::peek_token()
 
 void Scanner::consume_ws()
 {
-    while (isspace(cin.peek())) {
+    while (isspace(this->peekc())) {
         this->getc();
     }
 }
@@ -32,9 +39,9 @@ unique_ptr<Token> Scanner::next_token() {
     }
     char c;
     this->consume_ws();
-    if (cin.peek() == '/') {
+    if (this->peekc() == '/') {
         this->getc();
-        if (cin.peek() == '/') {
+        if (this->peekc() == '/') {
             this->getc();
             while ((c=this->getc())!='\n' && c != EOF) {}
             return this->next_token();
@@ -60,7 +67,7 @@ unique_ptr<Token> Scanner::next_token() {
     }
      
     if (c == '&' || c == '|') {
-        char nc = cin.peek();
+        char nc = this->peekc();
         if (nc == '&' || nc == '|') {
             this->getc();
             return make_unique<OperToken>(string{c, nc});
@@ -68,7 +75,7 @@ unique_ptr<Token> Scanner::next_token() {
     }
      
     if (c == '!' || c == '=' || c == '<' || c == '>') {
-        if (cin.peek() == '=') {
+        if (this->peekc() == '=') {
             this->getc();
             return make_unique<OperToken>(string{c, '='});      // !=, ==, <=, >=
         } else {
@@ -93,7 +100,7 @@ unique_ptr<Token> Scanner::next_token() {
 
     if (isdigit(c)) {
         string num = { c };
-        while (isdigit(cin.peek())) {
+        while (isdigit(this->peekc())) {
             c = this->getc();
             num = num + c;
         }
@@ -101,7 +108,7 @@ unique_ptr<Token> Scanner::next_token() {
     }
     if (isalpha(c) || c == '_') {
         string name = { c };
-        while (isalnum(cin.peek()) || cin.peek() == '_') {
+        while (isalnum(this->peekc()) || this->peekc() == '_') {
             c = this->getc();
             name = name + c;
         }
@@ -124,9 +131,25 @@ unique_ptr<Token> Scanner::next_token() {
     return nullptr;
 }
 
+char Scanner::peekc() {
+    if (next_char)
+        return *(next_char.get());
+    next_char = make_unique<char>(this->getc());
+    return *(next_char.get()); 
+}
+
 char Scanner::getc()
 {
-    char c = cin.get();
+    if (next_char) {
+        char res = *(next_char.get());
+        next_char = nullptr;
+        return res;
+    }
+    char c;
+    if (file)
+        c = file.get();
+    else
+        c = cin.get();
     if (c== EOF)
         return c;
     if (c == '\n') {

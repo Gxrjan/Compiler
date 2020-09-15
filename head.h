@@ -11,6 +11,7 @@
 #include <fstream>
 #include <vector>
 #include <set>
+#include <cstring>
 
 using namespace std;
 using Id = string;
@@ -306,12 +307,17 @@ class Program {
 
 // SCANNER
 class Scanner {
+    unique_ptr<char> next_char=nullptr;
+    ifstream file;
     char getc();
+    char peekc();
     void consume_ws();
     void report_error(string message);
     int line = 1;
     int column = 1;
   public:
+    Scanner();
+    Scanner(char *file_name);
     int last_line = 1;     // Line number of the last token read or peeked 
     int last_column = 1;   // Column number of the last token read or peeked
     unique_ptr<Token> next = nullptr;

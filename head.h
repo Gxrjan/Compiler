@@ -396,6 +396,7 @@ class Translator {
     set<Id> variables;
     void translate_num_literal(string *s, NumLiteral *l);
     void translate_bool_literal(string *s, BoolLiteral *l);
+    void translate_char_literal(string *s, CharLiteral *l);
     void translate_variable(string *s, Variable *var);
     void translate_op_expr(string *s, OpExpr *expr);
     void translate_expr(string *s, Expr *expr);

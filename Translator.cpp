@@ -27,6 +27,12 @@ void Translator::translate_variable(string *s, Variable *v)
         " push     qword ["+v->name+"]\n";
 }
 
+void Translator::translate_char_literal(string *s, CharLiteral *l)
+{
+    *s +=
+        " push          " + std::to_string((int)l->c) + "\n";
+}
+
 void Translator::translate_op_expr(string *s, OpExpr *expr) 
 {
     if (expr->op == "&&" || expr->op == "||") {
@@ -139,6 +145,8 @@ void Translator::translate_expr(string *s, Expr *e)
         this->translate_variable(s, var);
     } else if (auto expr = dynamic_cast<OpExpr *>(e)) {
         this->translate_op_expr(s, expr);
+    } else if (auto expr = dynamic_cast<CharLiteral *>(e)) {
+        this->translate_char_literal(s, expr);
     } else
         throw runtime_error("Unknown type of expression");
 }
@@ -169,13 +177,20 @@ void Translator::translate_print(string *s, Print *p)
 {
     *s += // asm comment 
         "; " + p->to_string() + "\n";
-
-    this->translate_expr(s, p->expr.get());
-    *s +=
-        " mov       rax, 0\n"
-        " mov       rdi, msg\n"
-        " pop       rsi\n"
-        " call      printf\n";
+    if (auto ch = dynamic_cast<CharLiteral *>(p->expr.get())) {
+        *s +=
+            " mov       rax, 0\n"
+            " mov       rdi, msgc\n"
+            " mov       rsi, \""+string{ch->c}+"\"\n"
+            " call      printf\n";
+    } else {
+        this->translate_expr(s, p->expr.get());
+        *s +=
+            " mov       rax, 0\n"
+            " mov       rdi, msgi\n"
+            " pop       rsi\n"
+            " call      printf\n";
+    }
 }
 
 void Translator::translate_if_statement(string *s, IfStatement *st, string loop_end_label)
@@ -284,7 +299,8 @@ string Translator::translate_program(Program* prog)
     result += 
         "extern printf\n"
         "section .data\n"
-        " msg     db      `%lld\\n`,0\n"
+        " msgi     db      `%lld\\n`,0\n"
+        " msgc     db      `%c\\n`,0\n"
         "section .text\n"
         " global main\n"
         "main:\n";

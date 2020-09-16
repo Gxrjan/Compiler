@@ -148,7 +148,7 @@ char Scanner::getc()
         return res;
     }
     char c;
-    if (file)
+    if (file.is_open())
         c = file.get();
     else
         c = cin.get();

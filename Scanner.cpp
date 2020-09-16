@@ -132,17 +132,19 @@ unique_ptr<Token> Scanner::next_token() {
 }
 
 char Scanner::peekc() {
-    if (next_char)
-        return *(next_char.get());
-    next_char = make_unique<char>(this->getc());
-    return *(next_char.get()); 
+    if (has_next)
+        return next_char;
+    next_char = this->getc();
+    has_next = true;
+    return next_char; 
 }
 
 char Scanner::getc()
 {
-    if (next_char) {
-        char res = *(next_char.get());
-        next_char = nullptr;
+    if (has_next) {
+        char res = next_char;
+        next_char = -1;
+        has_next = false;
         return res;
     }
     char c;

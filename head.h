@@ -307,7 +307,8 @@ class Program {
 
 // SCANNER
 class Scanner {
-    unique_ptr<char> next_char=nullptr;
+    char next_char = -1;
+    bool has_next = false;
     ifstream file;
     char getc();
     char peekc();

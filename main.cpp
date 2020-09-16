@@ -3,15 +3,23 @@
 
 int main(int argc, char *argv[])
 {
+    string file_name;
     if (argc > 2) {
         cerr << "Usage: gc [file_path]" << endl;
         return -1;
     }
-    ofstream file{ "a.asm", ios::out };
-    Scanner scan;
-    if (argc == 2)
-        scan = Scanner(argv[1]);
-    int len = strlen(argv[1]);
+    if (argc == 2) {
+        file_name = string(argv[1]);
+        size_t pos;
+        if ((pos=file_name.rfind(".g"))==string::npos ||
+            file_name.length() - pos != 2) {
+            cerr << "file should have g extension" << endl;
+            return -1;
+        }
+        file_name.resize(pos);
+    }
+    ofstream file{ argc == 1 ? "a.asm" : (file_name+".asm").c_str() , ios::out };
+    Scanner scan(argc == 2 ? argv[1] : nullptr);
     Translator tran;
     unique_ptr<Program> prog = Parser(&scan).parse_program();
     Checker c;
@@ -19,12 +27,12 @@ int main(int argc, char *argv[])
     string asm_code = tran.translate_program(prog.get());
     file << asm_code;
     file.close();
-    system("make prog");
-    if (argc == 2) {
-        argv[1][len-2] = 0;
-        char cmd[256];
-        strcat(cmd, "mv prog ");
-        strcat(cmd, argv[1]);
-        system(cmd);
+    if (argc == 1)
+        system("make prog");
+    else {
+        string asm_cmd = "nasm -Werror -f elf64 -g -F dwarf "+file_name+".asm -l "+file_name+".lst";
+        string gcc_cmd = "gcc -o "+file_name+" "+file_name+".o -no-pie";
+        system(asm_cmd.c_str());
+        system(gcc_cmd.c_str());
     }
 }

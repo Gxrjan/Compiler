@@ -96,3 +96,10 @@ string ElemAccessExpr::to_string()
 {
     return this->expr->to_string() + "[" + this->index->to_string() + "]";
 }
+
+bool ElemAccessExpr::isElemAccessExpr(Expr **expr, Expr **index) 
+{ 
+    *expr = this->expr.get();
+    *index = this->index.get();
+    return true; 
+}

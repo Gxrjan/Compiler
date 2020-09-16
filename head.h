@@ -184,6 +184,7 @@ class Expr {  // abstract base class
     virtual bool isBoolLiteral(bool *b) { return false; }
     virtual bool isOpExpr(string *op, Expr **left, Expr **right) { return false; }
     virtual bool isVariable(string *name) { return false; }
+    virtual bool isElemAccessExpr(Expr **expr, Expr **index) { return false; }
 };
 
 class NumLiteral : public Expr {
@@ -241,6 +242,7 @@ class ElemAccessExpr : public Expr {
     unique_ptr<Expr> index;
     ElemAccessExpr(unique_ptr<Expr> expr, unique_ptr<Expr> index, int line, int col);
     string to_string() override;
+    bool isElemAccessExpr(Expr **expr, Expr **index) override;
 };
 
 
@@ -410,6 +412,8 @@ class Translator {
     void translate_num_literal(string *s, NumLiteral *l);
     void translate_bool_literal(string *s, BoolLiteral *l);
     void translate_char_literal(string *s, CharLiteral *l);
+    void translate_string_literal(string *s, StringLiteral *l);
+    void translate_elem_access_expr(string *s, ElemAccessExpr *expr);
     void translate_variable(string *s, Variable *var);
     void translate_op_expr(string *s, OpExpr *expr);
     void translate_expr(string *s, Expr *expr);

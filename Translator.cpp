@@ -70,6 +70,16 @@ void Translator::translate_char_literal(string *s, CharLiteral *l)
         " push          " + std::to_string((int)l->c) + "\n";
 }
 
+void Translator::translate_string_literal(string *s, StringLiteral *l)
+{
+    // Todo
+}
+
+void Translator::translate_elem_access_expr(string *s, ElemAccessExpr *e)
+{
+    // Todo
+}
+
 void Translator::translate_op_expr(string *s, OpExpr *expr) 
 {
     if (expr->op == "&&" || expr->op == "||") {
@@ -184,6 +194,10 @@ void Translator::translate_expr(string *s, Expr *e)
         this->translate_op_expr(s, expr);
     } else if (auto expr = dynamic_cast<CharLiteral *>(e)) {
         this->translate_char_literal(s, expr);
+    } else if (auto expr = dynamic_cast<StringLiteral *>(e)) {
+        this->translate_string_literal(s, expr);
+    } else if (auto expr = dynamic_cast<ElemAccessExpr *>(e)) {
+        this->translate_elem_access_expr(s, expr);
     } else
         throw runtime_error("Unknown type of expression");
 }

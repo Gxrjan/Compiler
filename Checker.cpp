@@ -60,6 +60,8 @@ Type Checker::check_expr_type(Expr *expr, Block *b)
 
     if (dynamic_cast<CharLiteral *>(expr))
         return Type::Char;
+    if (dynamic_cast<StringLiteral *>(expr))
+        return Type::String;
     
     Expr* left;
     Expr* right;
@@ -85,6 +87,17 @@ Type Checker::check_expr_type(Expr *expr, Block *b)
                 this->report_error(expr->line, expr->col, "operands must int or char");
             return Type::Int;
         }
+    }
+    
+
+    if (expr->isElemAccessExpr(&left, &right)) {
+        Type left_type = this->check_expr(left, b);
+        Type right_type = this->check_expr(right, b);
+        if (left_type != Type::String)
+            this->report_error(left->line, left->col, "[] operator is only available for strings for now");
+        if (right_type != Type::Int && right_type != Type::Char)
+            this->report_error(right->line, right->col, "[] accepts only int or char");
+        return Type::Char;
     }
     throw runtime_error("Unrecognized expression");
 }

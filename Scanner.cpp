@@ -56,9 +56,10 @@ unique_ptr<Token> Scanner::next_token() {
 
     if (c == '\"') {
         string result = "";
-        while (this->peekc() != '\"')
+        while (this->peekc() != '\"' && this->peekc() != EOF)
             result += this->getc();
-        this->getc();
+        if (this->getc() != '\"')
+            this->report_error("String must be enclosed in double quotes");
         return make_unique<StringToken>(result);
     }
     
@@ -163,7 +164,7 @@ char Scanner::getc()
         c = file.get();
     else
         c = cin.get();
-    if (c== EOF)
+    if (c == EOF)
         return c;
     if (c == '\n') {
         this->line++;

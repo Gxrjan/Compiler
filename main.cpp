@@ -27,9 +27,10 @@ int main(int argc, char *argv[])
     string asm_code = tran.translate_program(prog.get());
     file << asm_code;
     file.close();
-    if (argc == 1)
-        system("make prog");
-    else {
+    if (argc == 1) {
+	system("nasm -Werror -f elf64 -g -F dwarf a.asm -l a.lst");
+	system("gcc -o prog a.o -no-pie");
+    } else {
         string asm_cmd = "nasm -Werror -f elf64 -g -F dwarf "+file_name+".asm -l "+file_name+".lst";
         string gcc_cmd = "gcc -o "+file_name+" "+file_name+".o -no-pie";
         system(asm_cmd.c_str());

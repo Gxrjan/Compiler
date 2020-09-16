@@ -83,3 +83,11 @@ bool CharToken::isChar(char *c) {
     *c = this->c;
     return true;
 }
+
+
+StringToken::StringToken(string s) { this->s = s; }
+string StringToken::to_string() { return "String token: \"" + this->s +"\""; }
+bool StringToken::isString(string *s) {
+    *s = this->s;
+    return true;
+}

@@ -50,6 +50,17 @@ string CharLiteral::to_string()
     return "'"+string{this->c}+"'"; 
 }
 
+StringLiteral::StringLiteral(string s, int line, int col) 
+{ 
+    this->s = s; 
+    this->line = line;
+    this->col = col;
+}
+string StringLiteral::to_string() 
+{
+    return "\""+this->s+"\""; 
+}
+
 OpExpr::OpExpr
 (string op, unique_ptr<Expr> left, unique_ptr<Expr> right, int line, int col) 
 : Expr(line, col)
@@ -70,4 +81,18 @@ bool OpExpr::isOpExpr(string *op, Expr **left, Expr **right)
     *left = this->left.get();
     *right = this->right.get();
     return true;
+}
+
+ElemAccessExpr::ElemAccessExpr(unique_ptr<Expr> expr, unique_ptr<Expr> index,
+                                 int line, int col)
+{
+    this->expr = move(expr);
+    this->index = move(index);
+    this->line = line;
+    this->col = col;
+}
+
+string ElemAccessExpr::to_string()
+{
+    return this->expr->to_string() + "[" + this->index->to_string() + "]";
 }

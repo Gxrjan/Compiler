@@ -53,6 +53,14 @@ unique_ptr<Token> Scanner::next_token() {
     this->last_column = this->column;
     if ((c=this->getc())==EOF)
         return nullptr;
+
+    if (c == '\"') {
+        string result = "";
+        while (this->peekc() != '\"')
+            result += this->getc();
+        this->getc();
+        return make_unique<StringToken>(result);
+    }
     
     if (c == '\'') {
         char wc = this->getc();
@@ -93,7 +101,8 @@ unique_ptr<Token> Scanner::next_token() {
         return make_unique<OperToken>(string{c});
     }
 
-    if (c == '(' || c == ')' || c == '{' || c == '}' || c == ';') {
+    if (c == '(' || c == ')' || c == '{' || c == '}' || c == ';' ||
+        c == '[' || c == ']') {
         return make_unique<SymbolToken>(string{c});
     }
     

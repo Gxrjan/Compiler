@@ -15,7 +15,7 @@
 
 using namespace std;
 using Id = string;
-enum class Type { Bool, Int, Char };
+enum class Type { Bool, Int, Char, String };
 enum class Operation {
     Add,
     Sub,
@@ -45,6 +45,9 @@ class TypeConverter {
                 break;
             case Type::Char:
                 return "char";
+                break;
+            case Type::String:
+                return "string";
                 break;
             default:
                 throw runtime_error("Unknown Type");
@@ -87,6 +90,7 @@ class Token {
     virtual bool isType(Type *t) { return false; }
     virtual bool isOper(string op) { return false; }
     virtual bool isChar(char *c) { return false; }
+    virtual bool isString(string *s) { return false; }
 };
 
 class NumToken : public Token {
@@ -103,6 +107,14 @@ class BoolToken : public Token {
     BoolToken(bool b);
     string to_string() override;
     bool isBool(bool *b) override;
+};
+
+class StringToken : public Token {
+  public:
+    string s;
+    StringToken(string s);
+    string to_string() override;
+    bool isString(string *s) override;
 };
 
 class OperToken : public Token {
@@ -213,6 +225,22 @@ class Variable : public Expr {
     Variable(string name, int line, int col);
     string to_string() override;
     bool isVariable(string *name) override;
+};
+
+class StringLiteral : public Expr {
+  public:
+    string s;
+    StringLiteral(string s, int line, int col);
+    string to_string() override;
+};
+
+
+class ElemAccessExpr : public Expr {
+  public:
+    unique_ptr<Expr> expr;
+    unique_ptr<Expr> index;
+    ElemAccessExpr(unique_ptr<Expr> expr, unique_ptr<Expr> index, int line, int col);
+    string to_string() override;
 };
 
 

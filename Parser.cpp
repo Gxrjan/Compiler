@@ -35,6 +35,7 @@ unique_ptr<Expr> Parser::parse_primary() {
     int line = this->scan->last_line;
     int col = this->scan->last_column;
     char wc;
+    string s;
     unique_ptr<Token> t = this->scan->next_token();
     if (t->isSymbol("(")) {
         unique_ptr<Expr> expr = this->parse_expr();
@@ -55,6 +56,8 @@ unique_ptr<Expr> Parser::parse_primary() {
         return make_unique<OpExpr>("-", move(zero), move(expr), line, col);
     }else if (t->isChar(&wc)) {
         return make_unique<CharLiteral>(wc, line, col);
+    } else if (t->isString(&s)) {
+        return make_unique<StringLiteral>(s, line, col);
     } else
         this->report_error("Syntax error");
     return nullptr; // Not reached

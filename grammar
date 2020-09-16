@@ -24,10 +24,10 @@ Statement ->
 
 
 Declaration ->
-        | Type Id '=' Expression
+        | Type id '=' Expression
 
 Assignment ->
-        | Id '=' Expression
+        | id '=' Expression
        
 Print -> 
         | "print" '(' Expression ')'
@@ -36,12 +36,14 @@ Print ->
 Expression ->
         | Primary
         | Expression BinaryOp Expression
+        | Expression '[' Expression ']'
 
 Primary ->
         | '(' Expression ')' 
         | number
-        | ''' character ''' 
-        | Id 
+        | ''' character '''
+        | '"' string '"' 
+        | id 
         | '!' Primary
         | '-' Primary
 

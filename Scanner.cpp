@@ -127,6 +127,8 @@ unique_ptr<Token> Scanner::next_token() {
             return make_unique<TypeToken>(Type::Int);
         if (name == "char")
             return make_unique<TypeToken>(Type::Char);
+        if (name == "string")
+            return make_unique<TypeToken>(Type::String);
         if (name == "true")
             return make_unique<BoolToken>(true);
         if (name == "false")

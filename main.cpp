@@ -4,6 +4,7 @@
 int main(int argc, char *argv[])
 {
     string file_name;
+    string program;
     if (argc > 2) {
         cerr << "Usage: gc [file_path]" << endl;
         return -1;
@@ -17,23 +18,26 @@ int main(int argc, char *argv[])
             return -1;
         }
         file_name.resize(pos);
+        program = file_name;
     }
     ofstream file{ argc == 1 ? "a.asm" : (file_name+".asm").c_str() , ios::out };
     Scanner scan(argc == 2 ? argv[1] : nullptr);
     Translator tran;
     unique_ptr<Program> prog = Parser(&scan).parse_program();
-    Checker c;
-    c.check_program(prog.get());
-    string asm_code = tran.translate_program(prog.get());
-    file << asm_code;
-    file.close();
-    if (argc == 1) {
-	system("nasm -Werror -f elf64 -g -F dwarf a.asm -l a.lst");
-	system("gcc -o prog a.o -no-pie");
-    } else {
-        string asm_cmd = "nasm -Werror -f elf64 -g -F dwarf "+file_name+".asm -l "+file_name+".lst";
-        string gcc_cmd = "gcc -o "+file_name+" "+file_name+".o -no-pie";
-        system(asm_cmd.c_str());
-        system(gcc_cmd.c_str());
-    }
+
+    cout << prog->to_string() << endl;
+
+    //Checker c;
+    //c.check_program(prog.get());
+    //string asm_code = tran.translate_program(prog.get());
+    //file << asm_code;
+    //file.close();
+    //if (argc == 1) {
+    //    file_name = "a";
+    //    program = "prog";
+    //} 
+    //string asm_cmd = "nasm -Werror -f elf64 -g -F dwarf "+file_name+".asm -l "+file_name+".lst";
+    //string gcc_cmd = "gcc -o "+program+" "+file_name+".o -no-pie";
+    //system(asm_cmd.c_str());
+    //system(gcc_cmd.c_str());
 }

@@ -67,6 +67,8 @@ unique_ptr<Expr> Parser::parse_expression(unique_ptr<Expr> lhs,
                                             int min_precedence)
 {
     Token *t = this->scan->peek_token();
+    int s_line = this->scan->last_line;
+    int s_col = this->scan->last_column;
     string op_1;
     while (t && t->isOper(&op_1) && 
             isBinary(op_1) && precedence[op_1] >= min_precedence) {
@@ -82,6 +84,12 @@ unique_ptr<Expr> Parser::parse_expression(unique_ptr<Expr> lhs,
             t = this->scan->peek_token();
         }
         lhs = make_unique<OpExpr>(op_1, move(lhs), move(rhs), line, col);
+    }
+    if (t && t->isSymbol("[")) {
+        this->scan->next_token();
+        unique_ptr<Expr> index = this->parse_expr();
+        this->expect("]");
+        return make_unique<ElemAccessExpr>(move(lhs), move(index), s_line, s_col);
     }
     return lhs;
 }

@@ -8,7 +8,7 @@ Scanner::Scanner(char *file_name) {
         return;
     file = ifstream(file_name, ios::in);
     if (!file.is_open())
-        throw runtime_error("File doesn't exist");
+        throw runtime_error("file not found " + string(file_name));
 }
 
 

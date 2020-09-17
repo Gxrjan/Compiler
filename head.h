@@ -410,7 +410,9 @@ class Checker {
 // TRANSLATOR
 class Translator {
     int label_id = 0;
+    int string_id = 0;
     set<Id> variables;
+    map<StringLiteral *, int> strings;
     void translate_num_literal(string *s, NumLiteral *l);
     void translate_bool_literal(string *s, BoolLiteral *l);
     void translate_char_literal(string *s, CharLiteral *l);

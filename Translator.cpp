@@ -73,10 +73,17 @@ void Translator::translate_char_literal(string *s, CharLiteral *l)
 void Translator::translate_string_literal(string *s, StringLiteral *l)
 {
     // TODO
+    int id = string_id++;
+    *s += 
+        " push  str_"+std::to_string(id)+"\n";
+    this->strings.insert({l, id});
 }
 
 void Translator::translate_elem_access_expr(string *s, ElemAccessExpr *e)
 {
+    // TODO
+    this->translate_expr(s, e->expr.get());
+    this->translate_expr(s, e->index.get());
     // TODO
 }
 
@@ -340,10 +347,8 @@ string Translator::translate_program(Program* prog)
 {
     string result = "";
     result += 
+        "%define u(x) __?utf16?__(x) \n"
         "extern printf\n"
-        "section .data\n"
-        " msgi     db      `%lld\\n`,0\n"
-        " msgc     db      `%c\\n`,0\n"
         "section .text\n"
         " global main\n"
         "main:\n";
@@ -361,5 +366,13 @@ string Translator::translate_program(Program* prog)
     for (auto &id : this->variables)
         result +=
             " "+id+"      resq 1\n";
+    result +=
+        "section .data\n"
+        " msgi     db      `%lld\\n`,0\n"
+        " msgc     db      `%c\\n`,0\n"
+    for (auto &p : this->strings)
+        result +=
+            "   dq        "+std::to_string(p.first->s.length())+"\n"
+            "   str_"+std::to_string(p.second)+"  dw      u('"+p.first->s+"')\n";
     return result;
 }

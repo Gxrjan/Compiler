@@ -12,12 +12,19 @@ Type Checker::check_compatability(OpExpr *expr, Block *b)
     
     switch (TypeConverter::string_to_operation(expr->op)) {
         case Operation::Add:
-            if ((left_t == Type::String && right_t == Type::Int) || 
-               (left_t == Type::Int && right_t == Type::String) ||
-               (left_t == Type::Bool || right_t == Type::Bool)  ||
-               (left_t == Type::Char && right_t == Type::String))
+            if (!(
+                (left_t == Type::String && right_t == Type::Int)  ||
+                (left_t == Type::Int && right_t == Type::String)  ||
+                (left_t == Type::String && right_t == Type::String) ||
+                (left_t == Type::String && right_t == Type::Char) ||
+                (left_t == Type::Char && right_t == Type::String)
+                )) 
                 this->report_error(expr->line, expr->col, "invalid operand types");
-            if (left_t == Type::String && right_t == Type::Char)
+            if ((left_t == Type::String && right_t == Type::Int)  ||
+                (left_t == Type::Int && right_t == Type::String)  ||
+                (left_t == Type::String && right_t == Type::Char) ||
+                (left_t == Type::Char && right_t == Type::String) ||
+                (left_t == Type::String && right_t == Type::String))
                 return Type::String;
             return Type::Int;
             break;
@@ -34,16 +41,15 @@ Type Checker::check_compatability(OpExpr *expr, Block *b)
         case Operation::G:
         case Operation::Le:
         case Operation::Ge:
-            if ((left_t != Type::Int && left_t != Type::Char) ||
-                (right_t != Type::Int && right_t != Type::Char))
+            if (!this->convertible_to_int(left_t) ||
+                !this->convertible_to_int(right_t))
                 this->report_error(expr->line, expr->col, "invalid operand types");
             return Type::Bool;
             break;
         case Operation::E: 
         case Operation::Ne:
             if (!((left_t == right_t) || 
-                (left_t == Type::Int && right_t == Type::Char) ||
-                (left_t == Type::Char && right_t == Type::Int)))
+                (this->convertible_to_int(left_t) && this->convertible_to_int(right_t))))
                 this->report_error(expr->line, expr->col, "invalid operand types");
             return Type::Bool;
             break;

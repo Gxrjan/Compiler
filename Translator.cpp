@@ -72,12 +72,12 @@ void Translator::translate_char_literal(string *s, CharLiteral *l)
 
 void Translator::translate_string_literal(string *s, StringLiteral *l)
 {
-    // Todo
+    // TODO
 }
 
 void Translator::translate_elem_access_expr(string *s, ElemAccessExpr *e)
 {
-    // Todo
+    // TODO
 }
 
 void Translator::translate_op_expr(string *s, OpExpr *expr) 

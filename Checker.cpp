@@ -1,12 +1,72 @@
 #include "head.h"
 
+bool Checker::convertible_to_int(Type type)
+{
+    return (type == Type::Int || type == Type::Char);
+}
+
+Type Checker::check_compatability(OpExpr *expr, Block *b)
+{
+    Type left_t = this->check_expr(expr->left.get(), b);
+    Type right_t = this->check_expr(expr->right.get(), b);
+    
+    switch (TypeConverter::string_to_operation(expr->op)) {
+        case Operation::Add:
+            if ((left_t == Type::String && right_t == Type::Int) || 
+               (left_t == Type::Int && right_t == Type::String) ||
+               (left_t == Type::Bool || right_t == Type::Bool)  ||
+               (left_t == Type::Char && right_t == Type::String))
+                this->report_error(expr->line, expr->col, "invalid operand types");
+            if (left_t == Type::String && right_t == Type::Char)
+                return Type::String;
+            return Type::Int;
+            break;
+        case Operation::Sub:
+        case Operation::Mul:
+        case Operation::Div:
+        case Operation::Mod:
+            if (!this->convertible_to_int(left_t) ||
+                !this->convertible_to_int(right_t))
+                this->report_error(expr->line, expr->col, "invalid operand types");
+            return Type::Int;
+            break;
+        case Operation::L:
+        case Operation::G:
+        case Operation::Le:
+        case Operation::Ge:
+            if ((left_t != Type::Int && left_t != Type::Char) ||
+                (right_t != Type::Int && right_t != Type::Char))
+                this->report_error(expr->line, expr->col, "invalid operand types");
+            return Type::Bool;
+            break;
+        case Operation::E: 
+        case Operation::Ne:
+            if (!((left_t == right_t) || 
+                (left_t == Type::Int && right_t == Type::Char) ||
+                (left_t == Type::Char && right_t == Type::Int)))
+                this->report_error(expr->line, expr->col, "invalid operand types");
+            return Type::Bool;
+            break;
+        case Operation::And:
+        case Operation::Or:
+            if (left_t != Type::Bool || right_t != Type::Bool)
+                this->report_error(expr->line, expr->col, "invalid operand types");
+            return Type::Bool;
+            break;
+        default:
+            this->report_error(expr->line, expr->col, "Unrecognized operation");
+            break;
+    }
+    throw runtime_error("For GCC");
+}
+
 void Checker::verify_assignment(Declaration *dec, Expr *expr, Block *b)
 {
     string t_string = TypeConverter::enum_to_string(dec->type);
     Type expr_type = this->check_expr(expr, b);
     switch (dec->type) {
         case Type::Int:
-            if (expr_type != Type::Int && expr_type != Type::Char)
+            if (!this->convertible_to_int(expr_type))
                 this->report_error(expr->line, expr->col, "int or char expected");
             break;
         default:
@@ -66,28 +126,8 @@ Type Checker::check_expr_type(Expr *expr, Block *b)
     Expr* left;
     Expr* right;
     string op;
-    if (expr->isOpExpr(&op, &left, &right)) {
-        Type left_type = this->check_expr(left, b);
-        Type right_type = this->check_expr(right, b);
-        
-        if (op == "&&" || op == "||") {
-            if (left_type != Type::Bool || right_type != Type::Bool)
-                this->report_error(expr->line, expr->col, "operands must be bool");
-            return Type::Bool;
-        } else if (op == "==" || op == "!=") {
-            if (left_type == Type::Bool || right_type == Type::Bool)
-                this->report_error(expr->line, expr->col, "operands must be int or char");
-            return Type::Bool;
-        } else if (op == "<" || op == ">" || op == "<=" || op == ">="){
-            if (left_type == Type::Bool || right_type == Type::Bool)
-                this->report_error(expr->line, expr->col, "operands must be int or char");
-            return Type::Bool;
-        } else { 
-            if (left_type == Type::Bool || right_type == Type::Bool)
-                this->report_error(expr->line, expr->col, "operands must int or char");
-            return Type::Int;
-        }
-    }
+    if (auto e = dynamic_cast<OpExpr *>(expr))
+        return this->check_compatability(e, b);
     
 
     if (expr->isElemAccessExpr(&left, &right)) {
@@ -95,7 +135,7 @@ Type Checker::check_expr_type(Expr *expr, Block *b)
         Type right_type = this->check_expr(right, b);
         if (left_type != Type::String)
             this->report_error(left->line, left->col, "[] operator is only available for strings for now");
-        if (right_type != Type::Int && right_type != Type::Char)
+        if (!this->convertible_to_int(right_type))
             this->report_error(right->line, right->col, "[] accepts only int or char");
         return Type::Char;
     }

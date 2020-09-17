@@ -34,7 +34,7 @@ int main(int argc, char *argv[])
         program = "prog";
     } 
     string asm_cmd = "nasm -Werror -f elf64 -g -F dwarf "+file_name+".asm -l "+file_name+".lst";
-    string gcc_cmd = "gcc -o "+program+" "+file_name+".o -no-pie";
+    string gcc_cmd = "gcc -o "+program+" "+file_name+".o G_runtime_library.o -no-pie -lstdc++";
     system(asm_cmd.c_str());
     system(gcc_cmd.c_str());
 }

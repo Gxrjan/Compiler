@@ -10,3 +10,5 @@ parse
 prog
 *.g
 gc
+actual
+expected

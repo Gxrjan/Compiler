@@ -4,7 +4,11 @@
 Scanner::Scanner() {}
 
 Scanner::Scanner(char *file_name) {
+    if (file_name == nullptr)
+        return;
     file = ifstream(file_name, ios::in);
+    if (!file.is_open())
+        throw runtime_error("File doesn't exist");
 }
 
 

@@ -26,16 +26,15 @@ int main(int argc, char *argv[])
     unique_ptr<Program> prog = Parser(&scan).parse_program();
     Checker c;
     c.check_program(prog.get());
-    cout << prog->to_string() << endl;
-    //string asm_code = tran.translate_program(prog.get());
-    //file << asm_code;
-    //file.close();
-    //if (argc == 1) {
-    //    file_name = "a";
-    //    program = "prog";
-    //} 
-    //string asm_cmd = "nasm -Werror -f elf64 -g -F dwarf "+file_name+".asm -l "+file_name+".lst";
-    //string gcc_cmd = "gcc -o "+program+" "+file_name+".o -no-pie";
-    //system(asm_cmd.c_str());
-    //system(gcc_cmd.c_str());
+    string asm_code = tran.translate_program(prog.get());
+    file << asm_code;
+    file.close();
+    if (argc == 1) {
+        file_name = "a";
+        program = "prog";
+    } 
+    string asm_cmd = "nasm -Werror -f elf64 -g -F dwarf "+file_name+".asm -l "+file_name+".lst";
+    string gcc_cmd = "gcc -o "+program+" "+file_name+".o -no-pie";
+    system(asm_cmd.c_str());
+    system(gcc_cmd.c_str());
 }

@@ -11,3 +11,5 @@ prog
 gc
 actual
 expected
+*.exe
+tests

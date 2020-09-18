@@ -266,6 +266,21 @@ class TypeCastExpr : public Expr {
     bool isTypeCastExpr(Type *t, Expr **expr) override;
 };
 
+class Args : public Expr {
+  public:
+    vector<unique_ptr<Expr>> expressions;
+    Args(vector<unique_ptr<Expr>> expressions, int line, int col);
+    string to_string() override;
+};
+
+class SubstrExpr : public Expr {
+  public:
+    unique_ptr<Expr> expr;
+    vector<unique_ptr<Expr>> arguments;
+    SubstrExpr(unique_ptr<Expr> expr, vector<unique_ptr<Expr>> arguments, int line, int col);
+    string to_string() override;
+};
+
 
 // Statement
 class Statement {
@@ -388,6 +403,7 @@ class Parser {
     unique_ptr<Declaration> parse_declaration();
     unique_ptr<Assignment> try_parse_assignment();
     unique_ptr<Assignment> parse_assignment();
+    vector<unique_ptr<Expr>> parse_arguments();
     unique_ptr<Print> try_parse_print();
     unique_ptr<IfStatement> try_parse_if();
     unique_ptr<WhileStatement> try_parse_while();
@@ -432,6 +448,7 @@ class Translator {
     int string_id = 0;
     set<Id> variables;
     map<StringLiteral *, int> strings;
+    string concat_cc(Type left, Type right);
     void translate_num_literal(string *s, NumLiteral *l);
     void translate_bool_literal(string *s, BoolLiteral *l);
     void translate_char_literal(string *s, CharLiteral *l);

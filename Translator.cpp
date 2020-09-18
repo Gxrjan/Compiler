@@ -1,6 +1,21 @@
 #include "head.h"
 
 
+string Translator::concat_cc(Type left, Type right)
+{
+    if (left == Type::String) {
+        if (right == Type::String)
+            return "";
+        else if (right == Type::Int)
+            return "_str_int";
+        else
+            return "_str_chr";
+    } else if (left == Type::Int)
+        return "_int_str";
+     else
+        return "_chr_str";
+}
+
 string Translator::operation_to_cc(Operation op)
 {
     switch (op) {
@@ -160,7 +175,7 @@ void Translator::translate_op_expr(string *s, OpExpr *expr)
                     *s +=
                         " pop   rsi\n"
                         " pop   rdi\n"
-                        " call  concat\n"
+                        " call  concat"+this->concat_cc(expr->left->type, expr->right->type)+"\n"
                         " push  rax\n";
                 }
                 break;
@@ -386,6 +401,10 @@ string Translator::translate_program(Program* prog)
         "extern printf\n"
         "extern get\n"
         "extern concat\n"
+        "extern concat_str_int\n"
+        "extern concat_int_str\n"
+        "extern concat_str_chr\n"
+        "extern concat_chr_str\n"
         "extern printg\n"
         "section .text\n"
         " global main\n"

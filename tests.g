@@ -149,7 +149,7 @@ print("abc".Length); // expect: 3
 
 print((int)'a'); // expect: 97
 print((char)97); // expect: a
-
+print((int)(char)(65536 + 65)); // expect: 65
 
 // Substring
 

@@ -71,21 +71,6 @@ gstring concat_chr_str(char16_t c, gstring s)
     return concat_chars(&c, 1, s, gstring_len(s));
 }
 
-
-gstring substr_int(gstring s, int from)
-{
-    long long s_len = gstring_len(s);
-    if (from < 0 || from > s_len)
-        throw runtime_error("index out of bounds");
-    gstring u = (gstring)malloc(2*(s_len-from));
-    long long *u_len = (long long *)u;
-    u = u + 4;
-    *u_len = s_len - from;
-    for (int i=0;i<*u_len;i++)
-        u[i] = s[from+i];
-    return u;
-}
-
 gstring substr_int_int(gstring s, int from, int len) 
 {
     long long s_len = gstring_len(s);
@@ -102,6 +87,12 @@ gstring substr_int_int(gstring s, int from, int len)
         u[i] = s[from+i];
     return u;
 }
+
+gstring substr_int(gstring s, int from)
+{
+    return substr_int_int(s, from, gstring_len(s)-from);
+}
+
 
 
 }

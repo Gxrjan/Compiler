@@ -139,3 +139,9 @@ print(s + t); // expect: Hello world!
 
 print(s.Length); // expect: 6
 print("abc".Length); // expect: 3
+
+
+// Type cast
+
+print((int)'a'); // expect: 97
+print((char)97); // expect: a

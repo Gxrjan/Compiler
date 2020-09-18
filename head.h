@@ -187,7 +187,8 @@ class Expr {  // abstract base class
     virtual bool isOpExpr(string *op, Expr **left, Expr **right) { return false; }
     virtual bool isVariable(string *name) { return false; }
     virtual bool isElemAccessExpr(Expr **expr, Expr **index) { return false; }
-    virtual bool isLengthExpr(Expr **expr) { return false; };
+    virtual bool isLengthExpr(Expr **expr) { return false; }
+    virtual bool isTypeCastExpr(Type *t, Expr **expr) { return false; }
 };
 
 class NumLiteral : public Expr {
@@ -256,7 +257,14 @@ class LengthExpr : public Expr {
     bool isLengthExpr(Expr **expr) override;
 };
 
-
+class TypeCastExpr : public Expr {
+  public:
+    Type type;
+    unique_ptr<Expr> expr;
+    TypeCastExpr(Type t, unique_ptr<Expr> expr, int line, int col);
+    string to_string() override;
+    bool isTypeCastExpr(Type *t, Expr **expr) override;
+};
 
 
 // Statement
@@ -430,6 +438,7 @@ class Translator {
     void translate_string_literal(string *s, StringLiteral *l);
     void translate_elem_access_expr(string *s, ElemAccessExpr *expr);
     void translate_length_expr(string *s, LengthExpr *expr);
+    void translate_type_cast_expr(string *s, TypeCastExpr *expr);
     void translate_variable(string *s, Variable *var);
     void translate_op_expr(string *s, OpExpr *expr);
     void translate_expr(string *s, Expr *expr);

@@ -38,9 +38,18 @@ unique_ptr<Expr> Parser::parse_primary() {
     string s;
     unique_ptr<Token> t = this->scan->next_token();
     if (t->isSymbol("(")) {
-        unique_ptr<Expr> expr = this->parse_expr();
-        this->expect(")");
-        return expr;
+        Token *next = this->scan->peek_token();
+        Type t;
+        if (next && next->isType(&t)) {
+            this->scan->next_token();
+            this->expect(")");
+            unique_ptr<Expr> expr = this->parse_expr();
+            return make_unique<TypeCastExpr>(t, move(expr), line, col);
+        } else {
+            unique_ptr<Expr> expr = this->parse_expr();
+            this->expect(")");
+            return expr;
+        }
     } else if (t->isNum(&num)) {
         return make_unique<NumLiteral>(num, line, col);
     } else if (t->isBool(&b)) {

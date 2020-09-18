@@ -144,6 +144,15 @@ Type Checker::check_expr_type(Expr *expr, Block *b)
             this->report_error(left->line, left->col, "Length function call is only applicable to strings");
         return Type::Int;
     }
+    
+    Type t;
+    if (expr->isTypeCastExpr(&t, &left)) {
+        if (!this->convertible_to_int(t))
+            this->report_error(expr->line, expr->col, "You can type cast to char or int");
+        if (!this->convertible_to_int(this->check_expr(left, b)))
+            this->report_error(left->line, left->col, "Type casts are only supported for ints and chars");
+        return t;
+    }
     throw runtime_error("Unrecognized expression");
 }
 

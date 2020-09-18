@@ -53,3 +53,8 @@ BinaryOp -> '&&' | '||' | '==' | '!=' | '<' | '>' | '<=' | '>=' | '+' | '-' | '*
 
 character ->
         | any character other than a single quote or new line
+
+
+Args ->
+        | Expression
+        | Expression, Args

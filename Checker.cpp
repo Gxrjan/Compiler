@@ -153,6 +153,17 @@ Type Checker::check_expr_type(Expr *expr, Block *b)
             this->report_error(left->line, left->col, "Type casts are only supported for ints and chars");
         return t;
     }
+
+    if (auto e = dynamic_cast<SubstrExpr *>(expr)) {
+        if (this->check_expr(e->expr.get(), b) != Type::String)
+            this->report_error(e->line, e->col, "Substring is supported only for strings");
+        if (e->arguments.size() < 1 || e->arguments.size() > 2)
+            this->report_error(e->line, e->col, "wrong number of arguments");
+        for (auto &a : e->arguments)
+            if (this->check_expr(a.get(), b) != Type::Int)
+                this->report_error(a->line, a->col, "must be int");
+        return Type::String;
+    }
     throw runtime_error("Unrecognized expression");
 }
 

@@ -12,6 +12,22 @@ Parser::Parser(Scanner* scan)
 
 }
 
+vector<unique_ptr<Expr>> Parser::parse_arguments()
+{
+    vector<unique_ptr<Expr>> result;
+    Token *t;
+    while ((t=this->scan->peek_token()) && !t->isSymbol(")")) {
+        unique_ptr<Expr> e = this->parse_expr();
+        if (e)
+            result.push_back(move(e));
+        t = this->scan->peek_token();
+        if (t && !t->isSymbol(","))
+            break;
+        this->scan->next_token();
+    }
+    return result;
+}
+
 void Parser::report_error(string message)
 {
     throw runtime_error("Parser error line " + std::to_string(this->scan->last_line)
@@ -105,9 +121,14 @@ unique_ptr<Expr> Parser::parse_expression(unique_ptr<Expr> lhs,
     if (t && t->isSymbol(".")) {
         this->scan->next_token();
         unique_ptr<Token> next = this->scan->next_token();
-        if (!t || !t->isId("Length"))
-            this->report_error("function call expected");
-        return make_unique<LengthExpr>(move(lhs), s_line, s_col);
+        if (next->isId("Length"))
+            return make_unique<LengthExpr>(move(lhs), s_line, s_col);
+        if (next->isId("Substring")) {
+            this->expect("(");
+            vector<unique_ptr<Expr>> arguments = this->parse_arguments();
+            this->expect(")");
+            return make_unique<SubstrExpr>(move(lhs), move(arguments), s_line, s_col);
+        }
     }
     return lhs;
 }

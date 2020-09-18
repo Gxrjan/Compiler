@@ -107,7 +107,7 @@ unique_ptr<Token> Scanner::next_token() {
     }
 
     if (c == '(' || c == ')' || c == '{' || c == '}' || c == ';' ||
-        c == '[' || c == ']' || c == '.') {
+        c == '[' || c == ']' || c == '.' || c == ',') {
         return make_unique<SymbolToken>(string{c});
     }
     

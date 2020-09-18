@@ -118,6 +118,30 @@ void Translator::translate_type_cast_expr(string *s, TypeCastExpr *e)
     this->translate_expr(s, e->expr.get());
 }
 
+void Translator::translate_substr_expr(string *s, SubstrExpr *e)
+{
+    // TODO
+    this->translate_expr(s, e->expr.get());
+    if (e->arguments.size() == 1) {
+        this->translate_expr(s, e->arguments[0].get());
+        *s +=
+            " pop       rsi\n"
+            " pop       rdi\n"
+            " call      substr_int\n"
+            " push      rax\n";
+    } else {
+        this->translate_expr(s, e->arguments[0].get());
+        this->translate_expr(s, e->arguments[1].get());
+        *s +=
+            " pop       rdx\n"
+            " pop       rsi\n"
+            " pop       rdi\n"
+            " call      substr_int_int\n"
+            " push      rax\n";
+        
+    }
+}
+
 void Translator::translate_op_expr(string *s, OpExpr *expr) 
 {
     if (expr->op == "&&" || expr->op == "||") {
@@ -248,6 +272,8 @@ void Translator::translate_expr(string *s, Expr *e)
         this->translate_length_expr(s, expr);
     } else if (auto expr = dynamic_cast<TypeCastExpr *>(e)) {
         this->translate_type_cast_expr(s, expr);
+    } else if (auto expr = dynamic_cast<SubstrExpr *>(e)) {
+        this->translate_substr_expr(s, expr);
     } else
         throw runtime_error("Unknown type of expression");
 }
@@ -405,6 +431,8 @@ string Translator::translate_program(Program* prog)
         "extern concat_int_str\n"
         "extern concat_str_chr\n"
         "extern concat_chr_str\n"
+        "extern substr_int\n"
+        "extern substr_int_int\n"
         "extern printg\n"
         "section .text\n"
         " global main\n"

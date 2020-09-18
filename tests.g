@@ -133,6 +133,10 @@ print(s[0]); // expect: B
 s = "Hello ";
 t = "world!";
 print(s + t); // expect: Hello world!
+print("Hell" + 'o'); // expect: Hello
+print('A' + "loha"); // expect: Aloha
+print("number: " + 12); // expect: number: 12
+print(300 + " spartans"); // expect: 300 spartans
 
 
 // Length call
@@ -145,3 +149,12 @@ print("abc".Length); // expect: 3
 
 print((int)'a'); // expect: 97
 print((char)97); // expect: a
+
+
+// Substring
+
+print("abcdef".Substring(1)); // expect: bcdef
+print("abcdef".Substring(2, 4)); // expect: cdef
+
+
+

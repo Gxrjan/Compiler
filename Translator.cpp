@@ -116,6 +116,13 @@ void Translator::translate_length_expr(string *s, LengthExpr *e)
 void Translator::translate_type_cast_expr(string *s, TypeCastExpr *e)
 {
     this->translate_expr(s, e->expr.get());
+    if (e->type == Type::Char) {
+        *s += 
+            " pop       rcx\n"
+            " mov       rbx, 0\n"
+            " mov       bx, cx\n"
+            " push      rbx\n";
+    }
 }
 
 void Translator::translate_substr_expr(string *s, SubstrExpr *e)

@@ -89,6 +89,15 @@ void Translator::translate_elem_access_expr(string *s, ElemAccessExpr *e)
         " push  rax\n";
 }
 
+void Translator::translate_length_expr(string *s, LengthExpr *e)
+{
+    this->translate_expr(s, e->expr.get());
+    *s +=
+        " pop   rcx\n"
+        " sub   rcx, 8\n"
+        " push  qword [rcx]\n";
+}
+
 void Translator::translate_op_expr(string *s, OpExpr *expr) 
 {
     if (expr->op == "&&" || expr->op == "||") {
@@ -215,6 +224,8 @@ void Translator::translate_expr(string *s, Expr *e)
         this->translate_string_literal(s, expr);
     } else if (auto expr = dynamic_cast<ElemAccessExpr *>(e)) {
         this->translate_elem_access_expr(s, expr);
+    } else if (auto expr = dynamic_cast<LengthExpr *>(e)) {
+        this->translate_length_expr(s, expr);
     } else
         throw runtime_error("Unknown type of expression");
 }

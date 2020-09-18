@@ -85,11 +85,20 @@ unique_ptr<Expr> Parser::parse_expression(unique_ptr<Expr> lhs,
         }
         lhs = make_unique<OpExpr>(op_1, move(lhs), move(rhs), line, col);
     }
+
     if (t && t->isSymbol("[")) {
         this->scan->next_token();
         unique_ptr<Expr> index = this->parse_expr();
         this->expect("]");
         return make_unique<ElemAccessExpr>(move(lhs), move(index), s_line, s_col);
+    }
+    
+    if (t && t->isSymbol(".")) {
+        this->scan->next_token();
+        unique_ptr<Token> next = this->scan->next_token();
+        if (!t || !t->isId("Length"))
+            this->report_error("function call expected");
+        return make_unique<LengthExpr>(move(lhs), s_line, s_col);
     }
     return lhs;
 }

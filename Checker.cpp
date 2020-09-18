@@ -138,6 +138,12 @@ Type Checker::check_expr_type(Expr *expr, Block *b)
             this->report_error(right->line, right->col, "[] accepts only int or char");
         return Type::Char;
     }
+
+    if (expr->isLengthExpr(&left)) {
+        if (this->check_expr(left, b) != Type::String)
+            this->report_error(left->line, left->col, "Length function call is only applicable to strings");
+        return Type::Int;
+    }
     throw runtime_error("Unrecognized expression");
 }
 

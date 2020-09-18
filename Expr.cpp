@@ -103,3 +103,22 @@ bool ElemAccessExpr::isElemAccessExpr(Expr **expr, Expr **index)
     *index = this->index.get();
     return true; 
 }
+
+
+LengthExpr::LengthExpr(unique_ptr<Expr> expr, int line, int col)
+{
+    this->line = line;
+    this->col = col;
+    this->expr = move(expr);
+}
+
+string LengthExpr::to_string() 
+{
+    return this->expr->to_string() + ".Length";
+}
+
+bool LengthExpr::isLengthExpr(Expr **expr)
+{
+    *expr = this->expr.get();
+    return true;
+}

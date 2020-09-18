@@ -4,10 +4,14 @@ typedef char16_t *gstring;
 using namespace std;
 
 extern "C" {
+inline long long gstring_len(gstring s) {
+  return *((long long *)(s-4));
+}
+
 
 char16_t get(gstring s, int i)
 {
-    long long slen = *((long long *)(s-4));
+    long long slen = gstring_len(s);
     if (i<0 || i>=slen)
         throw runtime_error("index out of bounds");
     return s[i];
@@ -15,8 +19,8 @@ char16_t get(gstring s, int i)
 
 gstring concat(gstring s, gstring t)
 {
-    long long slen = *((long long *)(s-4));
-    long long tlen = *((long long *)(t-4));
+    long long slen = gstring_len(s);
+    long long tlen = gstring_len(t);
     gstring u = (gstring)malloc(2*(slen+tlen)+8);
     long long *ulen = (long long *)u;
     u = u + 4;
@@ -28,10 +32,9 @@ gstring concat(gstring s, gstring t)
 
 void printg(gstring s)
 {
-    long long slen = *((long long *)(s-4));
+    long long slen = gstring_len(s);
     for (int i = 0;i < slen;i++) {
-        char c = *((char *)(s+i));
-        printf("%c", c);
+        printf("%lc", s[i]);
     }
     printf("\n");
 }

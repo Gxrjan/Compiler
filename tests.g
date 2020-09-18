@@ -133,3 +133,9 @@ print(s[0]); // expect: B
 s = "Hello ";
 t = "world!";
 print(s + t); // expect: Hello world!
+
+
+// Length call
+
+print(s.Length); // expect: 6
+print("abc".Length); // expect: 3

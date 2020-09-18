@@ -37,6 +37,7 @@ bool IdToken::isId(string *name)
     *name = this->name;
     return true;
 }
+bool IdToken::isId(string name) { return this->name == name; }
 string IdToken::to_string() { return "" + this->name; }
 
 

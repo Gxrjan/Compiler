@@ -76,6 +76,7 @@ else
 int n = 10;
 char c = 'a';
 string s = "Hello world!";
+string t = "foo";
 bool b = true;
 bool d = false;
 
@@ -125,3 +126,10 @@ print(n); // expect: 500
 // [] operator
 
 print(s[0]); // expect: B
+
+
+// concat
+
+s = "Hello ";
+t = "world!";
+print(s + t); // expect: Hello world!

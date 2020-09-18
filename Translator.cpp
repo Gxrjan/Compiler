@@ -138,9 +138,17 @@ void Translator::translate_op_expr(string *s, OpExpr *expr)
         Operation o;
         switch((o = TypeConverter::string_to_operation(expr->op))) {
             case Operation::Add:
-                *s += 
-                    " pop     rax\n"
-                    " add     [rsp], rax\n";
+                if (expr->type == Type::Int) {
+                    *s += 
+                        " pop     rax\n"
+                        " add     [rsp], rax\n";
+                } else {
+                    *s +=
+                        " pop   rsi\n"
+                        " pop   rdi\n"
+                        " call  concat\n"
+                        " push  rax\n";
+                }
                 break;
             case Operation::Sub:
                 *s += 
@@ -238,6 +246,13 @@ void Translator::translate_print(string *s, Print *p)
     *s += // asm comment 
         "; " + p->to_string() + "\n";
     this->translate_expr(s, p->expr.get());
+    if (p->expr->type == Type::String) {
+        *s +=
+            " pop       rdi\n"
+            " call      printg\n";
+        return;
+    }
+
     *s +=
         " mov       rax, 0\n"
         " mov       rdi, msg"+this->type_to_cc(p->expr->type)+"\n"
@@ -352,6 +367,8 @@ string Translator::translate_program(Program* prog)
         "%define u(x) __?utf16?__(x) \n"
         "extern printf\n"
         "extern get\n"
+        "extern concat\n"
+        "extern printg\n"
         "section .text\n"
         " global main\n"
         "main:\n";

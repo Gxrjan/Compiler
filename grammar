@@ -37,6 +37,7 @@ Expression ->
         | Primary
         | Expression BinaryOp Expression
         | Expression '[' Expression ']'
+        | Expression '.' id
 
 Primary ->
         | '(' Expression ')' 

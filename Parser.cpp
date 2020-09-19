@@ -49,12 +49,12 @@ unique_ptr<Expr> Parser::parse_unary()
     Token *peek = this->scan->peek_token();
     int line = this->scan->last_line;
     int col = this->scan->last_column;
-    if (peek && peek->isSymbol("!")) {
+    if (peek && peek->isOper("!")) {
         this->scan->next_token();
         unique_ptr<Expr> expr = this->parse_unary();
         return make_unique<OpExpr>("!", move(expr), nullptr, line, col);
     }
-    if (peek && peek->isSymbol("-")) {
+    if (peek && peek->isOper("-")) {
         this->scan->next_token();
         unique_ptr<Expr> expr = this->parse_unary();
         unique_ptr<Expr> zero = make_unique<NumLiteral>(0, -1, -1);

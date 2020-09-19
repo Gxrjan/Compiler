@@ -164,6 +164,16 @@ Type Checker::check_expr_type(Expr *expr, Block *b)
                 this->report_error(a->line, a->col, "must be int or char");
         return Type::String;
     }
+
+    if (auto e = dynamic_cast<IntParseExpr *>(expr)) {
+        if (e->arguments.size() != 1)
+            this->report_error(e->line, e->col, "wrong number of arguments");
+        if (this->check_expr(e->arguments[0].get(), b) != Type::String)
+            this->report_error(e->arguments[0]->line, 
+                               e->arguments[0]->col,
+                               "string expected");
+        return Type::Int;
+    }
     throw runtime_error("Unrecognized expression");
 }
 

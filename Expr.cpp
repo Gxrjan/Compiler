@@ -179,3 +179,21 @@ string SubstrExpr::to_string()
     result += ")";
     return result;
 }
+
+
+IntParseExpr::IntParseExpr(vector<unique_ptr<Expr>> args, int line, int col)
+{
+    this->arguments = move(args);
+    this->line = line;
+    this->col = col;
+}
+
+string IntParseExpr::to_string()
+{
+    string result = "int.Parse(";
+    for (auto &a : this->arguments)
+        result += a->to_string() + ",";
+    result.pop_back();
+    result += ")";
+    return result;
+}

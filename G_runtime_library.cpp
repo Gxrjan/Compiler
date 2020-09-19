@@ -88,5 +88,19 @@ gstring substr_int(gstring s, int from)
 }
 
 
+long long int_parse(gstring s)
+{
+    long long s_len = gstring_len(s);
+    wstring result;
+    for (int i=0;i<s_len;i++) {
+        wchar_t c = s[i];
+        if (!isdigit(c))
+            throw runtime_error("String contains non-digit characters");
+        else
+            result += c;
+    }
+    return std::stoll(result);
+}
+
 
 }

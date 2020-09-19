@@ -131,6 +131,19 @@ unique_ptr<Expr> Parser::parse_expression(unique_ptr<Expr> lhs,
         }
         this->report_error("Unknown function call");
     }
+
+    Type type;
+    if (t && t->isType(&type)) {
+        this->expect(".");
+        unique_ptr<Token> next = this->scan->next_token();
+        if (next->isId("Parse")) {
+            this->expect("(");
+            vector<unique_ptr<Expr>> arguments = this->parse_arguments();
+            this->expect(")");
+            return make_unique<IntParseExpr>(move(arguments), s_line, s_col);
+        }
+        this->report_error("Parse function call expected"); 
+    }
     return lhs;
 }
 

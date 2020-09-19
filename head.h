@@ -281,6 +281,14 @@ class SubstrExpr : public Expr {
     string to_string() override;
 };
 
+class IntParseExpr : public Expr {
+  public:
+    vector<unique_ptr<Expr>> arguments;
+    IntParseExpr(vector<unique_ptr<Expr>> arguments, int line, int col);
+    string to_string() override;
+    
+};
+
 
 // Statement
 class Statement {
@@ -457,6 +465,7 @@ class Translator {
     void translate_length_expr(string *s, LengthExpr *expr);
     void translate_type_cast_expr(string *s, TypeCastExpr *expr);
     void translate_substr_expr(string *s, SubstrExpr *expr);
+    void translate_int_parse_expr(string *s, IntParseExpr *expr);
     void translate_variable(string *s, Variable *var);
     void translate_op_expr(string *s, OpExpr *expr);
     void translate_expr(string *s, Expr *expr);

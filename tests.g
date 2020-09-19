@@ -156,5 +156,4 @@ print((int)(char)(65536 + 65)); // expect: 65
 print("abcdef".Substring(1)); // expect: bcdef
 print("abcdef".Substring(2, 4)); // expect: cdef
 
-
-
+print("xyzabc".Substring((char) 0, (char) 3)); // expect: xyz

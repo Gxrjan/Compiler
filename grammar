@@ -39,6 +39,7 @@ Expression ->
         | Expression '[' Expression ']'
         | Expression '.' id
         | Expression '.' id '(' Args ')'
+        | 'int' '.' id '(' Args ')'
 
 Primary ->
         | '(' Type ')' Primary

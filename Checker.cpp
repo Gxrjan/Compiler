@@ -160,8 +160,8 @@ Type Checker::check_expr_type(Expr *expr, Block *b)
         if (e->arguments.size() < 1 || e->arguments.size() > 2)
             this->report_error(e->line, e->col, "wrong number of arguments");
         for (auto &a : e->arguments)
-            if (this->check_expr(a.get(), b) != Type::Int)
-                this->report_error(a->line, a->col, "must be int");
+            if (!this->convertible_to_int(this->check_expr(a.get(), b)))
+                this->report_error(a->line, a->col, "must be int or char");
         return Type::String;
     }
     throw runtime_error("Unrecognized expression");

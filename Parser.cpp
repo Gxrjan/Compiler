@@ -129,6 +129,7 @@ unique_ptr<Expr> Parser::parse_expression(unique_ptr<Expr> lhs,
             this->expect(")");
             return make_unique<SubstrExpr>(move(lhs), move(arguments), s_line, s_col);
         }
+        this->report_error("Unknown function call");
     }
     return lhs;
 }

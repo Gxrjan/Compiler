@@ -119,9 +119,9 @@ void Translator::translate_type_cast_expr(string *s, TypeCastExpr *e)
     if (e->type == Type::Char) {
         *s += 
             " pop       rcx\n"
-            " mov       rbx, 0\n"
-            " mov       bx, cx\n"
-            " push      rbx\n";
+            " mov       rax, 0\n"
+            " mov       ax, cx\n"
+            " push      rax\n";
     }
 }
 
@@ -218,24 +218,24 @@ void Translator::translate_op_expr(string *s, OpExpr *expr)
             case Operation::Mul:
                 *s += 
                     " pop     rax\n"
-                    " pop     rbx\n"
-                    " imul    rax, rbx\n"
+                    " pop     rcx\n"
+                    " imul    rax, rcx\n"
                     " push    rax\n";
                 break;
             case Operation::Div:
                 *s += 
-                    " pop     rbx\n"
+                    " pop     rcx\n"
                     " pop     rax\n"
                     " mov     rdx, 0\n"
-                    " idiv    qword rbx\n"
+                    " idiv    qword rcx\n"
                     " push    rax\n";
                 break;
             case Operation::Mod:
                 *s += 
-                    " pop     rbx\n"
+                    " pop     rcx\n"
                     " pop     rax\n"
                     " mov     rdx, 0\n"
-                    " idiv    qword rbx\n"
+                    " idiv    qword rcx\n"
                     " push    rdx\n";
                 break;
             case Operation::L:

@@ -38,6 +38,7 @@ Expression ->
         | Expression BinaryOp Expression
         | Expression '[' Expression ']'
         | Expression '.' id
+        | Expression '.' id '(' Args ')'
 
 Primary ->
         | '(' Type ')' Primary

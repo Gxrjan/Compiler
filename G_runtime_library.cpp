@@ -79,13 +79,7 @@ gstring substr_int_int(gstring s, int from, int len)
     if ((from < 0 || from > s_len) || 
         ((from + len) > s_len))
         throw runtime_error("index out of bounds");
-    gstring u = (gstring)malloc(2*(len));
-    long long *u_len = (long long *)u;
-    u = u + 4;
-    *u_len = len;
-    for (int i=0;i<len;i++)
-        u[i] = s[from+i];
-    return u;
+    return concat_chars(s + from, len, s, 0);
 }
 
 gstring substr_int(gstring s, int from)

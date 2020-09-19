@@ -34,22 +34,25 @@ Print ->
 
 
 Expression ->
-        | Primary
+        | Unary
         | Expression BinaryOp Expression
-        | Expression '[' Expression ']'
-        | Expression '.' id
-        | Expression '.' id '(' Args ')'
-        | 'int' '.' id '(' Args ')'
 
 Primary ->
-        | '(' Type ')' Primary
         | '(' Expression ')' 
         | number
         | ''' character '''
         | '"' string '"' 
         | id 
-        | '!' Primary
-        | '-' Primary
+        | Primary '[' Expression ']'
+        | Primary '.' id
+        | Primary '.' id '(' Args ')'
+        | 'int' '.' id '(' Args ')'
+        
+Unary ->
+        | Primary
+        | '!' Unary
+        | '-' Unary
+        | '(' Type ')' Unary
 
 BinaryOp -> '&&' | '||' | '==' | '!=' | '<' | '>' | '<=' | '>=' | '+' | '-' | '*' | '/' | '%';
 

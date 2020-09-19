@@ -404,6 +404,7 @@ class Parser {
     map<string, int> precedence;
     void report_error(string message);
     bool isBinary(string op);
+    unique_ptr<Expr> parse_unary();
     unique_ptr<Expr> parse_primary();
     unique_ptr<Expr> parse_expression(unique_ptr<Expr> lhs, int prec);
     unique_ptr<Expr> parse_expr();

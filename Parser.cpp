@@ -49,7 +49,7 @@ unique_ptr<Expr> Parser::parse_unary()
     Token *peek = this->scan->peek_token();
     int line = this->scan->last_line;
     int col = this->scan->last_column;
-    if (peek && peek->isOper("!")) {
+    if (peek && peek->isSymbol("!")) {
         this->scan->next_token();
         unique_ptr<Expr> expr = this->parse_unary();
         return make_unique<OpExpr>("!", move(expr), nullptr, line, col);
@@ -88,20 +88,20 @@ unique_ptr<Expr> Parser::parse_primary() {
     char wc;
     string s;
     unique_ptr<Token> t = this->scan->next_token();
+    unique_ptr<Expr> prim;
     if (t->isSymbol("(")) {
-        unique_ptr<Expr> expr = this->parse_expr();
+        prim = this->parse_expr();
         this->expect(")"); // <====
-        return expr;
     } else if (t->isNum(&num)) {
-        return make_unique<NumLiteral>(num, line, col);
+        prim = make_unique<NumLiteral>(num, line, col);
     } else if (t->isBool(&b)) {
-        return make_unique<BoolLiteral>(b, line, col);
+        prim =  make_unique<BoolLiteral>(b, line, col);
     } else if (t->isId(&id)) {
-        return make_unique<Variable>(id, line, col);
+        prim = make_unique<Variable>(id, line, col);
     }else if (t->isChar(&wc)) {
-        return make_unique<CharLiteral>(wc, line, col);
+        prim = make_unique<CharLiteral>(wc, line, col);
     } else if (t->isString(&s)) {
-        return make_unique<StringLiteral>(s, line, col);
+        prim = make_unique<StringLiteral>(s, line, col);
     } else if (t->isType(&type) && type == Type::Int ) {
         this->expect(".");
         unique_ptr<Token> next = this->scan->next_token();
@@ -109,32 +109,34 @@ unique_ptr<Expr> Parser::parse_primary() {
             this->expect("(");
             vector<unique_ptr<Expr>> arguments = this->parse_arguments();
             this->expect(")");  // <====
-            return make_unique<IntParseExpr>(move(arguments), line, col);
+            prim = make_unique<IntParseExpr>(move(arguments), line, col);
         } else
             this->report_error("Parse call expected");
-    } else {
-        unique_ptr<Expr> prim = this->parse_primary();
-        Token *peek = this->scan->peek_token();
+    }
+    Token *peek;
+    while ((peek=this->scan->peek_token()) && (peek->isSymbol(".") || peek->isSymbol("["))) {
         if (peek && peek->isSymbol("[")) {
             this->scan->next_token();
             unique_ptr<Expr> expr = this->parse_expr();
             this->expect("]");
-            return make_unique<ElemAccessExpr>(move(prim), move(expr), line, col);
+            prim =  make_unique<ElemAccessExpr>(move(prim), move(expr), line, col);
         }
         if (peek && peek->isSymbol(".")) {
             this->scan->next_token();
             unique_ptr<Token> tok = this->scan->next_token();
             if (tok && tok->isId("Length"))
                 return make_unique<LengthExpr>(move(prim), line, col);
-            if (tok && tok->isId("Substring")) {
+            else if (tok && tok->isId("Substring")) {
                 this->expect("(");
                 vector<unique_ptr<Expr>> args = this->parse_arguments();
                 this->expect(")");  // <=====
-                return make_unique<SubstrExpr>(move(prim), move(args), line, col);
-            }
-            this->report_error("Unrecognized function call");
+                prim = make_unique<SubstrExpr>(move(prim), move(args), line, col);
+            } else
+                this->report_error("Unrecognized function call");
         }
+        
     }
+    return prim;
     this->report_error("Syntax error");
     return nullptr; // Not reached
 }
@@ -149,7 +151,7 @@ unique_ptr<Expr> Parser::parse_expression(unique_ptr<Expr> lhs,
         int line = this->scan->last_line;
         int col = this->scan->last_column;
         this->scan->next_token();
-        unique_ptr<Expr> rhs = this->parse_primary();
+        unique_ptr<Expr> rhs = this->parse_unary();
         t = this->scan->peek_token();
         string op_2;
         while (t && t->isOper(&op_2) &&

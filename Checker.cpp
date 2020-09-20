@@ -183,7 +183,11 @@ Type Checker::check_expr_type(Expr *expr, Block *b)
         if (e->arguments.size() != 2)
             this->report_error(e->line, e->col, "wrong number of arguments");
         this->expect_type(e->arguments[0].get(), b, Type::Char);
-        this->expect_type(e->arguments[1].get(), b, Type::Int);
+        if (!this->convertible_to_int(
+                this->check_expr(e->arguments[1].get(), b)))
+            this->report_error(e->arguments[1]->line,
+                                e->arguments[1]->col,
+                                "int or char expected");
         return Type::String;
     }
     throw runtime_error("Unrecognized expression");

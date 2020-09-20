@@ -143,7 +143,14 @@ bool TypeCastExpr::isTypeCastExpr(Type *t, Expr **expr)
     *expr = this->expr.get();
     return true;
 }
-
+string call_to_string(string prefix, vector<unique_ptr<Expr>> &args) {
+    string result = prefix + "(";
+    for (auto &a : args)
+        result += a->to_string() + ",";
+    result.pop_back();
+    result += ")";
+    return result;
+}
 
 SubstrExpr::SubstrExpr(unique_ptr<Expr> expr, vector<unique_ptr<Expr>> args, int line, int col)
 {
@@ -173,12 +180,7 @@ IntParseExpr::IntParseExpr(vector<unique_ptr<Expr>> args, int line, int col)
 
 string IntParseExpr::to_string()
 {
-    string result = "int.Parse(";
-    for (auto &a : this->arguments)
-        result += a->to_string() + ",";
-    result.pop_back();
-    result += ")";
-    return result;
+    return call_to_string("int.Parse", this->arguments);
 }
 
 
@@ -189,10 +191,5 @@ NewStrExpr::NewStrExpr(vector<unique_ptr<Expr>> arguments)
 
 string NewStrExpr::to_string()
 {
-    string result =  "new string(";
-    for (auto &a : this->arguments)
-        result += a->to_string() + ",";
-    result.pop_back();
-    result += ")";
-    return result;
+    return call_to_string("new string", this->arguments);
 }

@@ -166,4 +166,4 @@ print(int.Parse("-1")); // expect: -1
 
 // new String()
 
-print(new String('a', 3)); // expect: aaa
+print(new string('a', 3)); // expect: aaa

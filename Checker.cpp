@@ -1,5 +1,13 @@
 #include "head.h"
 
+
+void Checker::expect_type(Expr *e, Block *b, Type t)
+{
+    if (this->check_expr(e, b) != t)
+        this->report_error(e->line, e->col,
+        TypeConverter::enum_to_string(t)+" expected");
+}
+
 bool Checker::convertible_to_int(Type type)
 {
     return (type == Type::Int || type == Type::Char);
@@ -69,8 +77,7 @@ void Checker::verify_assignment(Declaration *dec, Expr *expr, Block *b)
                 this->report_error(expr->line, expr->col, "int or char expected");
             break;
         default:
-            if (dec->type != this->check_expr(dec->expr.get(), b))
-                this->report_error(expr->line, expr->col, t_string + " expected");
+            this->expect_type(dec->expr.get(), b, dec->type);
             break;
     }
 }
@@ -168,24 +175,15 @@ Type Checker::check_expr_type(Expr *expr, Block *b)
     if (auto e = dynamic_cast<IntParseExpr *>(expr)) {
         if (e->arguments.size() != 1)
             this->report_error(e->line, e->col, "wrong number of arguments");
-        if (this->check_expr(e->arguments[0].get(), b) != Type::String)
-            this->report_error(e->arguments[0]->line, 
-                               e->arguments[0]->col,
-                               "string expected");
+        this->expect_type(e->arguments[0].get(), b, Type::String);
         return Type::Int;
     }
 
     if (auto e = dynamic_cast<NewStrExpr *>(expr)) {
         if (e->arguments.size() != 2)
             this->report_error(e->line, e->col, "wrong number of arguments");
-        if (this->check_expr(e->arguments[0].get(), b) != Type::Char)
-            this->report_error(e->arguments[0]->line, 
-                               e->arguments[0]->col,
-                               "char expected");
-        if (this->check_expr(e->arguments[1].get(), b) != Type::Int)
-            this->report_error(e->arguments[1]->line, 
-                               e->arguments[1]->col,
-                               "int expected");
+        this->expect_type(e->arguments[0].get(), b, Type::Char);
+        this->expect_type(e->arguments[1].get(), b, Type::Int);
         return Type::String;
     }
     throw runtime_error("Unrecognized expression");

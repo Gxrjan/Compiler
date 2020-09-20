@@ -436,6 +436,7 @@ class Checker {
     Declaration *look_up(Id id, Block *b);
     Type check_expr(Expr *expr, Block *b);
     Type check_expr_type(Expr *expr, Block *b);
+    void expect_type(Expr *e, Block *b, Type t);
     bool convertible_to_int(Type t);
     void check_declaration(Declaration *dec, Block *b);
     void check_assignment(Assignment *asgn, Block *b);

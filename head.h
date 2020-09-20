@@ -382,19 +382,18 @@ class Program {
 class Scanner {
     char next_char = -1;
     bool has_next = false;
+    int line = 1;
+    int column = 1;
+    unique_ptr<Token> next = nullptr;
     ifstream file;
+    void report_error(string message);
     char getc();
     char peekc();
     void consume_ws();
-    void report_error(string message);
-    int line = 1;
-    int column = 1;
   public:
-    Scanner();
     Scanner(char *file_name);
     int last_line = 1;     // Line number of the last token read or peeked 
     int last_column = 1;   // Column number of the last token read or peeked
-    unique_ptr<Token> next = nullptr;
     Token *peek_token();
     unique_ptr<Token> next_token();
 };
@@ -438,6 +437,13 @@ class Checker {
     Type check_expr_type(Expr *expr, Block *b);
     void expect_type(Expr *e, Block *b, Type t);
     bool convertible_to_int(Type t);
+    Type check_variable(Variable *var, Block *b);
+    Type check_elem_access_expr(ElemAccessExpr *expr, Block *b);
+    Type check_length_expr(LengthExpr *expr, Block *b);
+    Type check_type_cast_expr(TypeCastExpr *expr, Block *b);
+    Type check_substr_expr(SubstrExpr *expr, Block *b);
+    Type check_int_parse_expr(IntParseExpr *expr, Block *b);
+    Type check_new_str_expr(NewStrExpr *expr, Block *b);
     void check_declaration(Declaration *dec, Block *b);
     void check_assignment(Assignment *asgn, Block *b);
     void verify_assignment(Declaration *dec, Expr *expr, Block *b);

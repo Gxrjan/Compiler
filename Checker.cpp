@@ -101,6 +101,75 @@ Declaration *Checker::look_up(Id id, Block *b)
 }
 
 
+Type Checker::check_variable(Variable *var, Block *b)
+{
+        Declaration *result = this->look_up(var->name, b);
+        if (!result)
+            this->report_error(var->line, var->col, "variable hasn't been declared");
+        return result->type;
+}
+
+Type Checker::check_elem_access_expr(ElemAccessExpr *expr, Block *b)
+{
+    Type left_type = this->check_expr(expr->expr.get(), b);
+    Type right_type = this->check_expr(expr->index.get(), b);
+    if (left_type != Type::String)
+        this->report_error(expr->expr->line, expr->expr->col, "[] operator is only available for strings for now");
+    if (!this->convertible_to_int(right_type))
+        this->report_error(expr->index->line, expr->index->col, "[] accepts only int or char");
+    return Type::Char;
+}
+
+Type Checker::check_length_expr(LengthExpr *expr, Block *b)
+{
+    if (this->check_expr(expr->expr.get(), b) != Type::String)
+        this->report_error(expr->expr->line, expr->expr->col, "Length function call is only applicable to strings");
+    return Type::Int;
+}
+
+Type Checker::check_type_cast_expr(TypeCastExpr *expr, Block *b)
+{
+    if (!this->convertible_to_int(expr->type))
+        this->report_error(expr->line, expr->col, "You can type cast to char or int");
+    if (!this->convertible_to_int(this->check_expr(expr->expr.get(), b)))
+        this->report_error(expr->expr->line, expr->expr->col, "Type casts are only supported for ints and chars");
+    return expr->type;
+}
+
+
+Type Checker::check_substr_expr(SubstrExpr *e, Block *b)
+{
+    if (this->check_expr(e->expr.get(), b) != Type::String)
+        this->report_error(e->line, e->col, "Substring is supported only for strings");
+    if (e->arguments.size() < 1 || e->arguments.size() > 2)
+        this->report_error(e->line, e->col, "wrong number of arguments");
+    for (auto &a : e->arguments)
+        if (!this->convertible_to_int(this->check_expr(a.get(), b)))
+            this->report_error(a->line, a->col, "must be int or char");
+    return Type::String;
+}
+
+Type Checker::check_int_parse_expr(IntParseExpr *e, Block *b)
+{
+    if (e->arguments.size() != 1)
+        this->report_error(e->line, e->col, "wrong number of arguments");
+    this->expect_type(e->arguments[0].get(), b, Type::String);
+    return Type::Int;
+}
+
+Type Checker::check_new_str_expr(NewStrExpr *e, Block *b)
+{
+    if (e->arguments.size() != 2)
+        this->report_error(e->line, e->col, "wrong number of arguments");
+    this->expect_type(e->arguments[0].get(), b, Type::Char);
+    if (!this->convertible_to_int(
+            this->check_expr(e->arguments[1].get(), b)))
+            this->report_error(e->arguments[1]->line,
+                               e->arguments[1]->col,
+                               "int or char expected");
+    return Type::String;
+}
+
 Type Checker::check_expr(Expr *expr, Block *b)
 {
     return expr->type = this->check_expr_type(expr, b);
@@ -108,88 +177,40 @@ Type Checker::check_expr(Expr *expr, Block *b)
 
 Type Checker::check_expr_type(Expr *expr, Block *b)
 {
-    long long num;
-    bool bl;
-    if (expr->isNumLiteral(&num))
+    if (dynamic_cast<NumLiteral *>(expr))
         return Type::Int;
-    if (expr->isBoolLiteral(&bl))
+    if (dynamic_cast<BoolLiteral *>(expr))
         return Type::Bool;
 
-    string name;
-
-    if (expr->isVariable(&name)) {
-        Declaration *result = this->look_up(name, b);
-        if (!result)
-            this->report_error(expr->line, expr->col, "variable hasn't been declared");
-        return result->type;
-    }
+    if (auto var = dynamic_cast<Variable *>(expr))
+        return this->check_variable(var, b);
 
     if (dynamic_cast<CharLiteral *>(expr))
         return Type::Char;
     if (dynamic_cast<StringLiteral *>(expr))
         return Type::String;
     
-    Expr* left;
-    Expr* right;
-    string op;
     if (auto e = dynamic_cast<OpExpr *>(expr))
         return this->check_compatability(e, b);
     
+    if (auto e = dynamic_cast<ElemAccessExpr *>(expr))
+        return this->check_elem_access_expr(e, b);
 
-    if (expr->isElemAccessExpr(&left, &right)) {
-        Type left_type = this->check_expr(left, b);
-        Type right_type = this->check_expr(right, b);
-        if (left_type != Type::String)
-            this->report_error(left->line, left->col, "[] operator is only available for strings for now");
-        if (!this->convertible_to_int(right_type))
-            this->report_error(right->line, right->col, "[] accepts only int or char");
-        return Type::Char;
-    }
-
-    if (expr->isLengthExpr(&left)) {
-        if (this->check_expr(left, b) != Type::String)
-            this->report_error(left->line, left->col, "Length function call is only applicable to strings");
-        return Type::Int;
-    }
+    if (auto e = dynamic_cast<LengthExpr *>(expr))
+        return this->check_length_expr(e, b);
     
-    Type t;
-    if (expr->isTypeCastExpr(&t, &left)) {
-        if (!this->convertible_to_int(t))
-            this->report_error(expr->line, expr->col, "You can type cast to char or int");
-        if (!this->convertible_to_int(this->check_expr(left, b)))
-            this->report_error(left->line, left->col, "Type casts are only supported for ints and chars");
-        return t;
-    }
+    if (auto e = dynamic_cast<TypeCastExpr *>(expr))
+        return this->check_type_cast_expr(e, b);
 
-    if (auto e = dynamic_cast<SubstrExpr *>(expr)) {
-        if (this->check_expr(e->expr.get(), b) != Type::String)
-            this->report_error(e->line, e->col, "Substring is supported only for strings");
-        if (e->arguments.size() < 1 || e->arguments.size() > 2)
-            this->report_error(e->line, e->col, "wrong number of arguments");
-        for (auto &a : e->arguments)
-            if (!this->convertible_to_int(this->check_expr(a.get(), b)))
-                this->report_error(a->line, a->col, "must be int or char");
-        return Type::String;
-    }
+    if (auto e = dynamic_cast<SubstrExpr *>(expr))
+        return this->check_substr_expr(e, b);
 
-    if (auto e = dynamic_cast<IntParseExpr *>(expr)) {
-        if (e->arguments.size() != 1)
-            this->report_error(e->line, e->col, "wrong number of arguments");
-        this->expect_type(e->arguments[0].get(), b, Type::String);
-        return Type::Int;
-    }
+    if (auto e = dynamic_cast<IntParseExpr *>(expr))
+        return this->check_int_parse_expr(e, b);
 
-    if (auto e = dynamic_cast<NewStrExpr *>(expr)) {
-        if (e->arguments.size() != 2)
-            this->report_error(e->line, e->col, "wrong number of arguments");
-        this->expect_type(e->arguments[0].get(), b, Type::Char);
-        if (!this->convertible_to_int(
-                this->check_expr(e->arguments[1].get(), b)))
-            this->report_error(e->arguments[1]->line,
-                                e->arguments[1]->col,
-                                "int or char expected");
-        return Type::String;
-    }
+    if (auto e = dynamic_cast<NewStrExpr *>(expr))
+        return this->check_new_str_expr(e, b);
+
     throw runtime_error("Unrecognized expression");
 }
 

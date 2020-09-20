@@ -1,7 +1,6 @@
 #include "head.h"
 
 
-Scanner::Scanner() {}
 
 Scanner::Scanner(char *file_name) {
     if (file_name == nullptr)
@@ -20,6 +19,46 @@ void Scanner::report_error(string message)
                       + ": " + message);
 }
 
+char Scanner::getc()
+{
+    if (has_next) {
+        char res = next_char;
+        next_char = -1;
+        has_next = false;
+        return res;
+    }
+    char c;
+    if (file.is_open())
+        c = file.get();
+    else
+        c = cin.get();
+    if (c == EOF)
+        return c;
+    if (c == '\n') {
+        this->line++;
+        this->column = 1;
+    } else {
+        this->column++;
+    }
+    return c;
+}
+
+char Scanner::peekc() {
+    if (has_next)
+        return next_char;
+    next_char = this->getc();
+    has_next = true;
+    return next_char; 
+}
+
+
+void Scanner::consume_ws()
+{
+    while (isspace(this->peekc())) {
+        this->getc();
+    }
+}
+
 Token* Scanner::peek_token()
 {
     if (this->next) {
@@ -27,13 +66,6 @@ Token* Scanner::peek_token()
     }
     this->next = this->next_token();
     return this->next.get();
-}
-
-void Scanner::consume_ws()
-{
-    while (isspace(this->peekc())) {
-        this->getc();
-    }
 }
 
 unique_ptr<Token> Scanner::next_token() {
@@ -148,34 +180,4 @@ unique_ptr<Token> Scanner::next_token() {
     return nullptr;
 }
 
-char Scanner::peekc() {
-    if (has_next)
-        return next_char;
-    next_char = this->getc();
-    has_next = true;
-    return next_char; 
-}
 
-char Scanner::getc()
-{
-    if (has_next) {
-        char res = next_char;
-        next_char = -1;
-        has_next = false;
-        return res;
-    }
-    char c;
-    if (file.is_open())
-        c = file.get();
-    else
-        c = cin.get();
-    if (c == EOF)
-        return c;
-    if (c == '\n') {
-        this->line++;
-        this->column = 1;
-    } else {
-        this->column++;
-    }
-    return c;
-}

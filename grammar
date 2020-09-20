@@ -12,6 +12,7 @@ Block ->
         | \epsilon
         | Statement Block
 
+
 Statement ->
         | Declaration ';'
         | Assignment ';'
@@ -26,9 +27,11 @@ Statement ->
 Declaration ->
         | Type id '=' Expression
 
+
 Assignment ->
         | id '=' Expression
        
+
 Print -> 
         | "print" '(' Expression ')'
 
@@ -36,6 +39,14 @@ Print ->
 Expression ->
         | Unary
         | Expression BinaryOp Expression
+
+
+Unary ->
+        | Primary
+        | '!' Unary
+        | '-' Unary
+        | '(' Type ')' Unary
+
 
 Primary ->
         | '(' Expression ')' 
@@ -47,14 +58,11 @@ Primary ->
         | Primary '.' id
         | Primary '.' id '(' Args ')'
         | 'int' '.' id '(' Args ')'
+        | 'new' 'string' '(' Args ')'
         
-Unary ->
-        | Primary
-        | '!' Unary
-        | '-' Unary
-        | '(' Type ')' Unary
 
 BinaryOp -> '&&' | '||' | '==' | '!=' | '<' | '>' | '<=' | '>=' | '+' | '-' | '*' | '/' | '%';
+
 
 character ->
         | any character other than a single quote or new line

@@ -157,3 +157,8 @@ print("abcdef".Substring(1)); // expect: bcdef
 print("abcdef".Substring(2, 4)); // expect: cdef
 
 print("xyzabc".Substring((char) 0, (char) 3)); // expect: xyz
+
+
+// int.Parse
+
+print(int.Parse("15123")); // expect: 15123

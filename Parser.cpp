@@ -66,12 +66,12 @@ unique_ptr<Expr> Parser::parse_unary()
         Type type;
         if (peek && peek->isType(&type)) {
             this->scan->next_token();
-            this->expect(")"); //<===
+            this->expect(")"); 
             unique_ptr<Expr> expr = this->parse_unary();
             return make_unique<TypeCastExpr>(type, move(expr), line, col);
         } else {
             unique_ptr<Expr> expr = this->parse_expr();
-            this->expect(")"); // <=====
+            this->expect(")"); 
             return expr;
         }
     }
@@ -91,7 +91,7 @@ unique_ptr<Expr> Parser::parse_primary() {
     unique_ptr<Expr> prim;
     if (t->isSymbol("(")) {
         prim = this->parse_expr();
-        this->expect(")"); // <====
+        this->expect(")"); 
     } else if (t->isNum(&num)) {
         prim = make_unique<NumLiteral>(num, line, col);
     } else if (t->isBool(&b)) {
@@ -108,7 +108,7 @@ unique_ptr<Expr> Parser::parse_primary() {
         if (next && next->isId("Parse")) {
             this->expect("(");
             vector<unique_ptr<Expr>> arguments = this->parse_arguments();
-            this->expect(")");  // <====
+            this->expect(")");  
             prim = make_unique<IntParseExpr>(move(arguments), line, col);
         } else
             this->report_error("Parse call expected");
@@ -129,7 +129,7 @@ unique_ptr<Expr> Parser::parse_primary() {
             else if (tok && tok->isId("Substring")) {
                 this->expect("(");
                 vector<unique_ptr<Expr>> args = this->parse_arguments();
-                this->expect(")");  // <=====
+                this->expect(")");  
                 prim = make_unique<SubstrExpr>(move(prim), move(args), line, col);
             } else
                 this->report_error("Unrecognized function call");
@@ -137,8 +137,6 @@ unique_ptr<Expr> Parser::parse_primary() {
         
     }
     return prim;
-    this->report_error("Syntax error");
-    return nullptr; // Not reached
 }
 
 unique_ptr<Expr> Parser::parse_expression(unique_ptr<Expr> lhs, 

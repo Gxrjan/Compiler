@@ -162,3 +162,4 @@ print("xyzabc".Substring((char) 0, (char) 3)); // expect: xyz
 // int.Parse
 
 print(int.Parse("15123")); // expect: 15123
+print(int.Parse("-1")); // expect: -1

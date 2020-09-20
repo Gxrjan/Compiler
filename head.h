@@ -266,12 +266,6 @@ class TypeCastExpr : public Expr {
     bool isTypeCastExpr(Type *t, Expr **expr) override;
 };
 
-class Args : public Expr {
-  public:
-    vector<unique_ptr<Expr>> expressions;
-    Args(vector<unique_ptr<Expr>> expressions, int line, int col);
-    string to_string() override;
-};
 
 class SubstrExpr : public Expr {
   public:
@@ -287,6 +281,13 @@ class IntParseExpr : public Expr {
     IntParseExpr(vector<unique_ptr<Expr>> arguments, int line, int col);
     string to_string() override;
     
+};
+
+class NewStrExpr : public Expr {
+  public:
+    vector<unique_ptr<Expr>> arguments;
+    NewStrExpr(vector<unique_ptr<Expr>> arguments);
+    string to_string() override;
 };
 
 
@@ -467,6 +468,7 @@ class Translator {
     void translate_type_cast_expr(string *s, TypeCastExpr *expr);
     void translate_substr_expr(string *s, SubstrExpr *expr);
     void translate_int_parse_expr(string *s, IntParseExpr *expr);
+    void translate_new_str_expr(string *s, NewStrExpr *expr);
     void translate_variable(string *s, Variable *var);
     void translate_op_expr(string *s, OpExpr *expr);
     void translate_expr(string *s, Expr *expr);

@@ -112,6 +112,15 @@ unique_ptr<Expr> Parser::parse_primary() {
             prim = make_unique<IntParseExpr>(move(arguments), line, col);
         } else
             this->report_error("Parse call expected");
+    } else if (t->isKeyword("new")) {
+        t = this->scan->next_token();
+        if (t && t->isId("String")) {
+            this->expect("(");
+            vector<unique_ptr<Expr>> arguments = this->parse_arguments();
+            this->expect(")");
+            return make_unique<NewStrExpr>(move(arguments));
+        } else
+            this->report_error("String expected");
     }
     Token *peek;
     while ((peek=this->scan->peek_token()) && (peek->isSymbol(".") || peek->isSymbol("["))) {

@@ -139,7 +139,8 @@ unique_ptr<Token> Scanner::next_token() {
         if (name == "false")
             return make_unique<BoolToken>(false);
         if (name == "print" || name == "if" || name == "else" ||
-            name == "while" || name == "for" || name == "break")
+            name == "while" || name == "for" || name == "break" ||
+            name == "new")
             return make_unique<KeywordToken>(name);
         return make_unique<IdToken>(name);
     }

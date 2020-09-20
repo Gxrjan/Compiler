@@ -157,6 +157,18 @@ void Translator::translate_int_parse_expr(string *s, IntParseExpr *e)
         " push  rax\n";
 }
 
+void Translator::translate_new_str_expr(string *s, NewStrExpr *e)
+{
+    
+    this->translate_expr(s, e->arguments[0].get());
+    this->translate_expr(s, e->arguments[1].get());
+    *s +=
+        " pop   rsi\n"
+        " pop   rdi\n"
+        " call  new_str_expr\n"
+        " push   rax\n";
+}
+
 void Translator::translate_op_expr(string *s, OpExpr *expr) 
 {
     if (expr->op == "&&" || expr->op == "||") {
@@ -291,6 +303,8 @@ void Translator::translate_expr(string *s, Expr *e)
         this->translate_substr_expr(s, expr);
     } else if (auto expr = dynamic_cast<IntParseExpr *>(e)) {
         this->translate_int_parse_expr(s, expr);
+    } else if (auto expr = dynamic_cast<NewStrExpr *>(e)) {
+        this->translate_new_str_expr(s, expr);
     } else
         throw runtime_error("Unknown type of expression");
 }
@@ -451,6 +465,7 @@ string Translator::translate_program(Program* prog)
         "extern substr_int\n"
         "extern substr_int_int\n"
         "extern int_parse\n"
+        "extern new_str_expr\n"
         "extern printg\n"
         "section .text\n"
         " global main\n"

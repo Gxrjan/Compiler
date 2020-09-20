@@ -111,4 +111,10 @@ long long int_parse(gstring s)
 }
 
 
+gstring new_str_expr(char16_t c, long long len)
+{
+    u16string s = u16string(len, c);
+    return concat_chars(s.c_str(), len, &c, 0);
+}
+
 }

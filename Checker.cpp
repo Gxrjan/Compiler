@@ -174,6 +174,20 @@ Type Checker::check_expr_type(Expr *expr, Block *b)
                                "string expected");
         return Type::Int;
     }
+
+    if (auto e = dynamic_cast<NewStrExpr *>(expr)) {
+        if (e->arguments.size() != 2)
+            this->report_error(e->line, e->col, "wrong number of arguments");
+        if (this->check_expr(e->arguments[0].get(), b) != Type::Char)
+            this->report_error(e->arguments[0]->line, 
+                               e->arguments[0]->col,
+                               "char expected");
+        if (this->check_expr(e->arguments[1].get(), b) != Type::Int)
+            this->report_error(e->arguments[1]->line, 
+                               e->arguments[1]->col,
+                               "int expected");
+        return Type::String;
+    }
     throw runtime_error("Unrecognized expression");
 }
 

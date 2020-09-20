@@ -145,23 +145,6 @@ bool TypeCastExpr::isTypeCastExpr(Type *t, Expr **expr)
 }
 
 
-Args::Args(vector<unique_ptr<Expr>> expressions, int line, int col)
-{
-    this->expressions = move(expressions);
-    this->line = line;
-    this->col = col;
-}
-
-string Args::to_string()
-{
-    string result = "";
-    for (auto &expr : this->expressions)
-        result += expr->to_string() + ", ";
-    result.pop_back();
-    return result;
-}
-
-
 SubstrExpr::SubstrExpr(unique_ptr<Expr> expr, vector<unique_ptr<Expr>> args, int line, int col)
 {
     this->expr = move(expr);
@@ -191,6 +174,22 @@ IntParseExpr::IntParseExpr(vector<unique_ptr<Expr>> args, int line, int col)
 string IntParseExpr::to_string()
 {
     string result = "int.Parse(";
+    for (auto &a : this->arguments)
+        result += a->to_string() + ",";
+    result.pop_back();
+    result += ")";
+    return result;
+}
+
+
+NewStrExpr::NewStrExpr(vector<unique_ptr<Expr>> arguments)
+{
+    this->arguments = move(arguments);
+}
+
+string NewStrExpr::to_string()
+{
+    string result =  "new string(";
     for (auto &a : this->arguments)
         result += a->to_string() + ",";
     result.pop_back();

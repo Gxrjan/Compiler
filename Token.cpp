@@ -47,30 +47,23 @@ string SymbolToken::to_string() { return "Symbol: " + this->s; }
 
 
 
-TypeToken::TypeToken(Type t) { this->type = t; }
-bool TypeToken::isType(Type *t) 
+TypeToken::TypeToken(Type *t) { this->type = t; }
+bool TypeToken::isType(Type **t) 
 {
     *t = this->type;
     return true;
 }
 string TypeToken::to_string()
 {
-    string result = "";
-    switch(this->type) {
-        case Type::Bool:
-            result = "bool";
-            break;
-        case Type::Int:
-            result = "int";
-            break;
-        case Type::Char:
-            result = "char";
-            break;
-        default:
-            throw runtime_error("Unknown type");
-            break;
-    }
-    return result;
+    if (this->type == &Int)
+        return "int";
+    if (this->type == &Bool)
+        return "bool";
+    if (this->type == &Char)
+        return "char";
+    if (this->type == &String)
+        return "string";
+    return "unknown type";
 }
 
 KeywordToken::KeywordToken(string name) { this->name = name; }

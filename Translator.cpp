@@ -1,16 +1,16 @@
 #include "head.h"
 
 
-string Translator::concat_cc(Type left, Type right)
+string Translator::concat_cc(Type *left, Type *right)
 {
-    if (left == Type::String) {
-        if (right == Type::String)
+    if (left == &String) {
+        if (right == &String)
             return "";
-        else if (right == Type::Int)
+        else if (right == &Int)
             return "_str_int";
         else
             return "_str_chr";
-    } else if (left == Type::Int)
+    } else if (left == &Int)
         return "_int_str";
      else
         return "_chr_str";
@@ -43,16 +43,11 @@ string Translator::operation_to_cc(Operation op)
     }
 }
 
-string Translator::type_to_cc(Type t)
+string Translator::type_to_cc(Type *t)
 {
-    switch (t) {
-        case Type::Char:
-            return "c";
-            break;
-        default:
-            return "i";
-            break;
-        }
+    if (t == &Char)
+        return "c";
+    return "i";
 }
 
 void Translator::translate_num_literal(string *s, NumLiteral *l)
@@ -116,7 +111,7 @@ void Translator::translate_length_expr(string *s, LengthExpr *e)
 void Translator::translate_type_cast_expr(string *s, TypeCastExpr *e)
 {
     this->translate_expr(s, e->expr.get());
-    if (e->type == Type::Char) {
+    if (e->type == &Char) {
         *s += 
             " pop       rcx\n"
             " mov       rax, 0\n"
@@ -218,7 +213,7 @@ void Translator::translate_op_expr(string *s, OpExpr *expr)
         Operation o;
         switch((o = TypeConverter::string_to_operation(expr->op))) {
             case Operation::Add:
-                if (expr->type == Type::Int) {
+                if (expr->type == &Int) {
                     *s += 
                         " pop     rax\n"
                         " add     [rsp], rax\n";
@@ -336,7 +331,7 @@ void Translator::translate_print(string *s, Print *p)
     *s += // asm comment 
         "; " + p->to_string() + "\n";
     this->translate_expr(s, p->expr.get());
-    if (p->expr->type == Type::String) {
+    if (p->expr->type == &String) {
         *s +=
             " pop       rdi\n"
             " call      printg\n";

@@ -124,7 +124,7 @@ bool LengthExpr::isLengthExpr(Expr **expr)
 }
 
 
-TypeCastExpr::TypeCastExpr(Type type, unique_ptr<Expr> expr, int line, int col)
+TypeCastExpr::TypeCastExpr(Type *type, unique_ptr<Expr> expr, int line, int col)
 {
     this->type = type;
     this->line = line;
@@ -137,7 +137,7 @@ string TypeCastExpr::to_string()
     return "("+TypeConverter::enum_to_string(this->type)+") "+this->expr->to_string();
 }
 
-bool TypeCastExpr::isTypeCastExpr(Type *t, Expr **expr)
+bool TypeCastExpr::isTypeCastExpr(Type **t, Expr **expr)
 {
     *t = this->type;
     *expr = this->expr.get();

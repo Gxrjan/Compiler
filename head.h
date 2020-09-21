@@ -15,7 +15,37 @@
 
 using namespace std;
 using Id = string;
-enum class Type { Bool, Int, Char, String };
+
+class Type { };
+
+class BasicType : public Type {
+    string name;
+
+  public:
+    BasicType(string name) { this->name = name; }
+};
+
+BasicType Bool("bool"), Char("char"), Int("int"), String("string");
+
+BasicType Empty("empty");   // type of 'null'
+
+class ArrayType : public Type {
+    Type *base;
+
+    ArrayType(Type *base) { this->base = base; }
+
+    static map<Type *, ArrayType*> array_types;  // int -> int[],  int[] -> int[][]
+
+  public:
+    static ArrayType *make(Type *base) {
+        auto it = array_types.find(base);
+        if (it != array_types.end())
+            return it->second;
+
+        return array_types[base] = new ArrayType(base);
+    }
+};
+
 enum class Operation {
     Add,
     Sub,
@@ -34,25 +64,17 @@ enum class Operation {
 
 class TypeConverter {
   public:
-    static string enum_to_string(Type t)
+    static string enum_to_string(Type *t)
     {
-        switch(t) {
-            case Type::Int:
-                return "int";
-                break;
-            case Type::Bool:
-                return "bool";
-                break;
-            case Type::Char:
-                return "char";
-                break;
-            case Type::String:
-                return "string";
-                break;
-            default:
-                throw runtime_error("Unknown Type");
-                break;
-        }
+        if (t == &Int)
+            return "int";
+        if (t == &Bool)
+            return "bool";
+        if (t == &Char)
+            return "char";
+        if (t == &String)
+            return "string";
+        return "unknown type";
     }
 
     static Operation string_to_operation(string op)
@@ -88,7 +110,7 @@ class Token {
     virtual bool isId(string name) { return false; }
     virtual bool isSymbol(string s) { return false; }
     virtual bool isKeyword(string name) { return false; }
-    virtual bool isType(Type *t) { return false; }
+    virtual bool isType(Type **t) { return false; }
     virtual bool isOper(string op) { return false; }
     virtual bool isChar(char *c) { return false; }
     virtual bool isString(string *s) { return false; }
@@ -159,9 +181,9 @@ class KeywordToken : public Token {
 
 class TypeToken : public Token {
   public:
-    Type type;
-    TypeToken(Type t);
-    bool isType(Type *t) override;
+    Type *type;
+    TypeToken(Type *t);
+    bool isType(Type **t) override;
     string to_string() override;
 };
 
@@ -177,7 +199,7 @@ class CharToken : public Token {
 // EXPRESSION
 class Expr {  // abstract base class
   public:
-    Type type;
+    Type *type;
     int line, col;
     Expr();
     Expr(int line, int col);
@@ -188,7 +210,7 @@ class Expr {  // abstract base class
     virtual bool isVariable(string *name) { return false; }
     virtual bool isElemAccessExpr(Expr **expr, Expr **index) { return false; }
     virtual bool isLengthExpr(Expr **expr) { return false; }
-    virtual bool isTypeCastExpr(Type *t, Expr **expr) { return false; }
+    virtual bool isTypeCastExpr(Type **t, Expr **expr) { return false; }
 };
 
 class NumLiteral : public Expr {
@@ -259,11 +281,11 @@ class LengthExpr : public Expr {
 
 class TypeCastExpr : public Expr {
   public:
-    Type type;
+    Type *type;
     unique_ptr<Expr> expr;
-    TypeCastExpr(Type t, unique_ptr<Expr> expr, int line, int col);
+    TypeCastExpr(Type *t, unique_ptr<Expr> expr, int line, int col);
     string to_string() override;
-    bool isTypeCastExpr(Type *t, Expr **expr) override;
+    bool isTypeCastExpr(Type **t, Expr **expr) override;
 };
 
 
@@ -317,10 +339,10 @@ class Print : public Statement {
 
 class Declaration : public Statement {
   public:
-    Type type;
+    Type *type;
     Id id;
     unique_ptr<Expr> expr;
-    Declaration(Type t, Id id, unique_ptr<Expr> expr, int line, int col);
+    Declaration(Type *t, Id id, unique_ptr<Expr> expr, int line, int col);
     string to_string() override;
 };
 
@@ -433,17 +455,17 @@ class Parser {
 // CHECKER
 class Checker {
     Declaration *look_up(Id id, Block *b);
-    Type check_expr(Expr *expr, Block *b);
-    Type check_expr_type(Expr *expr, Block *b);
-    void expect_type(Expr *e, Block *b, Type t);
-    bool convertible_to_int(Type t);
-    Type check_variable(Variable *var, Block *b);
-    Type check_elem_access_expr(ElemAccessExpr *expr, Block *b);
-    Type check_length_expr(LengthExpr *expr, Block *b);
-    Type check_type_cast_expr(TypeCastExpr *expr, Block *b);
-    Type check_substr_expr(SubstrExpr *expr, Block *b);
-    Type check_int_parse_expr(IntParseExpr *expr, Block *b);
-    Type check_new_str_expr(NewStrExpr *expr, Block *b);
+    Type *check_expr(Expr *expr, Block *b);
+    Type *check_expr_type(Expr *expr, Block *b);
+    void expect_type(Expr *e, Block *b, Type *t);
+    bool convertible_to_int(Type *t);
+    Type *check_variable(Variable *var, Block *b);
+    Type *check_elem_access_expr(ElemAccessExpr *expr, Block *b);
+    Type *check_length_expr(LengthExpr *expr, Block *b);
+    Type *check_type_cast_expr(TypeCastExpr *expr, Block *b);
+    Type *check_substr_expr(SubstrExpr *expr, Block *b);
+    Type *check_int_parse_expr(IntParseExpr *expr, Block *b);
+    Type *check_new_str_expr(NewStrExpr *expr, Block *b);
     void check_declaration(Declaration *dec, Block *b);
     void check_assignment(Assignment *asgn, Block *b);
     void verify_assignment(Declaration *dec, Expr *expr, Block *b);
@@ -452,7 +474,7 @@ class Checker {
     void check_for_statement(ForStatement *for_s, Block *b);
     void check_statement(Statement *s, Block *b, bool in_loop);
     void check_block(Block *b, bool in_loop);
-    Type check_compatability(OpExpr *expr, Block *b);
+    Type *check_compatability(OpExpr *expr, Block *b);
     void report_error(int line, int col, string message);
   public:
     void check_program(Program *p);
@@ -465,7 +487,7 @@ class Translator {
     int string_id = 0;
     set<Id> variables;
     map<StringLiteral *, int> strings;
-    string concat_cc(Type left, Type right);
+    string concat_cc(Type *left, Type *right);
     void translate_num_literal(string *s, NumLiteral *l);
     void translate_bool_literal(string *s, BoolLiteral *l);
     void translate_char_literal(string *s, CharLiteral *l);
@@ -487,7 +509,7 @@ class Translator {
     void translate_for_statement(string *s, ForStatement *for_s);
     void translate_statement(string *s, Statement *statement, string loop_end_label);
     void translate_block(string *s, Block *b, string loop_end_label);
-    string type_to_cc(Type t);
+    string type_to_cc(Type *t);
     string operation_to_cc(Operation op);
   public:
     string translate_program(Program *p);

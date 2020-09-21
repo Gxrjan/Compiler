@@ -37,7 +37,7 @@ string Print::to_string()
 
 
 Declaration::Declaration
-(Type t, Id id, unique_ptr<Expr> expr, int line, int col) 
+(Type *t, Id id, unique_ptr<Expr> expr, int line, int col) 
 : Statement(line, col)
 {
     this->type = t;

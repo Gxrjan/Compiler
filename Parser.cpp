@@ -63,7 +63,7 @@ unique_ptr<Expr> Parser::parse_unary()
     if (peek && peek->isSymbol("(")) {
         this->scan->next_token();
         peek = this->scan->peek_token();
-        Type type;
+        Type *type;
         if (peek && peek->isType(&type)) {
             this->scan->next_token();
             this->expect(")"); 
@@ -79,7 +79,7 @@ unique_ptr<Expr> Parser::parse_unary()
 }
 
 unique_ptr<Expr> Parser::parse_primary() {
-    Type type;
+    Type *type;
     long long int num;
     bool b;
     Id id;
@@ -102,7 +102,7 @@ unique_ptr<Expr> Parser::parse_primary() {
         prim = make_unique<CharLiteral>(wc, line, col);
     } else if (t->isString(&s)) {
         prim = make_unique<StringLiteral>(s, line, col);
-    } else if (t->isType(&type) && type == Type::Int ) {
+    } else if (t->isType(&type) && type == &Int ) {
         this->expect(".");
         unique_ptr<Token> next = this->scan->next_token();
         if (next && next->isId("Parse")) {
@@ -114,7 +114,7 @@ unique_ptr<Expr> Parser::parse_primary() {
             this->report_error("Parse call expected");
     } else if (t->isKeyword("new")) {
         t = this->scan->next_token();
-        if (t && t->isType(&type) && type == Type::String) {
+        if (t && t->isType(&type) && type == &String) {
             this->expect("(");
             vector<unique_ptr<Expr>> arguments = this->parse_arguments();
             this->expect(")");
@@ -178,7 +178,7 @@ unique_ptr<Expr> Parser::parse_expr()
 
 unique_ptr<Declaration> Parser::try_parse_declaration()
 {
-    Type type;
+    Type *type;
     Token *t = this->scan->peek_token();
     Id name;
     if (t && t->isType(&type)) {

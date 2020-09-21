@@ -1,33 +1,33 @@
 #include "head.h"
 
 
-void Checker::expect_type(Expr *e, Block *b, Type t)
+void Checker::expect_type(Expr *e, Block *b, Type *t)
 {
     if (this->check_expr(e, b) != t)
         this->report_error(e->line, e->col,
         TypeConverter::enum_to_string(t)+" expected");
 }
 
-bool Checker::convertible_to_int(Type type)
+bool Checker::convertible_to_int(Type *type)
 {
-    return (type == Type::Int || type == Type::Char);
+    return (type == &Int || type == &Char);
 }
 
-Type Checker::check_compatability(OpExpr *expr, Block *b)
+Type *Checker::check_compatability(OpExpr *expr, Block *b)
 {
-    Type left_t = this->check_expr(expr->left.get(), b);
-    Type right_t = this->check_expr(expr->right.get(), b);
+    Type *left_t = this->check_expr(expr->left.get(), b);
+    Type *right_t = this->check_expr(expr->right.get(), b);
     
     switch (TypeConverter::string_to_operation(expr->op)) {
         case Operation::Add:
             if (!(
-                (left_t == Type::String && right_t == Type::String) ||
-                (left_t == Type::String && this->convertible_to_int(right_t)) ||
-                (this->convertible_to_int(left_t) && right_t == Type::String) ||
+                (left_t == &String && right_t == &String) ||
+                (left_t == &String && this->convertible_to_int(right_t)) ||
+                (this->convertible_to_int(left_t) && right_t == &String) ||
                 (this->convertible_to_int(left_t) && this->convertible_to_int(right_t))
                 )) 
                 this->report_error(expr->line, expr->col, "invalid operand types");
-            return (left_t == Type::String || right_t == Type::String) ? Type::String : Type::Int;
+            return (left_t == &String || right_t == &String) ? &String : &Int;
             break;
         case Operation::Sub:
         case Operation::Mul:
@@ -36,7 +36,7 @@ Type Checker::check_compatability(OpExpr *expr, Block *b)
             if (!this->convertible_to_int(left_t) ||
                 !this->convertible_to_int(right_t))
                 this->report_error(expr->line, expr->col, "invalid operand types");
-            return Type::Int;
+            return &Int;
             break;
         case Operation::L:
         case Operation::G:
@@ -45,20 +45,20 @@ Type Checker::check_compatability(OpExpr *expr, Block *b)
             if (!this->convertible_to_int(left_t) ||
                 !this->convertible_to_int(right_t))
                 this->report_error(expr->line, expr->col, "invalid operand types");
-            return Type::Bool;
+            return &Bool;
             break;
         case Operation::E: 
         case Operation::Ne:
             if (!((left_t == right_t) || 
                 (this->convertible_to_int(left_t) && this->convertible_to_int(right_t))))
                 this->report_error(expr->line, expr->col, "invalid operand types");
-            return Type::Bool;
+            return &Bool;
             break;
         case Operation::And:
         case Operation::Or:
-            if (left_t != Type::Bool || right_t != Type::Bool)
+            if (left_t != &Bool || right_t != &Bool)
                 this->report_error(expr->line, expr->col, "invalid operand types");
-            return Type::Bool;
+            return &Bool;
             break;
         default:
             this->report_error(expr->line, expr->col, "Unrecognized operation");
@@ -70,16 +70,12 @@ Type Checker::check_compatability(OpExpr *expr, Block *b)
 void Checker::verify_assignment(Declaration *dec, Expr *expr, Block *b)
 {
     string t_string = TypeConverter::enum_to_string(dec->type);
-    Type expr_type = this->check_expr(expr, b);
-    switch (dec->type) {
-        case Type::Int:
-            if (!this->convertible_to_int(expr_type))
-                this->report_error(expr->line, expr->col, "int or char expected");
-            break;
-        default:
-            this->expect_type(dec->expr.get(), b, dec->type);
-            break;
-    }
+    Type *expr_type = this->check_expr(expr, b);
+    if (dec->type == &Int) {
+        if (!this->convertible_to_int(expr_type))
+            this->report_error(expr->line, expr->col, "int or char expected");
+    } else
+        this->expect_type(dec->expr.get(), b, dec->type);
 }
 
 void Checker::report_error(int line, int col, string message)
@@ -101,7 +97,7 @@ Declaration *Checker::look_up(Id id, Block *b)
 }
 
 
-Type Checker::check_variable(Variable *var, Block *b)
+Type *Checker::check_variable(Variable *var, Block *b)
 {
         Declaration *result = this->look_up(var->name, b);
         if (!result)
@@ -109,25 +105,25 @@ Type Checker::check_variable(Variable *var, Block *b)
         return result->type;
 }
 
-Type Checker::check_elem_access_expr(ElemAccessExpr *expr, Block *b)
+Type *Checker::check_elem_access_expr(ElemAccessExpr *expr, Block *b)
 {
-    Type left_type = this->check_expr(expr->expr.get(), b);
-    Type right_type = this->check_expr(expr->index.get(), b);
-    if (left_type != Type::String)
+    Type *left_type = this->check_expr(expr->expr.get(), b);
+    Type *right_type = this->check_expr(expr->index.get(), b);
+    if (left_type != &String)
         this->report_error(expr->expr->line, expr->expr->col, "[] operator is only available for strings for now");
     if (!this->convertible_to_int(right_type))
         this->report_error(expr->index->line, expr->index->col, "[] accepts only int or char");
-    return Type::Char;
+    return &Char;
 }
 
-Type Checker::check_length_expr(LengthExpr *expr, Block *b)
+Type *Checker::check_length_expr(LengthExpr *expr, Block *b)
 {
-    if (this->check_expr(expr->expr.get(), b) != Type::String)
+    if (this->check_expr(expr->expr.get(), b) != &String)
         this->report_error(expr->expr->line, expr->expr->col, "Length function call is only applicable to strings");
-    return Type::Int;
+    return &Int;
 }
 
-Type Checker::check_type_cast_expr(TypeCastExpr *expr, Block *b)
+Type *Checker::check_type_cast_expr(TypeCastExpr *expr, Block *b)
 {
     if (!this->convertible_to_int(expr->type))
         this->report_error(expr->line, expr->col, "You can type cast to char or int");
@@ -137,58 +133,58 @@ Type Checker::check_type_cast_expr(TypeCastExpr *expr, Block *b)
 }
 
 
-Type Checker::check_substr_expr(SubstrExpr *e, Block *b)
+Type *Checker::check_substr_expr(SubstrExpr *e, Block *b)
 {
-    if (this->check_expr(e->expr.get(), b) != Type::String)
+    if (this->check_expr(e->expr.get(), b) != &String)
         this->report_error(e->line, e->col, "Substring is supported only for strings");
     if (e->arguments.size() < 1 || e->arguments.size() > 2)
         this->report_error(e->line, e->col, "wrong number of arguments");
     for (auto &a : e->arguments)
         if (!this->convertible_to_int(this->check_expr(a.get(), b)))
             this->report_error(a->line, a->col, "must be int or char");
-    return Type::String;
+    return &String;
 }
 
-Type Checker::check_int_parse_expr(IntParseExpr *e, Block *b)
+Type *Checker::check_int_parse_expr(IntParseExpr *e, Block *b)
 {
     if (e->arguments.size() != 1)
         this->report_error(e->line, e->col, "wrong number of arguments");
-    this->expect_type(e->arguments[0].get(), b, Type::String);
-    return Type::Int;
+    this->expect_type(e->arguments[0].get(), b, &String);
+    return &Int;
 }
 
-Type Checker::check_new_str_expr(NewStrExpr *e, Block *b)
+Type *Checker::check_new_str_expr(NewStrExpr *e, Block *b)
 {
     if (e->arguments.size() != 2)
         this->report_error(e->line, e->col, "wrong number of arguments");
-    this->expect_type(e->arguments[0].get(), b, Type::Char);
+    this->expect_type(e->arguments[0].get(), b, &Char);
     if (!this->convertible_to_int(
             this->check_expr(e->arguments[1].get(), b)))
             this->report_error(e->arguments[1]->line,
                                e->arguments[1]->col,
                                "int or char expected");
-    return Type::String;
+    return &String;
 }
 
-Type Checker::check_expr(Expr *expr, Block *b)
+Type *Checker::check_expr(Expr *expr, Block *b)
 {
     return expr->type = this->check_expr_type(expr, b);
 }
 
-Type Checker::check_expr_type(Expr *expr, Block *b)
+Type *Checker::check_expr_type(Expr *expr, Block *b)
 {
     if (dynamic_cast<NumLiteral *>(expr))
-        return Type::Int;
+        return &Int;
     if (dynamic_cast<BoolLiteral *>(expr))
-        return Type::Bool;
+        return &Bool;
 
     if (auto var = dynamic_cast<Variable *>(expr))
         return this->check_variable(var, b);
 
     if (dynamic_cast<CharLiteral *>(expr))
-        return Type::Char;
+        return &Char;
     if (dynamic_cast<StringLiteral *>(expr))
-        return Type::String;
+        return &String;
     
     if (auto e = dynamic_cast<OpExpr *>(expr))
         return this->check_compatability(e, b);
@@ -234,7 +230,7 @@ void Checker::check_assignment(Assignment *asgn, Block *b)
 
 void Checker::check_if_statement(IfStatement *st, Block *b, bool in_loop)
 {
-    if (this->check_expr(st->cond.get(), b) != Type::Bool)
+    if (this->check_expr(st->cond.get(), b) != &Bool)
         this->report_error(st->cond->line, st->cond->col, "if statement requires bool");
     this->check_statement(st->if_s.get(), b, in_loop);
     if (st->else_s)
@@ -243,7 +239,7 @@ void Checker::check_if_statement(IfStatement *st, Block *b, bool in_loop)
 
 void Checker::check_while_statement(WhileStatement *st, Block *b)
 {
-    if (this->check_expr(st->cond.get(), b) != Type::Bool)
+    if (this->check_expr(st->cond.get(), b) != &Bool)
         this->report_error(st->cond->line, st->cond->col, "while statement requires bool");
     this->check_statement(st->statement.get(), b, true);
 }
@@ -254,7 +250,7 @@ void Checker::check_for_statement(ForStatement *for_s, Block *b)
     this->check_declaration(for_s->init.get(), b);
     
     // Checking cond
-    if (this->check_expr(for_s->cond.get(), b) != Type::Bool)
+    if (this->check_expr(for_s->cond.get(), b) != &Bool)
         this->report_error(for_s->cond->line, 
                            for_s->cond->col,
                            "Bool expression expected");

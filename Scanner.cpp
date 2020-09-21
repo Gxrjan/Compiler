@@ -159,13 +159,13 @@ unique_ptr<Token> Scanner::next_token() {
             name = name + c;
         }
         if (name == "bool")
-            return make_unique<TypeToken>(Type::Bool);
+            return make_unique<TypeToken>(&Bool);
         if (name == "int")
-            return make_unique<TypeToken>(Type::Int);
+            return make_unique<TypeToken>(&Int);
         if (name == "char")
-            return make_unique<TypeToken>(Type::Char);
+            return make_unique<TypeToken>(&Char);
         if (name == "string")
-            return make_unique<TypeToken>(Type::String);
+            return make_unique<TypeToken>(&String);
         if (name == "true")
             return make_unique<BoolToken>(true);
         if (name == "false")

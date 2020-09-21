@@ -60,6 +60,7 @@ Primary ->
         | Primary '.' id '(' Args ')'
         | 'int' '.' id '(' Args ')'
         | 'new' 'string' '(' Args ')'
+        | 'null'
         
 
 BinaryOp -> '&&' | '||' | '==' | '!=' | '<' | '>' | '<=' | '>=' | '+' | '-' | '*' | '/' | '%';

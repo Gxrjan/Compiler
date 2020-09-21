@@ -28,6 +28,8 @@ u16string ascii_to_u16(string s) {
 
 char16_t get(gstring s, int i)
 {
+    if (s == 0)
+        throw runtime_error("null pointer exception");
     long long slen = gstring_len(s);
     if (i<0 || i>=slen)
         throw runtime_error("index out of bounds");
@@ -36,11 +38,22 @@ char16_t get(gstring s, int i)
 
 gstring concat(gstring s, gstring t)
 {
+    if (t == 0 && s == 0)
+        return 0;
+    if (t == 0)
+        return concat_chars(s, gstring_len(s), t, 0);
+    if (s == 0)
+        return concat_chars(s, 0, t, gstring_len(t));
+
     return concat_chars(s, gstring_len(s), t, gstring_len(t));
 }
 
 void printg(gstring s)
 {
+    if (s == 0) {
+        printf("\n");
+        return;
+    }
     long long slen = gstring_len(s);
     for (int i = 0;i < slen;i++) {
         printf("%lc", s[i]);
@@ -52,27 +65,37 @@ void printg(gstring s)
 gstring concat_str_int(gstring s, int i)
 {
     u16string num = ascii_to_u16(std::to_string(i));
+    if (s == 0)
+        return concat_chars(s, 0, num.c_str(), num.length());
     return concat_chars(s, gstring_len(s), num.c_str(), num.length());
 }
 
 gstring concat_int_str(int i, gstring s)
 {
     u16string num = ascii_to_u16(std::to_string(i));
+    if (s == 0)
+        return concat_chars(num.c_str(), num.length(), s, 0);
     return concat_chars(num.c_str(), num.length(), s, gstring_len(s));
 }
 
 gstring concat_str_chr(gstring s, char16_t c) 
 {
+    if (s == 0)
+        return concat_chars(s, 0, &c, 1);
     return concat_chars(s, gstring_len(s), &c, 1);
 }
 
 gstring concat_chr_str(char16_t c, gstring s)
 {
+    if (s == 0)
+        return concat_chars(&c, 1, s, 0);
     return concat_chars(&c, 1, s, gstring_len(s));
 }
 
 gstring substr_int_int(gstring s, int from, int len) 
 {
+    if (s == 0)
+        throw runtime_error("null pointer exception");
     long long s_len = gstring_len(s);
     if (len < 0)
         throw runtime_error("length of the substring must be >=0");
@@ -84,12 +107,16 @@ gstring substr_int_int(gstring s, int from, int len)
 
 gstring substr_int(gstring s, int from)
 {
+    if (s == 0)
+        throw runtime_error("null pointer exception");
     return substr_int_int(s, from, gstring_len(s)-from);
 }
 
 
 long long int_parse(gstring s)
 {
+    if (s == 0)
+        throw runtime_error("null pointer exception");
     long long s_len = gstring_len(s);
     if (s_len == 0)
         throw runtime_error("Trying to convert empty string to int");

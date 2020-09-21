@@ -193,3 +193,6 @@ string NewStrExpr::to_string()
 {
     return call_to_string("new string", this->arguments);
 }
+
+NullExpr::NullExpr(int line, int col) : Expr(line, col) {}
+string NullExpr::to_string() { return "null"; }

@@ -121,6 +121,8 @@ unique_ptr<Expr> Parser::parse_primary() {
             return make_unique<NewStrExpr>(move(arguments));
         } else
             this->report_error("string expected");
+    } else if (t->isKeyword("null")) {
+        prim = make_unique<NullExpr>(line, col);
     }
     Token *peek;
     while ((peek=this->scan->peek_token()) && (peek->isSymbol(".") || peek->isSymbol("["))) {

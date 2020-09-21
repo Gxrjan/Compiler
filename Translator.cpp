@@ -300,6 +300,9 @@ void Translator::translate_expr(string *s, Expr *e)
         this->translate_int_parse_expr(s, expr);
     } else if (auto expr = dynamic_cast<NewStrExpr *>(e)) {
         this->translate_new_str_expr(s, expr);
+    } else if (dynamic_cast<NullExpr *>(e)) {
+        *s +=
+            " push      0\n";
     } else
         throw runtime_error("Unknown type of expression");
 }

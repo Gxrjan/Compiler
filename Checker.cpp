@@ -74,6 +74,9 @@ void Checker::verify_assignment(Declaration *dec, Expr *expr, Block *b)
     if (dec->type == &Int) {
         if (!this->convertible_to_int(expr_type))
             this->report_error(expr->line, expr->col, "int or char expected");
+    } else if (dec->type == &String) {
+        if (expr_type != &String && expr_type != &Empty)
+            this->report_error(expr->line, expr->col, "string or null expected");
     } else
         this->expect_type(dec->expr.get(), b, dec->type);
 }
@@ -207,6 +210,9 @@ Type *Checker::check_expr_type(Expr *expr, Block *b)
     if (auto e = dynamic_cast<NewStrExpr *>(expr))
         return this->check_new_str_expr(e, b);
 
+    if (dynamic_cast<NullExpr *>(expr))
+        return &Empty;
+
     throw runtime_error("Unrecognized expression");
 }
 
@@ -273,6 +279,9 @@ void Checker::check_statement(Statement *s, Block *b, bool in_loop)
         this->check_assignment(asgn, b);
     }else if (auto print = dynamic_cast<Print *>(s)) {
         this->check_expr(print->expr.get(), b);
+        if (print->expr->type == &Empty)
+            this->report_error(print->expr->line, 
+                               print->expr->col, "Can't print null");
     } else if (auto st = dynamic_cast<IfStatement *>(s)) {
         this->check_if_statement(st, b, in_loop);
     } else if (auto st = dynamic_cast<WhileStatement *>(s)) {

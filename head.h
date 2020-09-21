@@ -309,6 +309,12 @@ class NewStrExpr : public Expr {
 };
 
 
+class NullExpr : public Expr {
+  public:
+    NullExpr(int line, int col);
+    string to_string() override;
+};
+
 // Statement
 class Statement {
   public:

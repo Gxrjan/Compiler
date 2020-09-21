@@ -20,22 +20,18 @@ class Type { };
 
 class BasicType : public Type {
     string name;
-
   public:
-    BasicType(string name) { this->name = name; }
+    BasicType(string name);
 };
 
-BasicType Bool("bool"), Char("char"), Int("int"), String("string");
+extern BasicType Bool, Char, Int, String, Empty;
 
-BasicType Empty("empty");   // type of 'null'
 
 class ArrayType : public Type {
     Type *base;
-
-    ArrayType(Type *base) { this->base = base; }
+    ArrayType(Type *base);
 
     static map<Type *, ArrayType*> array_types;  // int -> int[],  int[] -> int[][]
-
   public:
     static ArrayType *make(Type *base) {
         auto it = array_types.find(base);

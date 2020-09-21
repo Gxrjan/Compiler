@@ -1,7 +1,8 @@
 Type ->
-        | "int"
-        | "bool"
-        | "char"
+        | 'int'
+        | 'bool'
+        | 'char'
+        | 'string'
 
 
 Program ->
@@ -33,7 +34,7 @@ Assignment ->
        
 
 Print -> 
-        | "print" '(' Expression ')'
+        | 'print' '(' Expression ')'
 
 
 Expression ->

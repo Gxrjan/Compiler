@@ -55,15 +55,7 @@ bool TypeToken::isType(Type **t)
 }
 string TypeToken::to_string()
 {
-    if (this->type == &Int)
-        return "int";
-    if (this->type == &Bool)
-        return "bool";
-    if (this->type == &Char)
-        return "char";
-    if (this->type == &String)
-        return "string";
-    return "unknown type";
+    return this->type->to_string();
 }
 
 KeywordToken::KeywordToken(string name) { this->name = name; }

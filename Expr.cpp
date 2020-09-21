@@ -134,7 +134,7 @@ TypeCastExpr::TypeCastExpr(Type *type, unique_ptr<Expr> expr, int line, int col)
 
 string TypeCastExpr::to_string() 
 {
-    return "("+TypeConverter::enum_to_string(this->type)+") "+this->expr->to_string();
+    return "("+this->type->to_string()+") "+this->expr->to_string();
 }
 
 bool TypeCastExpr::isTypeCastExpr(Type **t, Expr **expr)

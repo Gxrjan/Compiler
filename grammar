@@ -1,8 +1,12 @@
-Type ->
+BasicType ->
         | 'int'
         | 'bool'
         | 'char'
         | 'string'
+
+Type ->
+        | BasicType
+        | Type '[' ']'
 
 
 Program ->

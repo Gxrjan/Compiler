@@ -5,7 +5,9 @@ using namespace std;
 
 extern "C" {
 inline long long gstring_len(gstring s) {
-  return *((long long *)(s-4));
+    if (s == 0)
+        throw runtime_error("null pointer exception");
+    return *((long long *)(s-4));
 }
 
 
@@ -41,9 +43,9 @@ gstring concat(gstring s, gstring t)
     if (t == 0 && s == 0)
         return 0;
     if (t == 0)
-        return concat_chars(s, gstring_len(s), t, 0);
+        return s;
     if (s == 0)
-        return concat_chars(s, 0, t, gstring_len(t));
+        return t;
 
     return concat_chars(s, gstring_len(s), t, gstring_len(t));
 }
@@ -143,5 +145,6 @@ gstring new_str_expr(char16_t c, long long len)
     u16string s(len, c);
     return concat_chars(s.c_str(), len, &c, 0);
 }
+
 
 }

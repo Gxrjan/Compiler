@@ -5,12 +5,17 @@ void Checker::expect_type(Expr *e, Block *b, Type *t)
 {
     if (this->check_expr(e, b) != t)
         this->report_error(e->line, e->col,
-        TypeConverter::enum_to_string(t)+" expected");
+        t->to_string()+" expected");
 }
 
 bool Checker::convertible_to_int(Type *type)
 {
     return (type == &Int || type == &Char);
+}
+
+bool Checker::nullable(Type *type)
+{
+    return ((type == &String) || dynamic_cast<ArrayType *>(type));
 }
 
 Type *Checker::check_compatability(OpExpr *expr, Block *b)
@@ -49,8 +54,11 @@ Type *Checker::check_compatability(OpExpr *expr, Block *b)
             break;
         case Operation::E: 
         case Operation::Ne:
-            if (!((left_t == right_t) || 
-                (this->convertible_to_int(left_t) && this->convertible_to_int(right_t))))
+            if (!(
+(left_t == right_t) || 
+(this->convertible_to_int(left_t) && this->convertible_to_int(right_t)) || 
+(left_t == &String && right_t == &Empty) ||
+(right_t == &String && left_t == &Empty)))
                 this->report_error(expr->line, expr->col, "invalid operand types");
             return &Bool;
             break;
@@ -69,7 +77,7 @@ Type *Checker::check_compatability(OpExpr *expr, Block *b)
 
 void Checker::verify_assignment(Declaration *dec, Expr *expr, Block *b)
 {
-    string t_string = TypeConverter::enum_to_string(dec->type);
+    string t_string = dec->type->to_string();
     Type *expr_type = this->check_expr(expr, b);
     if (dec->type == &Int) {
         if (!this->convertible_to_int(expr_type))
@@ -212,7 +220,6 @@ Type *Checker::check_expr_type(Expr *expr, Block *b)
 
     if (dynamic_cast<NullExpr *>(expr))
         return &Empty;
-
     throw runtime_error("Unrecognized expression");
 }
 

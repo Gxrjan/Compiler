@@ -16,12 +16,16 @@
 using namespace std;
 using Id = string;
 
-class Type { };
+class Type { 
+  public:
+    virtual string to_string()=0;
+};
 
 class BasicType : public Type {
     string name;
   public:
     BasicType(string name);
+    string to_string() override;
 };
 
 extern BasicType Bool, Char, Int, String, Empty;
@@ -33,6 +37,7 @@ class ArrayType : public Type {
 
     static map<Type *, ArrayType*> array_types;  // int -> int[],  int[] -> int[][]
   public:
+    string to_string() override;
     static ArrayType *make(Type *base) {
         auto it = array_types.find(base);
         if (it != array_types.end())
@@ -60,18 +65,6 @@ enum class Operation {
 
 class TypeConverter {
   public:
-    static string enum_to_string(Type *t)
-    {
-        if (t == &Int)
-            return "int";
-        if (t == &Bool)
-            return "bool";
-        if (t == &Char)
-            return "char";
-        if (t == &String)
-            return "string";
-        return "unknown type";
-    }
 
     static Operation string_to_operation(string op)
     {
@@ -428,6 +421,7 @@ class Parser {
     map<string, int> precedence;
     void report_error(string message);
     bool isBinary(string op);
+    Type *parse_type();
     unique_ptr<Expr> parse_unary();
     unique_ptr<Expr> parse_primary();
     unique_ptr<Expr> parse_expression(unique_ptr<Expr> lhs, int prec);
@@ -461,6 +455,7 @@ class Checker {
     Type *check_expr_type(Expr *expr, Block *b);
     void expect_type(Expr *e, Block *b, Type *t);
     bool convertible_to_int(Type *t);
+    bool nullable(Type *t);
     Type *check_variable(Variable *var, Block *b);
     Type *check_elem_access_expr(ElemAccessExpr *expr, Block *b);
     Type *check_length_expr(LengthExpr *expr, Block *b);
@@ -513,6 +508,7 @@ class Translator {
     void translate_block(string *s, Block *b, string loop_end_label);
     string type_to_cc(Type *t);
     string operation_to_cc(Operation op);
+    void report_error(int line, int col, string message);
   public:
     string translate_program(Program *p);
 };

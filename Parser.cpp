@@ -12,6 +12,20 @@ Parser::Parser(Scanner* scan)
 
 }
 
+//Type *Parser::parse_type()
+//{
+//    unique_ptr<Token> type = this->scan->next_token();
+//    Type *t;
+//    type->isType(&t);
+//    Token *peek;
+//    while ((peek = this->scan->peek_token()) && peek->isSymbol("[")) {
+//        this->scan->next_token();
+//        t = ArrayType::make(t);
+//        this->expect("]");
+//    }
+//    return t;
+//}
+
 vector<unique_ptr<Expr>> Parser::parse_arguments()
 {
     vector<unique_ptr<Expr>> result;
@@ -123,7 +137,8 @@ unique_ptr<Expr> Parser::parse_primary() {
             this->report_error("string expected");
     } else if (t->isKeyword("null")) {
         prim = make_unique<NullExpr>(line, col);
-    }
+    } else
+        this->report_error("Syntax error");
     Token *peek;
     while ((peek=this->scan->peek_token()) && (peek->isSymbol(".") || peek->isSymbol("["))) {
         if (peek && peek->isSymbol("[")) {

@@ -1,6 +1,13 @@
 #include "head.h"
 
 
+void Translator::report_error(int line, int col, string message)
+{
+    throw runtime_error("Translator error line " + std::to_string(line)
+                    +  ", col " + std::to_string(col)
+                    +  ": " + message);
+}
+
 string Translator::concat_cc(Type *left, Type *right)
 {
     if (left == &String) {
@@ -103,9 +110,9 @@ void Translator::translate_length_expr(string *s, LengthExpr *e)
 {
     this->translate_expr(s, e->expr.get());
     *s +=
-        " pop   rcx\n"
-        " sub   rcx, 8\n"
-        " push  qword [rcx]\n";
+        " pop   rdi\n"
+        " call gstring_len\n"
+        " push  rax\n";
 }
 
 void Translator::translate_type_cast_expr(string *s, TypeCastExpr *e)
@@ -464,6 +471,7 @@ string Translator::translate_program(Program* prog)
         "extern substr_int_int\n"
         "extern int_parse\n"
         "extern new_str_expr\n"
+        "extern gstring_len\n"
         "extern printg\n"
         "section .text\n"
         " global main\n"
@@ -489,6 +497,6 @@ string Translator::translate_program(Program* prog)
     for (auto &p : this->strings)
         result +=
             "   dq        "+std::to_string(p.first->s.length())+"\n"
-            "   str_"+std::to_string(p.second)+"  dw      u('"+p.first->s+"')\n";
+            "   str_"+std::to_string(p.second)+"  dw      u(`"+p.first->s+"`)\n";
     return result;
 }

@@ -8,6 +8,18 @@ BasicType Empty("empty");   // type of 'null'
 
 BasicType::BasicType(string name) { this->name = name; }
 
+string BasicType::to_string()
+{
+    return this->name;
+}
+
 
 ArrayType::ArrayType(Type *base) { this->base = base; }
 
+
+string ArrayType::to_string()
+{
+    if (auto bt = dynamic_cast<BasicType *>(this->base))
+        return  bt->to_string() + "[]";
+    return this->base->to_string() + "[]";
+}

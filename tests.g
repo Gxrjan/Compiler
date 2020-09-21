@@ -167,3 +167,10 @@ print(int.Parse("-1")); // expect: -1
 // new String()
 
 print(new string('a', 3)); // expect: aaa
+
+// null
+
+string null_string = null;
+print(null_string + 11); // expect: 11
+print(null_string + 'a'); // expect: a
+print(null_string + "hell"); // expect: hell

@@ -152,12 +152,8 @@ arr_label:
                 Token *peek;
                 while ((peek=this->scan->peek_token())&&peek->isSymbol("[")) {
                     this->scan->next_token();
-                    peek = this->scan->peek_token();
-                    if (peek->isSymbol("]"))
-                        arr_t = ArrayType::make(arr_t);
-                    else
-                        break;
-                    this->scan->next_token();
+                    arr_t = ArrayType::make(arr_t);
+                    this->expect("]");
                 }
                 return make_unique<NewArrExpr>(arr_t, move(expr), line, col);
             }

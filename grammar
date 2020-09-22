@@ -52,20 +52,22 @@ Unary ->
         | '-' Unary
         | '(' Type ')' Unary
 
-
 Primary ->
+        | PrimaryNoArrayCreation
+        | 'new' BasicType '[' Expression ']' ( '[' ']' )*
+        
+PrimaryNoArrayCreation ->
         | '(' Expression ')' 
         | number
         | ''' character '''
         | '"' string '"' 
         | id 
-        | Primary '[' Expression ']'
+        | PrimaryNoArrayCreation '[' Expression ']'
         | Primary '.' id
         | Primary '.' id '(' Args ')'
         | 'int' '.' id '(' Args ')'
         | 'new' 'string' '(' Args ')'
         | 'null'
-        | 'new' BasicType '[' Expression ']' ( '[' ']' )*
         
 
 BinaryOp -> '&&' | '||' | '==' | '!=' | '<' | '>' | '<=' | '>=' | '+' | '-' | '*' | '/' | '%';

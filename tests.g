@@ -183,3 +183,7 @@ string [][][] str_arr = new string[100][][];
 bool[][] b_arr = new bool[100][];
 char[] c_arr = new char[10];
 
+// arr.Length
+
+print(b_arr.Length); // expect: 100
+

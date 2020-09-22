@@ -136,8 +136,11 @@ Type *Checker::check_elem_access_expr(ElemAccessExpr *expr, Block *b)
 
 Type *Checker::check_length_expr(LengthExpr *expr, Block *b)
 {
-    if (this->check_expr(expr->expr.get(), b) != &String)
-        this->report_error(expr->expr->line, expr->expr->col, "Length function call is only applicable to strings");
+    if (!(this->nullable(this->check_expr(expr->expr.get(), b))))
+        this->report_error(expr->expr->line, expr->expr->col, "Length function call is only applicable to strings or arrays");
+        
+    //if (this->check_expr(expr->expr.get(), b) != &String)
+    //    this->report_error(expr->expr->line, expr->expr->col, "Length function call is only applicable to strings");
     return &Int;
 }
 

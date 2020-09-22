@@ -109,9 +109,16 @@ void Translator::translate_elem_access_expr(string *s, ElemAccessExpr *e)
 void Translator::translate_length_expr(string *s, LengthExpr *e)
 {
     this->translate_expr(s, e->expr.get());
+        *s +=
+            " pop   rdi\n";
+
+    if (e->type == &String)
+        *s +=
+            " call gstring_len\n";
+    else
+        *s +=
+            " call arr_len\n";
     *s +=
-        " pop   rdi\n"
-        " call gstring_len\n"
         " push  rax\n";
 }
 
@@ -494,6 +501,7 @@ string Translator::translate_program(Program* prog)
         "extern new_str_expr\n"
         "extern new_arr_expr\n"
         "extern gstring_len\n"
+        "extern arr_len\n"
         "extern printg\n"
         "section .text\n"
         " global main\n"

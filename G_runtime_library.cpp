@@ -157,4 +157,9 @@ void *new_arr_expr(int size, long long len)
 }
 
 
+long long arr_len(void *p)
+{
+    return gstring_len(static_cast<gstring>(p));
+}
+
 }

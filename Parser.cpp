@@ -246,17 +246,18 @@ unique_ptr<Declaration> Parser::parse_declaration()
     return dec;
 }
 
+
 unique_ptr<Assignment> Parser::try_parse_assignment()
 {
     Token *t = this->scan->peek_token();
     Id name;
     if (t && t->isId(&name)) {
-        this->scan->next_token();
+        unique_ptr<Expr> expr = this->parse_primary();
         int line = this->scan->last_line;
         int col = this->scan->last_column;
         this->expect("=");
         unique_ptr<Expr> e = this->parse_expr();
-        return make_unique<Assignment>(name, move(e), line, col);
+        return make_unique<Assignment>(move(expr), move(e), line, col);
     }
     return nullptr;
 }

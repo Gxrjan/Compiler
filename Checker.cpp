@@ -127,11 +127,13 @@ Type *Checker::check_elem_access_expr(ElemAccessExpr *expr, Block *b)
 {
     Type *left_type = this->check_expr(expr->expr.get(), b);
     Type *right_type = this->check_expr(expr->index.get(), b);
-    if (left_type != &String)
-        this->report_error(expr->expr->line, expr->expr->col, "[] operator is only available for strings for now");
+    if (left_type == &String)
+        return &Char;
+    else 
+        this->report_error(expr->line, expr->col, "[] only operates on Strings"); // I know this is wrong
     if (!this->convertible_to_int(right_type))
         this->report_error(expr->index->line, expr->index->col, "[] accepts only int or char");
-    return &Char;
+    return nullptr; // unreachable
 }
 
 Type *Checker::check_length_expr(LengthExpr *expr, Block *b)
@@ -139,8 +141,6 @@ Type *Checker::check_length_expr(LengthExpr *expr, Block *b)
     if (!(this->nullable(this->check_expr(expr->expr.get(), b))))
         this->report_error(expr->expr->line, expr->expr->col, "Length function call is only applicable to strings or arrays");
         
-    //if (this->check_expr(expr->expr.get(), b) != &String)
-    //    this->report_error(expr->expr->line, expr->expr->col, "Length function call is only applicable to strings");
     return &Int;
 }
 
@@ -254,9 +254,24 @@ void Checker::check_declaration(Declaration *dec, Block *b)
 }
 
 
+bool Checker::try_get_id(Expr *e, Id *id)
+{
+    if (auto var = dynamic_cast<Variable *>(e)) {
+        *id = var->name;
+        return true;
+    } else if (auto expr = dynamic_cast<ElemAccessExpr *>(e)) {
+        return try_get_id(expr->expr.get(), id);
+    } else
+        return false;
+}
+
 void Checker::check_assignment(Assignment *asgn, Block *b)
 {
-    Declaration *result = this->look_up(asgn->id, b);
+    Declaration *result;
+    Id id;
+    if (!this->try_get_id(asgn->id.get(), &id))
+        this->report_error(asgn->line, asgn->col, "variable expected");
+    result = this->look_up(id, b);
     if (!result)
         this->report_error(asgn->line, asgn->col, "variable hasn't been declared");
     this->verify_assignment(result, asgn->expr.get(), b);

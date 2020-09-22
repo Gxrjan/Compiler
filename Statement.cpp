@@ -9,15 +9,15 @@ Statement::Statement(int line, int col)
     this->col = col;
 }
 
-Assignment::Assignment(Id id, unique_ptr<Expr> expr, int line, int col)
+Assignment::Assignment(unique_ptr<Expr> id, unique_ptr<Expr> expr, int line, int col)
 : Statement(line, col)
 {
-    this->id = id;
+    this->id = move(id);
     this->expr = move(expr);
 }
 
 string Assignment::to_string() { 
-    return "(Assignment: " + this->id +
+    return "(Assignment: " + this->id->to_string() +
             " = " + this->expr->to_string() + ")"; 
 }
 

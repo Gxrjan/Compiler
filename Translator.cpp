@@ -358,10 +358,11 @@ void Translator::translate_assignment(string *s, Assignment *asgn)
 {
     *s += // asm comment
         "; " + asgn->to_string() + "\n";
-
-    this->translate_expr(s, asgn->expr.get());
-    *s +=
-       " pop        qword ["+asgn->id+"]\n";
+    if (auto var = dynamic_cast<Variable *>(asgn->id.get())) {
+        this->translate_expr(s, asgn->expr.get());
+        *s +=
+           " pop        qword ["+var->name+"]\n";
+    }
 }
 
 void Translator::translate_print(string *s, Print *p)

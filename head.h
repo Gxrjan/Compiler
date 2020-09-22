@@ -32,11 +32,12 @@ extern BasicType Bool, Char, Int, String, Empty;
 
 
 class ArrayType : public Type {
-    Type *base;
     ArrayType(Type *base);
 
-    static map<Type *, ArrayType*> array_types;  // int -> int[],  int[] -> int[][]
+    
   public:
+    static map<Type *, ArrayType*> array_types;  // int -> int[],  int[] -> int[][]
+    Type *base;
     string to_string() override;
     static ArrayType *make(Type *base) {
         auto it = array_types.find(base);
@@ -327,9 +328,9 @@ class Statement {
 
 class Assignment : public Statement {
   public:
-    Id id;
+    unique_ptr<Expr> id;
     unique_ptr<Expr> expr;
-    Assignment(Id id, unique_ptr<Expr> expr, int line, int col);
+    Assignment(unique_ptr<Expr> id, unique_ptr<Expr> expr, int line, int col);
     string to_string() override;
 };
 
@@ -464,6 +465,7 @@ class Checker {
     void expect_type(Expr *e, Block *b, Type *t);
     bool convertible_to_int(Type *t);
     bool nullable(Type *t);
+    bool try_get_id(Expr *e, Id *id);
     Type *check_variable(Variable *var, Block *b);
     Type *check_elem_access_expr(ElemAccessExpr *expr, Block *b);
     Type *check_length_expr(LengthExpr *expr, Block *b);

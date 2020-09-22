@@ -147,6 +147,14 @@ gstring new_str_expr(char16_t c, long long len)
 }
 
 
+void *new_arr_expr(int size, long long len)
+{
+    void *p = malloc(len*size+8);
+    *((long long *)p) = len;
+    p = static_cast<char *>(p) + 8;
+    memset(p, 0, len*size);
+    return p;
+}
 
 
 }

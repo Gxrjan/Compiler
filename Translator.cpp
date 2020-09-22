@@ -173,8 +173,21 @@ void Translator::translate_new_str_expr(string *s, NewStrExpr *e)
 
 void Translator::translate_new_arr_expr(string *s, NewArrExpr *e)
 {
-   *s +=
-      " push    0\n"; 
+    this->translate_expr(s, e->expr.get());
+    *s +=
+        " pop   rsi\n";
+    if (e->type == &Bool)
+        *s +=
+            " mov      rdi, 1\n";
+    else if (e->type == &Char) 
+        *s +=
+            " mov      rdi, 2\n";
+    else
+        *s +=
+            " mov      rdi, 8\n";
+    *s +=
+        " call new_arr_expr\n"
+        " push  rax\n";
 }
 
 void Translator::translate_op_expr(string *s, OpExpr *expr) 
@@ -479,6 +492,7 @@ string Translator::translate_program(Program* prog)
         "extern substr_int_int\n"
         "extern int_parse\n"
         "extern new_str_expr\n"
+        "extern new_arr_expr\n"
         "extern gstring_len\n"
         "extern printg\n"
         "section .text\n"

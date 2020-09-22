@@ -128,13 +128,37 @@ unique_ptr<Expr> Parser::parse_primary() {
             this->report_error("Parse call expected");
     } else if (t->isKeyword("new")) {
         t = this->scan->next_token();
-        if (t && t->isType(&type) && type == &String) {
-            this->expect("(");
-            vector<unique_ptr<Expr>> arguments = this->parse_arguments();
-            this->expect(")");
-            return make_unique<NewStrExpr>(move(arguments));
+        if (t && t->isType(&type)) {
+            if (type == &String) {
+                Token *peek = this->scan->peek_token();
+                if (peek->isSymbol("(")) {
+                    this->scan->next_token();
+                    vector<unique_ptr<Expr>> arguments = 
+                        this->parse_arguments();
+                    this->expect(")");
+                    return make_unique<NewStrExpr>(move(arguments));
+                } else if (peek->isSymbol("[")) {
+                    goto arr_label;
+                } else
+                    this->report_error("'(' or '[' expected");
+            } else if (type == &Empty) {
+                this->report_error("can't declare null array");
+            } else {
+arr_label:
+                this->expect("[");
+                unique_ptr<Expr> expr = this->parse_expr();
+                this->expect("]");
+                Type *arr_t = ArrayType::make(type);
+                Token *peek;
+                while ((peek=this->scan->peek_token())&&peek->isSymbol("[")) {
+                    this->scan->next_token();
+                    arr_t = ArrayType::make(arr_t);
+                    this->expect("]");
+                }
+                return make_unique<NewArrExpr>(arr_t, move(expr), line, col);
+            }
         } else
-            this->report_error("string expected");
+            this->report_error("type expected");
     } else if (t->isKeyword("null")) {
         prim = make_unique<NullExpr>(line, col);
     } else

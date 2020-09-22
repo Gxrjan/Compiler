@@ -184,6 +184,13 @@ Type *Checker::check_new_str_expr(NewStrExpr *e, Block *b)
     return &String;
 }
 
+Type *Checker::check_new_arr_expr(NewArrExpr *e, Block *b)
+{
+    if (!this->convertible_to_int(this->check_expr(e->expr.get(), b)))
+        this->report_error(e->expr->line, e->expr->col, "int or char expected");
+    return e->type;
+}
+
 Type *Checker::check_expr(Expr *expr, Block *b)
 {
     return expr->type = this->check_expr_type(expr, b);
@@ -227,6 +234,10 @@ Type *Checker::check_expr_type(Expr *expr, Block *b)
 
     if (dynamic_cast<NullExpr *>(expr))
         return &Empty;
+
+    if (auto e = dynamic_cast<NewArrExpr *>(expr))
+        return this->check_new_arr_expr(e, b);
+
     throw runtime_error("Unrecognized expression");
 }
 

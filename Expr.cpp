@@ -196,3 +196,15 @@ string NewStrExpr::to_string()
 
 NullExpr::NullExpr(int line, int col) : Expr(line, col) {}
 string NullExpr::to_string() { return "null"; }
+    
+
+
+NewArrExpr::NewArrExpr(Type *type, unique_ptr<Expr> expr, int line, int col) : Expr(line, col)
+{
+    this->type = type;
+    this->expr = move(expr);
+}
+string NewArrExpr::to_string()
+{
+    return "new "+this->type->to_string()+" " +this->expr->to_string();
+}

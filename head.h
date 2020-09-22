@@ -308,6 +308,14 @@ class NullExpr : public Expr {
     string to_string() override;
 };
 
+
+class NewArrExpr : public Expr {
+  public:
+    Type *type;
+    unique_ptr<Expr> expr;
+    NewArrExpr(Type *type, unique_ptr<Expr> expr, int line, int col);
+    string to_string() override;
+};
 // Statement
 class Statement {
   public:
@@ -463,6 +471,7 @@ class Checker {
     Type *check_substr_expr(SubstrExpr *expr, Block *b);
     Type *check_int_parse_expr(IntParseExpr *expr, Block *b);
     Type *check_new_str_expr(NewStrExpr *expr, Block *b);
+    Type *check_new_arr_expr(NewArrExpr *expr, Block *b);
     void check_declaration(Declaration *dec, Block *b);
     void check_assignment(Assignment *asgn, Block *b);
     void verify_assignment(Declaration *dec, Expr *expr, Block *b);
@@ -495,6 +504,7 @@ class Translator {
     void translate_substr_expr(string *s, SubstrExpr *expr);
     void translate_int_parse_expr(string *s, IntParseExpr *expr);
     void translate_new_str_expr(string *s, NewStrExpr *expr);
+    void translate_new_arr_expr(string *s, NewArrExpr *expr);
     void translate_variable(string *s, Variable *var);
     void translate_op_expr(string *s, OpExpr *expr);
     void translate_expr(string *s, Expr *expr);

@@ -65,6 +65,7 @@ Primary ->
         | 'int' '.' id '(' Args ')'
         | 'new' 'string' '(' Args ')'
         | 'null'
+        | 'new' BasicType '[' Expression ']' ( '[' ']' )*
         
 
 BinaryOp -> '&&' | '||' | '==' | '!=' | '<' | '>' | '<=' | '>=' | '+' | '-' | '*' | '/' | '%';

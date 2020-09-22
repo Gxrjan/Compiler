@@ -171,6 +171,12 @@ void Translator::translate_new_str_expr(string *s, NewStrExpr *e)
         " push   rax\n";
 }
 
+void Translator::translate_new_arr_expr(string *s, NewArrExpr *e)
+{
+   *s +=
+      " push    0\n"; 
+}
+
 void Translator::translate_op_expr(string *s, OpExpr *expr) 
 {
     if (expr->op == "&&" || expr->op == "||") {
@@ -310,6 +316,8 @@ void Translator::translate_expr(string *s, Expr *e)
     } else if (dynamic_cast<NullExpr *>(e)) {
         *s +=
             " push      0\n";
+    } else if (auto expr = dynamic_cast<NewArrExpr *>(e)) {
+        this->translate_new_arr_expr(s, expr);
     } else
         throw runtime_error("Unknown type of expression");
 }

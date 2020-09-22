@@ -174,3 +174,12 @@ string null_string = null;
 print(null_string + 11); // expect: 11
 print(null_string + 'a'); // expect: a
 print(null_string + "hell"); // expect: hell
+
+// arrays
+
+int[] arr = null;
+arr = new int[1];
+string [][][] str_arr = new string[100][][];
+bool[][] b_arr = new bool[100][];
+char[] c_arr = new char[10];
+

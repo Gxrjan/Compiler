@@ -1,6 +1,6 @@
 #include "head.h"
 
-
+map<Type *, ArrayType*> ArrayType::array_types;
 
 BasicType Bool("bool"), Char("char"), Int("int"), String("string");
 
@@ -19,7 +19,5 @@ ArrayType::ArrayType(Type *base) { this->base = base; }
 
 string ArrayType::to_string()
 {
-    if (auto bt = dynamic_cast<BasicType *>(this->base))
-        return  bt->to_string() + "[]";
     return this->base->to_string() + "[]";
 }

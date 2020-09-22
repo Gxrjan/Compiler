@@ -12,19 +12,19 @@ Parser::Parser(Scanner* scan)
 
 }
 
-//Type *Parser::parse_type()
-//{
-//    unique_ptr<Token> type = this->scan->next_token();
-//    Type *t;
-//    type->isType(&t);
-//    Token *peek;
-//    while ((peek = this->scan->peek_token()) && peek->isSymbol("[")) {
-//        this->scan->next_token();
-//        t = ArrayType::make(t);
-//        this->expect("]");
-//    }
-//    return t;
-//}
+Type *Parser::parse_type()
+{
+    unique_ptr<Token> type = this->scan->next_token();
+    Type *t;
+    type->isType(&t);
+    Token *peek;
+    while ((peek = this->scan->peek_token()) && peek->isSymbol("[")) {
+        this->scan->next_token();
+        t = ArrayType::make(t);
+        this->expect("]");
+    }
+    return t;
+}
 
 vector<unique_ptr<Expr>> Parser::parse_arguments()
 {
@@ -199,7 +199,7 @@ unique_ptr<Declaration> Parser::try_parse_declaration()
     Token *t = this->scan->peek_token();
     Id name;
     if (t && t->isType(&type)) {
-        this->scan->next_token();
+        type = this->parse_type();
         unique_ptr<Token> next = this->scan->next_token();
         if (next && next->isId(&name)) {
             int line = this->scan->last_line;

@@ -58,7 +58,10 @@ Type *Checker::check_compatability(OpExpr *expr, Block *b)
 (left_t == right_t) || 
 (this->convertible_to_int(left_t) && this->convertible_to_int(right_t)) || 
 (left_t == &String && right_t == &Empty) ||
-(right_t == &String && left_t == &Empty)))
+(right_t == &String && left_t == &Empty) ||
+(dynamic_cast<ArrayType *>(left_t) && right_t == &Empty) ||
+(dynamic_cast<ArrayType *>(right_t) && left_t == &Empty)
+))
                 this->report_error(expr->line, expr->col, "invalid operand types");
             return &Bool;
             break;
@@ -85,8 +88,12 @@ void Checker::verify_assignment(Declaration *dec, Expr *expr, Block *b)
     } else if (dec->type == &String) {
         if (expr_type != &String && expr_type != &Empty)
             this->report_error(expr->line, expr->col, "string or null expected");
-    } else
+    } else if (dec->type == &Bool || dec->type == &Char) {
         this->expect_type(dec->expr.get(), b, dec->type);
+    } else
+        if (!((dec->type == expr->type) || 
+                (expr->type == &Empty)))
+            this->report_error(expr->line, expr->col, dec->type->to_string() + " or null expected");
 }
 
 void Checker::report_error(int line, int col, string message)

@@ -378,25 +378,27 @@ void Translator::translate_assignment(string *s, Assignment *asgn)
         this->translate_expr(s, asgn->expr.get());
         *s +=
            " pop        qword ["+var->name+"]\n";
+    
+    } else {
+        auto el = dynamic_cast<ElemAccessExpr *>(asgn->id.get());
+        this->translate_expr(s, el->expr.get());
+        this->translate_expr(s, el->index.get());
+        this->translate_expr(s, asgn->expr.get());
+        auto arr_t = dynamic_cast<ArrayType *>(el->expr->type);
+        *s +=
+            " pop       rdx\n"
+           " pop       rsi\n"
+           " pop       rdi\n";
+        if (arr_t->base == &Bool)
+            *s +=
+                " call  setb\n";
+        else if (arr_t->base == &Char)
+            *s +=
+                " call set\n";
+        else
+            *s +=
+                " call setll\n";
     }
-    //} else {
-    //    auto el = dynamic_cast<ElemAccessExpr *>(asgn.id.get());
-
-    //    this->translate_expr(s, asgn->id.get());
-    //    this->translate_expr(s, asgn->expr.get());
-    //    *s +=
-    //        " pop       rsi\n"
-    //        " pop       rdi\n";
-    //    if (arr_t->base == &Bool)
-    //        *s +=
-    //            " call  setb\n";
-    //    else if (arr_t->base == &Char)
-    //        *s +=
-    //            " call set\n";
-    //    else
-    //        *s +=
-    //            " call setll\n";
-    //}
 }
 
 void Translator::translate_print(string *s, Print *p)

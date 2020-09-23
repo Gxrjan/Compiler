@@ -225,3 +225,18 @@ int[] a = new int[100];
 int index = 3;
 a[index] = 99;
 print(a[index]); // expect: 99
+
+
+if ("hi" == "hi")
+  print("same");  // expect: same
+else
+  print("different");
+
+string new_s = null;
+string new_t = "null";
+
+if (new_s == new_t)
+  print("same again");
+else
+  print("different"); // expect: different
+

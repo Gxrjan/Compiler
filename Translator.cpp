@@ -306,14 +306,29 @@ void Translator::translate_op_expr(string *s, OpExpr *expr)
             case Operation::G:
             case Operation::Le:
             case Operation::Ge:
-            case Operation::E:
-            case Operation::Ne:
                 *s +=
                     " pop       rax\n"
                     " mov       rcx, 0\n"
                     " cmp       qword [rsp], rax\n"
                     " set"+this->operation_to_cc(o) +"     cl\n"
                     " mov       [rsp], rcx\n";
+                break;
+            case Operation::E:
+            case Operation::Ne:
+                if (expr->left->type == &String && expr->right->type == &String) {
+                    *s +=
+                        " pop   rdi\n"
+                        " pop   rsi\n"
+                        " call  cmp_str\n"
+                        " push  rax\n";
+                } else {
+                    *s +=
+                        " pop       rax\n"
+                        " mov       rcx, 0\n"
+                        " cmp       qword [rsp], rax\n"
+                        " set"+this->operation_to_cc(o) +"     cl\n"
+                        " mov       [rsp], rcx\n";
+                }
                 break;
             default:
                 throw runtime_error("Unknown operator");
@@ -533,6 +548,7 @@ string Translator::translate_program(Program* prog)
         "extern setb\n"
         "extern setll\n"
         "extern concat\n"
+        "extern cmp_str\n"
         "extern concat_str_int\n"
         "extern concat_int_str\n"
         "extern concat_str_chr\n"

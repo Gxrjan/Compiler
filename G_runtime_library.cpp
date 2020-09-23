@@ -212,4 +212,21 @@ void setb(char *arr, long long index, char val)
         throw runtime_error("index out of bounds");
     arr[index] = val;
 }
+
+
+long long cmp_str(gstring s, gstring t)
+{
+    if (s==0 && t==0)
+        return 1;
+    else if (s == 0 || t == 0)
+        return 0;
+    long long s_len = gstring_len(s);
+    long long t_len = gstring_len(t);
+    if (s_len != t_len)
+        return 0;
+    for (int i=0;i<s_len;i++)
+        if (s[i] != t[i])
+            return 0;
+    return 1;
+}
 }

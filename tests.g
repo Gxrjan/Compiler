@@ -217,3 +217,5 @@ print(str_arr[10][20][30]); // expect: Hello world
 
 c_arr[9] = 'x';
 print(c_arr[9]); // expect: x
+
+print(str_arr[10][20].Length); // expect: 300

@@ -34,7 +34,7 @@ Declaration ->
 
 
 Assignment ->
-        | id '=' Expression
+        | PrimaryNoArrayDeclaration '=' Expression
        
 
 Print -> 

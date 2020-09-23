@@ -83,7 +83,7 @@ void Checker::verify_assignment(Expr *left, Expr *right, Block *b)
     Type *left_t = this->check_expr(left, b);
     Type *right_t = this->check_expr(right, b);
     if (left_t == &Int) {
-        if (!this->convertible_to_int(left_t))
+        if (!this->convertible_to_int(right_t))
             this->report_error(right->line, right->col, "int or char expected");
     } else if (left_t == &Bool) {
         if (right_t != &Bool)

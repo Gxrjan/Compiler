@@ -162,4 +162,46 @@ long long arr_len(void *p)
     return gstring_len(static_cast<gstring>(p));
 }
 
+
+long long getll(long long *arr, int index)
+{
+    if (arr == 0)
+        throw runtime_error("null pointer exception");
+    long long arr_len = *(arr-1);
+    if (index < 0 || index > arr_len)
+        throw runtime_error("index out of bounds");
+    return arr[index];
+}
+
+char getb(char *arr, int index)
+{
+    if (arr == 0)
+        throw runtime_error("null pointer exception");
+    long long arr_len = *(arr-8);
+    if (index < 0 || index > arr_len)
+        throw runtime_error("index out of bounds");
+    return arr[index];
+}
+
+
+void set(gstring arr, char16_t val)
+{
+    if (arr == 0)
+        throw runtime_error("null pointer exception");
+    *arr = val;
+}
+
+void setll(long long *arr, long long val)
+{
+    if (arr == 0)
+        throw runtime_error("null pointer exception");
+    *arr = val;
+}
+
+void setb(char *arr, char val)
+{
+    if (arr == 0)
+        throw runtime_error("null pointer exception");
+    *arr = val;
+}
 }

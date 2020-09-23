@@ -101,8 +101,24 @@ void Translator::translate_elem_access_expr(string *s, ElemAccessExpr *e)
     this->translate_expr(s, e->index.get());
     *s +=
         " pop   rsi\n"
-        " pop   rdi\n"
-        " call  get\n"
+        " pop   rdi\n";
+    if (e->expr->type == &String)
+        *s +=
+            " call  get\n";
+    else {
+        auto arr_t = dynamic_cast<ArrayType *>(e->expr->type);
+        if (arr_t->base == &Char)
+            *s +=
+                " call get\n";
+        else if (arr_t->base == &Bool)
+            *s +=
+                " call getb\n";
+        else
+            *s +=
+                " call  getll\n";
+    }
+
+    *s +=
         " push  rax\n";
 }
 
@@ -363,6 +379,24 @@ void Translator::translate_assignment(string *s, Assignment *asgn)
         *s +=
            " pop        qword ["+var->name+"]\n";
     }
+    //} else {
+    //    auto el = dynamic_cast<ElemAccessExpr *>(asgn.id.get());
+
+    //    this->translate_expr(s, asgn->id.get());
+    //    this->translate_expr(s, asgn->expr.get());
+    //    *s +=
+    //        " pop       rsi\n"
+    //        " pop       rdi\n";
+    //    if (arr_t->base == &Bool)
+    //        *s +=
+    //            " call  setb\n";
+    //    else if (arr_t->base == &Char)
+    //        *s +=
+    //            " call set\n";
+    //    else
+    //        *s +=
+    //            " call setll\n";
+    //}
 }
 
 void Translator::translate_print(string *s, Print *p)
@@ -491,6 +525,11 @@ string Translator::translate_program(Program* prog)
         "%define u(x) __?utf16?__(x) \n"
         "extern printf\n"
         "extern get\n"
+        "extern getb\n"
+        "extern getll\n"
+        "extern set\n"
+        "extern setb\n"
+        "extern setll\n"
         "extern concat\n"
         "extern concat_str_int\n"
         "extern concat_int_str\n"

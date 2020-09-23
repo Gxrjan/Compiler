@@ -194,3 +194,5 @@ int[][][] arr_3d = new int[100][][];
 arr_3d[1] = new int[200][];
 arr_3d[1][2] = new int[300];
 
+//print(arr_3d[1][2][0]);
+

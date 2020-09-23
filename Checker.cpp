@@ -129,8 +129,10 @@ Type *Checker::check_elem_access_expr(ElemAccessExpr *expr, Block *b)
     Type *right_type = this->check_expr(expr->index.get(), b);
     if (left_type == &String)
         return &Char;
-    else 
-        this->report_error(expr->line, expr->col, "[] only operates on Strings"); // I know this is wrong
+    else if (auto arr_type = dynamic_cast<ArrayType *>(left_type)) {
+        return arr_type->base;
+    } else 
+        this->report_error(expr->line, expr->col, "[] only operates on Strings and arrays");
     if (!this->convertible_to_int(right_type))
         this->report_error(expr->index->line, expr->index->col, "[] accepts only int or char");
     return nullptr; // unreachable
@@ -274,6 +276,8 @@ void Checker::check_assignment(Assignment *asgn, Block *b)
     result = this->look_up(id, b);
     if (!result)
         this->report_error(asgn->line, asgn->col, "variable hasn't been declared");
+    if (this->check_expr(asgn->id.get(), b) == this->check_expr(asgn->expr.get(), b))
+        return;
     this->verify_assignment(result, asgn->expr.get(), b);
 }
 

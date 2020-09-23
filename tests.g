@@ -187,3 +187,10 @@ char[] c_arr = new char[10];
 
 print(b_arr.Length); // expect: 100
 
+
+// array types 
+
+int[][][] arr_3d = new int[100][][];
+arr_3d[1] = new int[200][];
+arr_3d[1][2] = new int[300];
+

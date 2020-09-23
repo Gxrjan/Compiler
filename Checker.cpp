@@ -82,13 +82,9 @@ void Checker::verify_assignment(Expr *left, Expr *right, Block *b)
 {
     Type *left_t = this->check_expr(left, b);
     Type *right_t = this->check_expr(right, b);
-    string t_string = left_t->to_string();
-    if (right_t == &Int) {
+    if (left_t == &Int) {
         if (!this->convertible_to_int(left_t))
             this->report_error(right->line, right->col, "int or char expected");
-    } else if (left_t == &String) {
-        if (right_t != &String && right_t != &Empty)
-            this->report_error(right->line, right->col, "string or null expected");
     } else if (left_t == &Bool) {
         if (right_t != &Bool)
             this->report_error(right->line, right->col, "bool expected");
@@ -98,7 +94,7 @@ void Checker::verify_assignment(Expr *left, Expr *right, Block *b)
     } else
         if (!((left_t == right_t) || 
                 (right_t == &Empty)))
-            this->report_error(right->line, right->col, t_string + " or null expected");
+            this->report_error(right->line, right->col, left_t->to_string() + " or null expected");
 }
 
 void Checker::report_error(int line, int col, string message)

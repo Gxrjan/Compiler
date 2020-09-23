@@ -79,7 +79,7 @@ string s = "Hello world!";
 string t = "foo";
 bool b = true;
 bool d = false;
-
+int x = 'a';
 
 // assignments
 n = 1;

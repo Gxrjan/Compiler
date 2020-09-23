@@ -214,5 +214,6 @@ str_arr[10] = new string[200][];
 str_arr[10][20] = new string[300];
 str_arr[10][20][30] = "Hello world";
 print(str_arr[10][20][30]); // expect: Hello world
+
 c_arr[9] = 'x';
 print(c_arr[9]); // expect: x

@@ -170,8 +170,7 @@ arr_label:
             unique_ptr<Expr> expr = this->parse_expr();
             this->expect("]");
             prim =  make_unique<ElemAccessExpr>(move(prim), move(expr), line, col);
-        }
-        if (peek && peek->isSymbol(".")) {
+        } else if (peek && peek->isSymbol(".")) {
             this->scan->next_token();
             unique_ptr<Token> tok = this->scan->next_token();
             if (tok && tok->isId("Length"))
@@ -183,7 +182,8 @@ arr_label:
                 prim = make_unique<SubstrExpr>(move(prim), move(args), line, col);
             } else
                 this->report_error("Unrecognized function call");
-        }
+        } else
+            this->report_error("'[' or '.' expected");
         
     }
     return prim;

@@ -219,3 +219,9 @@ c_arr[9] = 'x';
 print(c_arr[9]); // expect: x
 
 print(str_arr[10][20].Length); // expect: 300
+
+
+int[] a = new int[100];
+int index = 3;
+a[index] = 99;
+print(a[index]); // expect: 99

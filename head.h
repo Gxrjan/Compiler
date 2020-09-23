@@ -476,7 +476,7 @@ class Checker {
     Type *check_new_arr_expr(NewArrExpr *expr, Block *b);
     void check_declaration(Declaration *dec, Block *b);
     void check_assignment(Assignment *asgn, Block *b);
-    void verify_assignment(Declaration *dec, Expr *expr, Block *b);
+    void verify_assignment(Expr *left, Expr *right, Block *b);
     void check_if_statement(IfStatement *st, Block *b, bool in_loop);
     void check_while_statement(WhileStatement *st, Block *b);
     void check_for_statement(ForStatement *for_s, Block *b);

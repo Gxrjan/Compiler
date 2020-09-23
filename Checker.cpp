@@ -78,22 +78,27 @@ Type *Checker::check_compatability(OpExpr *expr, Block *b)
     throw runtime_error("For GCC");
 }
 
-void Checker::verify_assignment(Declaration *dec, Expr *expr, Block *b)
+void Checker::verify_assignment(Expr *left, Expr *right, Block *b)
 {
-    string t_string = dec->type->to_string();
-    Type *expr_type = this->check_expr(expr, b);
-    if (dec->type == &Int) {
-        if (!this->convertible_to_int(expr_type))
-            this->report_error(expr->line, expr->col, "int or char expected");
-    } else if (dec->type == &String) {
-        if (expr_type != &String && expr_type != &Empty)
-            this->report_error(expr->line, expr->col, "string or null expected");
-    } else if (dec->type == &Bool || dec->type == &Char) {
-        this->expect_type(dec->expr.get(), b, dec->type);
+    Type *left_t = this->check_expr(left, b);
+    Type *right_t = this->check_expr(right, b);
+    string t_string = left_t->to_string();
+    if (right_t == &Int) {
+        if (!this->convertible_to_int(left_t))
+            this->report_error(right->line, right->col, "int or char expected");
+    } else if (left_t == &String) {
+        if (right_t != &String && right_t != &Empty)
+            this->report_error(right->line, right->col, "string or null expected");
+    } else if (left_t == &Bool) {
+        if (right_t != &Bool)
+            this->report_error(right->line, right->col, "bool expected");
+    } else if (left_t == &Char) {
+        if (right_t != &Char)
+            this->report_error(right->line, right->col, "char expected");
     } else
-        if (!((dec->type == expr->type) || 
-                (expr->type == &Empty)))
-            this->report_error(expr->line, expr->col, dec->type->to_string() + " or null expected");
+        if (!((left_t == right_t) || 
+                (right_t == &Empty)))
+            this->report_error(right->line, right->col, t_string + " or null expected");
 }
 
 void Checker::report_error(int line, int col, string message)
@@ -251,8 +256,9 @@ void Checker::check_declaration(Declaration *dec, Block *b)
 {
     if (this->look_up(dec->id, b))
         this->report_error(dec->line, dec->col, "variable has already been declared");
-    this->verify_assignment(dec, dec->expr.get(), b);
+    Variable v(dec->id, dec->line, dec->col);
     b->variables.insert({dec->id, dec});
+    this->verify_assignment(&v, dec->expr.get(), b);
 }
 
 
@@ -269,16 +275,10 @@ bool Checker::try_get_id(Expr *e, Id *id)
 
 void Checker::check_assignment(Assignment *asgn, Block *b)
 {
-    Declaration *result;
     Id id;
     if (!this->try_get_id(asgn->id.get(), &id))
         this->report_error(asgn->line, asgn->col, "variable expected");
-    result = this->look_up(id, b);
-    if (!result)
-        this->report_error(asgn->line, asgn->col, "variable hasn't been declared");
-    if (this->check_expr(asgn->id.get(), b) == this->check_expr(asgn->expr.get(), b))
-        return;
-    this->verify_assignment(result, asgn->expr.get(), b);
+    this->verify_assignment(asgn->id.get(), asgn->expr.get(), b);
 }
 
 void Checker::check_if_statement(IfStatement *st, Block *b, bool in_loop)

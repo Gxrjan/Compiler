@@ -194,5 +194,25 @@ int[][][] arr_3d = new int[100][][];
 arr_3d[1] = new int[200][];
 arr_3d[1][2] = new int[300];
 
-//print(arr_3d[1][2][0]);
 
+// assignment of multi dim arrays
+arr_3d[1][2][3] = 999;
+print(arr_3d[1][2][3]); // expect: 999
+
+bool[][][][] b_arr_4d = new bool[10][][][];
+b_arr_4d[0] = new bool[10][][];
+b_arr_4d[0][1] = new bool[10][];
+b_arr_4d[0][1][2] = new bool[10];
+b_arr_4d[0][1][2][3] = true;
+if (b_arr_4d[0][1][2][3])
+  print("Yay");  // expect: Yay
+else
+  print("Nay");
+
+
+str_arr[10] = new string[200][];
+str_arr[10][20] = new string[300];
+str_arr[10][20][30] = "Hello world";
+print(str_arr[10][20][30]); // expect: Hello world
+c_arr[9] = 'x';
+print(c_arr[9]); // expect: x

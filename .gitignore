@@ -13,3 +13,4 @@ actual
 expected
 *.exe
 tests
+tmp/

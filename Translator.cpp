@@ -319,7 +319,11 @@ void Translator::translate_op_expr(string *s, OpExpr *expr)
                     *s +=
                         " pop   rdi\n"
                         " pop   rsi\n"
-                        " call  cmp_str\n"
+                        " call  cmp_str\n";
+                    if (o==Operation::Ne)
+                        *s +=
+                            " xor   rax, 1\n";
+                    *s +=
                         " push  rax\n";
                 } else {
                     *s +=

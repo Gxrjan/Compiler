@@ -240,3 +240,8 @@ if (new_s == new_t)
 else
   print("different"); // expect: different
 
+if ("a" != "a")
+  print("diff");
+else
+  print("same"); // expect: same
+

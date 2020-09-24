@@ -5,7 +5,7 @@ using namespace std;
 
 extern "C" {
 inline long long gstring_len(gstring s) {
-    if (s == 0)
+    if (!s)
         throw runtime_error("null pointer exception");
     return *((long long *)(s-4));
 }
@@ -30,7 +30,7 @@ u16string ascii_to_u16(string s) {
 
 char16_t get(gstring s, int i)
 {
-    if (s == 0)
+    if (!s)
         throw runtime_error("null pointer exception");
     long long slen = gstring_len(s);
     if (i<0 || i>=slen)
@@ -40,11 +40,11 @@ char16_t get(gstring s, int i)
 
 gstring concat(gstring s, gstring t)
 {
-    if (t == 0 && s == 0)
+    if (!t && !s)
         return 0;
-    if (t == 0)
+    if (!t)
         return s;
-    if (s == 0)
+    if (!s)
         return t;
 
     return concat_chars(s, gstring_len(s), t, gstring_len(t));
@@ -52,7 +52,7 @@ gstring concat(gstring s, gstring t)
 
 void printg(gstring s)
 {
-    if (s == 0) {
+    if (!s) {
         printf("\n");
         return;
     }
@@ -67,7 +67,7 @@ void printg(gstring s)
 gstring concat_str_int(gstring s, int i)
 {
     u16string num = ascii_to_u16(std::to_string(i));
-    if (s == 0)
+    if (!s)
         return concat_chars(s, 0, num.c_str(), num.length());
     return concat_chars(s, gstring_len(s), num.c_str(), num.length());
 }
@@ -75,28 +75,28 @@ gstring concat_str_int(gstring s, int i)
 gstring concat_int_str(int i, gstring s)
 {
     u16string num = ascii_to_u16(std::to_string(i));
-    if (s == 0)
+    if (!s)
         return concat_chars(num.c_str(), num.length(), s, 0);
     return concat_chars(num.c_str(), num.length(), s, gstring_len(s));
 }
 
 gstring concat_str_chr(gstring s, char16_t c) 
 {
-    if (s == 0)
+    if (!s)
         return concat_chars(s, 0, &c, 1);
     return concat_chars(s, gstring_len(s), &c, 1);
 }
 
 gstring concat_chr_str(char16_t c, gstring s)
 {
-    if (s == 0)
+    if (!s)
         return concat_chars(&c, 1, s, 0);
     return concat_chars(&c, 1, s, gstring_len(s));
 }
 
 gstring substr_int_int(gstring s, int from, int len) 
 {
-    if (s == 0)
+    if (!s)
         throw runtime_error("null pointer exception");
     long long s_len = gstring_len(s);
     if (len < 0)
@@ -109,7 +109,7 @@ gstring substr_int_int(gstring s, int from, int len)
 
 gstring substr_int(gstring s, int from)
 {
-    if (s == 0)
+    if (!s)
         throw runtime_error("null pointer exception");
     return substr_int_int(s, from, gstring_len(s)-from);
 }
@@ -117,7 +117,7 @@ gstring substr_int(gstring s, int from)
 
 long long int_parse(gstring s)
 {
-    if (s == 0)
+    if (!s)
         throw runtime_error("null pointer exception");
     long long s_len = gstring_len(s);
     if (s_len == 0)
@@ -164,7 +164,7 @@ long long arr_len(void *p)
 
 long long getll(long long *arr, int index)
 {
-    if (arr == 0)
+    if (!arr)
         throw runtime_error("null pointer exception");
     long long arr_l = arr_len(arr);
     if (index < 0 || index >= arr_l)
@@ -174,7 +174,7 @@ long long getll(long long *arr, int index)
 
 char getb(char *arr, int index)
 {
-    if (arr == 0)
+    if (!arr)
         throw runtime_error("null pointer exception");
     long long arr_l = arr_len(arr);
     if (index < 0 || index >= arr_l)
@@ -185,7 +185,7 @@ char getb(char *arr, int index)
 
 void set(gstring arr, long long index, char16_t val)
 {
-    if (arr == 0)
+    if (!arr)
         throw runtime_error("null pointer exception");
     long long arr_l = arr_len(arr);
     if (index < 0 || index >= arr_l)
@@ -195,7 +195,7 @@ void set(gstring arr, long long index, char16_t val)
 
 void setll(long long *arr, long long index, long long val)
 {
-    if (arr == 0)
+    if (!arr)
         throw runtime_error("null pointer exception");
     long long arr_l = arr_len(arr);
     if (index < 0 || index >= arr_l)
@@ -205,7 +205,7 @@ void setll(long long *arr, long long index, long long val)
 
 void setb(char *arr, long long index, char val)
 {
-    if (arr == 0)
+    if (!arr)
         throw runtime_error("null pointer exception");
     long long arr_l = arr_len(arr);
     if (index < 0 || index >= arr_l)
@@ -216,9 +216,9 @@ void setb(char *arr, long long index, char val)
 
 long long cmp_str(gstring s, gstring t)
 {
-    if (s==0 && t==0)
+    if (!s && !t)
         return 1;
-    else if (s == 0 || t == 0)
+    else if (!s || !t)
         return 0;
     long long s_len = gstring_len(s);
     long long t_len = gstring_len(t);

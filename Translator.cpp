@@ -514,6 +514,19 @@ void Translator::translate_inc_expr(string *s, IncExpr *expr)
         this->translate_variable(s, var);
         *s +=
             " inc   qword ["+var->name+"]\n";
+    } else {
+        auto el = dynamic_cast<ElemAccessExpr *>(expr->expr.get());
+        this->translate_elem_access_expr(s, el);
+        *s +=
+            " pop   rdx\n"
+            " push  rdx\n"
+            " inc   rdx\n";
+        this->translate_expr(s, el->expr.get());
+        this->translate_expr(s, el->index.get());
+        *s +=
+            " pop   rsi\n"
+            " pop   rdi\n"
+            " call  setll\n";
     }
 }
 

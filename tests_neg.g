@@ -29,3 +29,21 @@ int[][] arr = new int[10][];
 arr[1] = new string[10];
 
 
+string[] arr = new string[10];
+arr[0]++;
+
+char[] arr = new char[10];
+arr[0]++;
+
+bool[] arr = new bool[10];
+arr[0]++;
+
+bool b = true;
+b++;
+
+char c = 'a';
+c++;
+
+int x = 1;
+x++++;
+

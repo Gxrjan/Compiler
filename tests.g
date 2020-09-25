@@ -277,3 +277,41 @@ x = 1;
 n = x++ * 20 - 10;
 print(n); // expect: 10
 
+
+arr = new int[10];
+for (int i=0;i<arr.Length;i++)
+  print(arr[i]++);
+// expect: 0
+// expect: 0
+// expect: 0
+// expect: 0
+// expect: 0
+// expect: 0
+// expect: 0
+// expect: 0
+// expect: 0
+// expect: 0
+for (int i=0;i<arr.Length;i++)
+  print(arr[i]);
+// expect: 1
+// expect: 1
+// expect: 1
+// expect: 1
+// expect: 1
+// expect: 1
+// expect: 1
+// expect: 1
+// expect: 1
+// expect: 1
+
+for (int i = 0;arr[0]<arr.Length;arr[0]++)
+  print(arr[0]);
+// expect: 1
+// expect: 2
+// expect: 3
+// expect: 4
+// expect: 5
+// expect: 6
+// expect: 7
+// expect: 8
+// expect: 9

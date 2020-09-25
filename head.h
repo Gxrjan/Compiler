@@ -317,6 +317,14 @@ class NewArrExpr : public Expr {
     NewArrExpr(Type *type, unique_ptr<Expr> expr, int line, int col);
     string to_string() override;
 };
+
+class IncExpr : public Expr {
+  public:
+    unique_ptr<Expr> expr;
+    IncExpr(unique_ptr<Expr> expr, int line, int col);
+    string to_string() override;
+
+};
 // Statement
 class Statement {
   public:
@@ -378,13 +386,22 @@ class WhileStatement : public Statement {
     string to_string() override;
 };
 
+class ExpressionStatement : public Statement {
+  public:
+    unique_ptr<Expr> expr;
+    unique_ptr<Statement> asgn;
+    ExpressionStatement(unique_ptr<Expr> expr, unique_ptr<Statement> asgn, int line, int col);
+    string to_string() override;
+
+};
+
 class ForStatement : public Statement {
   public:
     unique_ptr<Declaration> init;
     unique_ptr<Expr> cond;
-    unique_ptr<Assignment> iter;
+    unique_ptr<ExpressionStatement> iter;
     unique_ptr<Statement> body;
-    ForStatement(unique_ptr<Declaration> init, unique_ptr<Expr> cond, unique_ptr<Assignment> iter, unique_ptr<Statement> body);
+    ForStatement(unique_ptr<Declaration> init, unique_ptr<Expr> cond, unique_ptr<ExpressionStatement> iter, unique_ptr<Statement> body);
     string to_string() override;
 };
 
@@ -393,6 +410,7 @@ class BreakStatement : public Statement {
     BreakStatement(int line, int col);
     string to_string() override;
 };
+
 
 
 // Program
@@ -448,6 +466,8 @@ class Parser {
     unique_ptr<Block> try_parse_block();
     unique_ptr<BreakStatement> try_parse_break();
     unique_ptr<Block> parse_outer_block();
+    unique_ptr<ExpressionStatement> try_parse_expression_statement();
+    unique_ptr<ExpressionStatement> parse_expression_statement();
     void check_expr(Expr *expr);
     void expect(string c);
   public:
@@ -482,6 +502,9 @@ class Checker {
     void check_for_statement(ForStatement *for_s, Block *b);
     void check_statement(Statement *s, Block *b, bool in_loop);
     void check_block(Block *b, bool in_loop);
+    void check_expression_statement(ExpressionStatement *s, Block *b);
+    Type *check_inc_expr(IncExpr *expr, Block *b);
+    bool verify_int(Type *t);
     Type *check_compatability(OpExpr *expr, Block *b);
     void report_error(int line, int col, string message);
   public:
@@ -518,6 +541,8 @@ class Translator {
     void translate_for_statement(string *s, ForStatement *for_s);
     void translate_statement(string *s, Statement *statement, string loop_end_label);
     void translate_block(string *s, Block *b, string loop_end_label);
+    void translate_expression_statement(string *s, ExpressionStatement *expr);
+    void translate_inc_expr(string *s, IncExpr *expr);
     string type_to_cc(Type *t);
     string operation_to_cc(Operation op);
     void report_error(int line, int col, string message);

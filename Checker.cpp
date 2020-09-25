@@ -244,6 +244,9 @@ Type *Checker::check_expr_type(Expr *expr, Block *b)
     if (auto e = dynamic_cast<NewArrExpr *>(expr))
         return this->check_new_arr_expr(e, b);
 
+    if (auto inc = dynamic_cast<IncExpr *>(expr))
+        return this->check_inc_expr(inc, b);
+
     throw runtime_error("Unrecognized expression");
 }
 
@@ -305,13 +308,55 @@ void Checker::check_for_statement(ForStatement *for_s, Block *b)
                            "Bool expression expected");
 
     // Checking iter
-    this->check_assignment(for_s->iter.get(), b);
+    this->check_expression_statement(for_s->iter.get(), b);
 
     // Checking body
     this->check_statement(for_s->body.get(), b, true);
 
     // Removing id after for statement is over
     b->variables.erase(for_s->init->id);
+}
+
+void Checker::check_expression_statement(ExpressionStatement *s, Block *b) 
+{
+    if (s->expr) {
+        if (auto inc = dynamic_cast<IncExpr *>(s->expr.get()))
+            this->check_inc_expr(inc, b);
+        else
+            this->report_error(s->expr->line, s->expr->col, "inc expression or assignemnt expected");
+    } else if (s->asgn)
+    {
+        if (auto asgn = dynamic_cast<Assignment *>(s->asgn.get()))
+            this->check_assignment(asgn, b);
+        else
+            this->report_error(s->asgn->line, s->asgn->col, "inc expression or assignemnt expected");
+    } else
+        this->report_error(s->line, s->col, "expression statement is empty");
+    
+}
+
+bool Checker::verify_int(Type *t)
+{
+    if (t == &Int)
+        return true;
+    else if (auto arr_t = dynamic_cast<ArrayType *>(t))
+        return verify_int(arr_t->base);
+    return false;
+}
+
+
+Type *Checker::check_inc_expr(IncExpr *expr, Block *b)
+{
+    Id id;
+    if (!this->try_get_id(expr->expr.get(), &id))
+        this->report_error(expr->line, expr->col, "must increment var or elem of arrray");
+    Declaration *dec = this->look_up(id, b);
+    if (!dec)
+        this->report_error(expr->line, expr->col, "variable wasn't declared");
+    if (!this->verify_int(dec->type))
+        this->report_error(expr->line, expr->col, "must incremenent int");
+    this->check_expr(expr->expr.get(), b);
+    return &Int;
 }
 
 void Checker::check_statement(Statement *s, Block *b, bool in_loop)
@@ -334,6 +379,9 @@ void Checker::check_statement(Statement *s, Block *b, bool in_loop)
     } else if (auto br = dynamic_cast<BreakStatement *>(s)) { 
         if (!in_loop)
             this->report_error(br->line, br->col, "break outside of loop");
+    } else if (auto es = dynamic_cast<ExpressionStatement *>(s)) {
+        this->check_expression_statement(es, b);
+
     } else {
         Block *b1 = dynamic_cast<Block *>(s);
         if (b1) {

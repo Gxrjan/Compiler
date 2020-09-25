@@ -245,3 +245,35 @@ if ("a" != "a")
 else
   print("same"); // expect: same
 
+// inc expr
+
+x = -1;
+x++;
+print(x); // expect: 0
+int[][][] new_arr = new int[10][][];
+new_arr[0] = new int[10][];
+new_arr[0][1] = new int[10];
+new_arr[x++][x++][x++] = x++;
+print(new_arr[0][1][2]); // expect: 3
+
+x = 0;
+print(x++); // expect: 0
+for (int i=0;i<5;i++)
+  print(i);
+// expect: 0
+// expect: 1
+// expect: 2
+// expect: 3
+// expect: 4
+
+n = 0;
+x = 0;
+n = 1 + x++;
+print(n); // expect: 1
+
+
+n = 0;
+x = 1;
+n = x++ * 20 - 10;
+print(n); // expect: 10
+

@@ -22,6 +22,9 @@ int main(int argc, char *argv[])
     }
     ofstream file{ argc == 1 ? "a.asm" : (file_name+".asm").c_str() , ios::out };
     Scanner scan(argc == 2 ? argv[1] : nullptr);
+    // unique_ptr<Token> t;
+    // while (t = scan.next_token())
+    //     cout << t->to_string() << endl;
     Translator tran;
     unique_ptr<Program> prog = Parser(&scan).parse_program();
     Checker c;

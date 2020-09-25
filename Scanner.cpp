@@ -135,6 +135,13 @@ unique_ptr<Token> Scanner::next_token() {
     
 
     if (c == '+' || c == '-' || c == '*' || c == '%') {
+        if (c == '+') {
+            char peek = this->peekc();
+            if (peek == '+') {
+                this->getc();
+                return make_unique<OperToken>(string{c, peek});
+            }
+        }
         return make_unique<OperToken>(string{c});
     }
 

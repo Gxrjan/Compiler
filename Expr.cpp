@@ -208,3 +208,13 @@ string NewArrExpr::to_string()
 {
     return "new "+this->type->to_string()+" " +this->expr->to_string();
 }
+
+IncExpr::IncExpr(unique_ptr<Expr> expr, int line, int col) : Expr(line, col)
+{
+    this->expr = move(expr);
+}
+string IncExpr::to_string()
+{
+    return this->expr->to_string() + " ++";
+}
+

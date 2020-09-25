@@ -20,21 +20,24 @@ Block ->
 
 Statement ->
         | Declaration ';'
-        | Assignment ';'
+        | ExpressionStatement ';'
         | Print ';'
         | '{' Block '}'
         | 'if' '(' CompExpr ')' Statement [ 'else' Statement ]
         | 'while' '(' CompExpr ')' Statement
-        | 'for' '(' Declaration ';' Expression ';' Assignment ')' Statement
+        | 'for' '(' Declaration ';' Expression ';' ExpressionStatement ')' Statement
         | 'break' ';'
 
 
 Declaration ->
         | Type id '=' Expression
 
+ExpressionStatement ->
+        | Assignment
+        | PostIncrementExpression
 
 Assignment ->
-        | PrimaryNoArrayDeclaration '=' Expression
+        | PrimaryNoArrayCreation '=' Expression
        
 
 Print -> 
@@ -68,6 +71,10 @@ PrimaryNoArrayCreation ->
         | 'int' '.' id '(' Args ')'
         | 'new' 'string' '(' Args ')'
         | 'null'
+        | PostIncrementExpression
+
+PostIncrementExpression ->
+        | PrimaryNoArrayCreation '++'
         
 
 BinaryOp -> '&&' | '||' | '==' | '!=' | '<' | '>' | '<=' | '>=' | '+' | '-' | '*' | '/' | '%';

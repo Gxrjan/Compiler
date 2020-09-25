@@ -80,6 +80,7 @@ PrimaryNoArrayCreation ->
 
 PostIncrementExpression ->
         | PrimaryNoArrayCreation '++'
+        | PrimaryNoArrayCreation '--'
         
 
 BinaryOp -> '&&' | '||' | '==' | '!=' | '<' | '>' | '<=' | '>=' | '+' | '-' | '*' | '/' | '%';

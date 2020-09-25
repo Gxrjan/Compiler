@@ -209,8 +209,9 @@ string NewArrExpr::to_string()
     return "new "+this->type->to_string()+" " +this->expr->to_string();
 }
 
-IncExpr::IncExpr(unique_ptr<Expr> expr, int line, int col) : Expr(line, col)
+IncExpr::IncExpr(string op, unique_ptr<Expr> expr, int line, int col) : Expr(line, col)
 {
+    this->op = op;
     this->expr = move(expr);
 }
 string IncExpr::to_string()

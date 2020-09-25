@@ -141,6 +141,12 @@ unique_ptr<Token> Scanner::next_token() {
                 this->getc();
                 return make_unique<OperToken>(string{c, peek});
             }
+        } else if (c == '-') {
+            char peek = this->peekc();
+            if (peek == '-') {
+                this->getc();
+                return make_unique<OperToken>(string{c, peek});
+            }
         }
         return make_unique<OperToken>(string{c});
     }

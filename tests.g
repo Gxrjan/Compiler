@@ -321,3 +321,16 @@ for (int i = 0;arr[0]<arr.Length;arr[0]++)
 // expect: 8
 // expect: 9
 
+x = 1;
+x--;
+print(x); // expect: 0
+
+
+for (int i = 5;i>-1;i--)
+  print(i);
+// expect: 5
+// expect: 4
+// expect: 3
+// expect: 2
+// expect: 1
+// expect: 0

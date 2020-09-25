@@ -510,13 +510,24 @@ void Translator::translate_for_statement(string *s, ForStatement *for_s)
         "loop_end"+label_id+":\n";
     
 }
+
+string Translator::string_to_op(string op)
+{
+    if (op == "++")
+        return "inc";
+    else if (op == "--")
+        return "dec";
+    else
+        throw runtime_error("Unknown op");
+}
+
 void Translator::translate_inc_expr(string *s, IncExpr *expr)
 {
     // TODO
     if (auto var = dynamic_cast<Variable *>(expr->expr.get())) {
         this->translate_variable(s, var);
         *s +=
-            " inc   qword ["+var->name+"]\n";
+            " "+this->string_to_op(expr->op)+"   qword ["+var->name+"]\n";
     } else {
         auto el = dynamic_cast<ElemAccessExpr *>(expr->expr.get());
         this->translate_expr(s, el->expr.get());
@@ -527,7 +538,7 @@ void Translator::translate_inc_expr(string *s, IncExpr *expr)
             " call  getll\n"
             " push  rax\n"
             " mov   rdx, rax\n"
-            " inc   rdx\n"
+            " "+this->string_to_op(expr->op)+"   rdx\n"
             " call  setll\n";
     }
 }

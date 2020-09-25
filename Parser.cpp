@@ -164,7 +164,8 @@ arr_label:
     } else
         this->report_error("Syntax error");
     Token *peek;
-    while ((peek=this->scan->peek_token()) && (peek->isSymbol(".") || peek->isSymbol("[") || peek->isOper("++"))) {
+    while ((peek=this->scan->peek_token()) && (peek->isSymbol(".") || peek->isSymbol("[") || 
+            peek->isOper("++") || peek->isOper("--"))) {
         if (peek && peek->isSymbol("[")) {
             this->scan->next_token();
             unique_ptr<Expr> expr = this->parse_expr();
@@ -184,7 +185,10 @@ arr_label:
                 this->report_error("Unrecognized function call");
         } else if (peek->isOper("++")) {
             this->scan->next_token();
-            return make_unique<IncExpr>(move(prim), line, col);
+            return make_unique<IncExpr>("++", move(prim), line, col);
+        } else if (peek->isOper("--")) {
+            this->scan->next_token();
+            return make_unique<IncExpr>("--", move(prim), line, col);
         } else
             this->report_error("'[' or '.' expected");
         

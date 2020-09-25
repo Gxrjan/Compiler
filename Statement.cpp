@@ -103,7 +103,7 @@ string WhileStatement::to_string()
 }
 
 
-ForStatement::ForStatement(unique_ptr<Declaration> init, unique_ptr<Expr> cond, unique_ptr<ExpressionStatement> iter, unique_ptr<Statement> body)
+ForStatement::ForStatement(unique_ptr<Declaration> init, unique_ptr<Expr> cond, unique_ptr<Statement> iter, unique_ptr<Statement> body)
 {
     this->init = move(init);
     this->cond = move(cond);
@@ -124,16 +124,12 @@ BreakStatement::BreakStatement(int line, int col) : Statement(line, col) {}
 string BreakStatement::to_string() { return "break"; }
 
 
-ExpressionStatement::ExpressionStatement(unique_ptr<Expr> expr, unique_ptr<Statement> asgn, int line, int col) : Statement(line, col)
+ExpressionStatement::ExpressionStatement(unique_ptr<Expr> expr, int line, int col) : Statement(line, col)
 {
     this->expr = move(expr);
-    this->asgn = move(asgn);
 }
 
 string ExpressionStatement::to_string()
 {
-    if (expr)
-        return this->expr->to_string();
-    else
-        return this->asgn->to_string();
+    return this->expr->to_string();
 }

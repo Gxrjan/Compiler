@@ -308,7 +308,10 @@ void Checker::check_for_statement(ForStatement *for_s, Block *b)
                            "Bool expression expected");
 
     // Checking iter
-    this->check_expression_statement(for_s->iter.get(), b);
+    if (auto asgn = dynamic_cast<Assignment *>(for_s->iter.get()))
+        this->check_assignment(asgn, b);
+    else if (auto es = dynamic_cast<ExpressionStatement *>(for_s->iter.get()))
+        this->check_expression_statement(es, b);
 
     // Checking body
     this->check_statement(for_s->body.get(), b, true);
@@ -323,16 +326,8 @@ void Checker::check_expression_statement(ExpressionStatement *s, Block *b)
         if (auto inc = dynamic_cast<IncExpr *>(s->expr.get()))
             this->check_inc_expr(inc, b);
         else
-            this->report_error(s->expr->line, s->expr->col, "inc expression or assignemnt expected");
-    } else if (s->asgn)
-    {
-        if (auto asgn = dynamic_cast<Assignment *>(s->asgn.get()))
-            this->check_assignment(asgn, b);
-        else
-            this->report_error(s->asgn->line, s->asgn->col, "inc expression or assignemnt expected");
-    } else
-        this->report_error(s->line, s->col, "expression statement is empty");
-    
+            this->report_error(s->expr->line, s->expr->col, "inc expression expected");
+    }
 }
 
 bool Checker::verify_int(Type *t)

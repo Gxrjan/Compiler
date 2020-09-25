@@ -389,8 +389,7 @@ class WhileStatement : public Statement {
 class ExpressionStatement : public Statement {
   public:
     unique_ptr<Expr> expr;
-    unique_ptr<Statement> asgn;
-    ExpressionStatement(unique_ptr<Expr> expr, unique_ptr<Statement> asgn, int line, int col);
+    ExpressionStatement(unique_ptr<Expr> expr, int line, int col);
     string to_string() override;
 
 };
@@ -399,9 +398,9 @@ class ForStatement : public Statement {
   public:
     unique_ptr<Declaration> init;
     unique_ptr<Expr> cond;
-    unique_ptr<ExpressionStatement> iter;
+    unique_ptr<Statement> iter;
     unique_ptr<Statement> body;
-    ForStatement(unique_ptr<Declaration> init, unique_ptr<Expr> cond, unique_ptr<ExpressionStatement> iter, unique_ptr<Statement> body);
+    ForStatement(unique_ptr<Declaration> init, unique_ptr<Expr> cond, unique_ptr<Statement> iter, unique_ptr<Statement> body);
     string to_string() override;
 };
 
@@ -466,8 +465,8 @@ class Parser {
     unique_ptr<Block> try_parse_block();
     unique_ptr<BreakStatement> try_parse_break();
     unique_ptr<Block> parse_outer_block();
-    unique_ptr<ExpressionStatement> try_parse_expression_statement();
-    unique_ptr<ExpressionStatement> parse_expression_statement();
+    unique_ptr<Statement> try_parse_expression_statement_or_assignment();
+    unique_ptr<Statement> parse_expression_statement_or_assignment();
     void check_expr(Expr *expr);
     void expect(string c);
   public:

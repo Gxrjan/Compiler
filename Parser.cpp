@@ -265,15 +265,15 @@ unique_ptr<Assignment> Parser::try_parse_assignment()
     return nullptr;
 }
 
-unique_ptr<ExpressionStatement> Parser::parse_expression_statement()
+unique_ptr<Statement> Parser::parse_expression_statement_or_assignment()
 {
-    unique_ptr<ExpressionStatement> dec = this->try_parse_expression_statement();
-    if (!dec)
+    unique_ptr<Statement> dec = this->try_parse_expression_statement_or_assignment();
+    if (!dynamic_cast<Assignment *>(dec.get()) && !dynamic_cast<ExpressionStatement *>(dec.get()))
         this->report_error("Assignment or inc expr expected");
     return dec;
 }
 
-unique_ptr<ExpressionStatement> Parser::try_parse_expression_statement()
+unique_ptr<Statement> Parser::try_parse_expression_statement_or_assignment()
 {
     Token *t = this->scan->peek_token();
     Id name;
@@ -282,11 +282,10 @@ unique_ptr<ExpressionStatement> Parser::try_parse_expression_statement()
         int line = this->scan->last_line;
         int col = this->scan->last_column;
         if (dynamic_cast<IncExpr *>(expr.get()))
-            return make_unique<ExpressionStatement>(move(expr), nullptr, line, col);
+            return make_unique<ExpressionStatement>(move(expr), line, col);
         this->expect("=");
         unique_ptr<Expr> e = this->parse_expr();
-        unique_ptr<Assignment> asgn = make_unique<Assignment>(move(expr), move(e), line, col);
-        return make_unique<ExpressionStatement>(nullptr, move(asgn), line, col);
+        return make_unique<Assignment>(move(expr), move(e), line, col);
     }
     return nullptr;
 }
@@ -358,7 +357,7 @@ unique_ptr<ForStatement> Parser::try_parse_for()
         this->expect(";");
         unique_ptr<Expr> cond = this->parse_expr();
         this->expect(";");
-        unique_ptr<ExpressionStatement> iter = this->parse_expression_statement();
+        unique_ptr<Statement> iter = this->parse_expression_statement_or_assignment();
         this->expect(")");
         unique_ptr<Statement> body = this->parse_statement();
         return make_unique<ForStatement>(move(init), move(cond), 
@@ -391,7 +390,7 @@ unique_ptr<Statement> Parser::parse_statement()
     }
 
     // Assignment or incexpr
-    if ((s=this->try_parse_expression_statement())) {
+    if ((s=this->try_parse_expression_statement_or_assignment())) {
         this->expect(";");
         return s;
     }

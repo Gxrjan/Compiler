@@ -20,21 +20,26 @@ Block ->
 
 Statement ->
         | Declaration ';'
+        | Assignment ';'
         | ExpressionStatement ';'
         | Print ';'
         | '{' Block '}'
         | 'if' '(' CompExpr ')' Statement [ 'else' Statement ]
         | 'while' '(' CompExpr ')' Statement
-        | 'for' '(' Declaration ';' Expression ';' ExpressionStatement ')' Statement
+        | 'for' '(' Declaration ';' Expression ';' ForIter ')' Statement
         | 'break' ';'
 
+
+ForIter ->
+        | Assignment
+        | ExpressionStatement
+
+ExpressionStatement ->
+        | PostIncrementExpression
 
 Declaration ->
         | Type id '=' Expression
 
-ExpressionStatement ->
-        | Assignment
-        | PostIncrementExpression
 
 Assignment ->
         | PrimaryNoArrayCreation '=' Expression

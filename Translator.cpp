@@ -501,7 +501,10 @@ void Translator::translate_for_statement(string *s, ForStatement *for_s)
         " cmp       rax, 0\n"
         " je        loop_end"+label_id+"\n";
     this->translate_statement(s, for_s->body.get(), label_id);
-    this->translate_expression_statement(s, for_s->iter.get());
+    if (auto es = dynamic_cast<ExpressionStatement *>(for_s->iter.get()))
+        this->translate_expression_statement(s, es);
+    else if (auto asgn = dynamic_cast<Assignment *>(for_s->iter.get()))
+        this->translate_assignment(s, asgn);
     *s +=
         " jmp       loop"+label_id+"\n"
         "loop_end"+label_id+":\n";
@@ -532,10 +535,7 @@ void Translator::translate_inc_expr(string *s, IncExpr *expr)
 
 void Translator::translate_expression_statement(string *s, ExpressionStatement *expr)
 {
-    if (expr->asgn)
-        this->translate_assignment(s, dynamic_cast<Assignment *>(expr->asgn.get()));
-    else
-        this->translate_inc_expr(s, dynamic_cast<IncExpr *>(expr->expr.get()));
+    this->translate_inc_expr(s, dynamic_cast<IncExpr *>(expr->expr.get()));
 }
 
 void Translator::translate_statement(string *s, Statement *statement, string loop_end_label)

@@ -47,3 +47,6 @@ c++;
 int x = 1;
 x++++;
 
+int[] a = new int[10];
+a++;  // should be an error: you can't increment an int[]
+

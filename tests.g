@@ -279,6 +279,11 @@ print(n); // expect: 10
 
 
 arr = new int[10];
+x = 0;
+arr[x++]++;
+print(x); // expect: 1
+
+arr = new int[10];
 for (int i=0;i<arr.Length;i++)
   print(arr[i]++);
 // expect: 0
@@ -315,3 +320,4 @@ for (int i = 0;arr[0]<arr.Length;arr[0]++)
 // expect: 7
 // expect: 8
 // expect: 9
+

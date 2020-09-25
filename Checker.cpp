@@ -353,9 +353,8 @@ Type *Checker::check_inc_expr(IncExpr *expr, Block *b)
     Declaration *dec = this->look_up(id, b);
     if (!dec)
         this->report_error(expr->line, expr->col, "variable wasn't declared");
-    if (!this->verify_int(dec->type))
+    if (this->check_expr(expr->expr.get(), b) != &Int)
         this->report_error(expr->line, expr->col, "must incremenent int");
-    this->check_expr(expr->expr.get(), b);
     return &Int;
 }
 

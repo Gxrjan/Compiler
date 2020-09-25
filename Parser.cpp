@@ -185,10 +185,10 @@ arr_label:
                 this->report_error("Unrecognized function call");
         } else if (peek->isOper("++")) {
             this->scan->next_token();
-            return make_unique<IncExpr>("++", move(prim), line, col);
+            return make_unique<IncExpr>(true, move(prim), line, col);
         } else if (peek->isOper("--")) {
             this->scan->next_token();
-            return make_unique<IncExpr>("--", move(prim), line, col);
+            return make_unique<IncExpr>(false, move(prim), line, col);
         } else
             this->report_error("'[' or '.' expected");
         

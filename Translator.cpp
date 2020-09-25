@@ -511,14 +511,9 @@ void Translator::translate_for_statement(string *s, ForStatement *for_s)
     
 }
 
-string Translator::string_to_op(string op)
+string Translator::bool_to_op(bool inc)
 {
-    if (op == "++")
-        return "inc";
-    else if (op == "--")
-        return "dec";
-    else
-        throw runtime_error("Unknown op");
+    return (inc ? "inc" : "dec");
 }
 
 void Translator::translate_inc_expr(string *s, IncExpr *expr)
@@ -527,18 +522,20 @@ void Translator::translate_inc_expr(string *s, IncExpr *expr)
     if (auto var = dynamic_cast<Variable *>(expr->expr.get())) {
         this->translate_variable(s, var);
         *s +=
-            " "+this->string_to_op(expr->op)+"   qword ["+var->name+"]\n";
+            " "+this->bool_to_op(expr->inc)+"   qword ["+var->name+"]\n";
     } else {
         auto el = dynamic_cast<ElemAccessExpr *>(expr->expr.get());
         this->translate_expr(s, el->expr.get());
         this->translate_expr(s, el->index.get());
         *s +=
+            " mov   rsi, qword [rsp]\n"
+            " mov   rdi, qword [rsp+8]\n"
+            " call  getll\n"
             " pop   rsi\n"
             " pop   rdi\n"
-            " call  getll\n"
-            " push  rax\n"
             " mov   rdx, rax\n"
-            " "+this->string_to_op(expr->op)+"   rdx\n"
+            " push  rax\n"
+            " "+this->bool_to_op(expr->inc)+"   rdx\n"
             " call  setll\n";
     }
 }

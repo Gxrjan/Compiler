@@ -326,12 +326,6 @@ void Checker::check_expression_statement(ExpressionStatement *s, Block *b)
 
 Type *Checker::check_inc_expr(IncExpr *expr, Block *b)
 {
-    Id id;
-    if (!this->try_get_id(expr->expr.get(), &id))
-        this->report_error(expr->line, expr->col, "must increment var or elem of arrray");
-    Declaration *dec = this->look_up(id, b);
-    if (!dec)
-        this->report_error(expr->line, expr->col, "variable wasn't declared");
     if (this->check_expr(expr->expr.get(), b) != &Int)
         this->report_error(expr->line, expr->col, "must incremenent int");
     return &Int;

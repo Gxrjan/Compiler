@@ -320,9 +320,9 @@ class NewArrExpr : public Expr {
 
 class IncExpr : public Expr {
   public:
-    string op;
+    bool inc;
     unique_ptr<Expr> expr;
-    IncExpr(string op, unique_ptr<Expr> expr, int line, int col);
+    IncExpr(bool inc, unique_ptr<Expr> expr, int line, int col);
     string to_string() override;
 
 };
@@ -543,7 +543,7 @@ class Translator {
     void translate_block(string *s, Block *b, string loop_end_label);
     void translate_expression_statement(string *s, ExpressionStatement *expr);
     void translate_inc_expr(string *s, IncExpr *expr);
-    string string_to_op(string op);
+    string bool_to_op(bool inc);
     string type_to_cc(Type *t);
     string operation_to_cc(Operation op);
     void report_error(int line, int col, string message);

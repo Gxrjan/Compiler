@@ -268,7 +268,7 @@ unique_ptr<Assignment> Parser::try_parse_assignment()
 unique_ptr<Statement> Parser::parse_expression_statement_or_assignment()
 {
     unique_ptr<Statement> dec = this->try_parse_expression_statement_or_assignment();
-    if (!dynamic_cast<Assignment *>(dec.get()) && !dynamic_cast<ExpressionStatement *>(dec.get()))
+    if (!dec)
         this->report_error("Assignment or inc expr expected");
     return dec;
 }

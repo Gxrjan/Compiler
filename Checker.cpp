@@ -308,10 +308,8 @@ void Checker::check_for_statement(ForStatement *for_s, Block *b)
                            "Bool expression expected");
 
     // Checking iter
-    if (auto asgn = dynamic_cast<Assignment *>(for_s->iter.get()))
-        this->check_assignment(asgn, b);
-    else if (auto es = dynamic_cast<ExpressionStatement *>(for_s->iter.get()))
-        this->check_expression_statement(es, b);
+    this->check_statement(for_s->iter.get(), b, false);
+    
 
     // Checking body
     this->check_statement(for_s->body.get(), b, true);
@@ -322,21 +320,7 @@ void Checker::check_for_statement(ForStatement *for_s, Block *b)
 
 void Checker::check_expression_statement(ExpressionStatement *s, Block *b) 
 {
-    if (s->expr) {
-        if (auto inc = dynamic_cast<IncExpr *>(s->expr.get()))
-            this->check_inc_expr(inc, b);
-        else
-            this->report_error(s->expr->line, s->expr->col, "inc expression expected");
-    }
-}
-
-bool Checker::verify_int(Type *t)
-{
-    if (t == &Int)
-        return true;
-    else if (auto arr_t = dynamic_cast<ArrayType *>(t))
-        return verify_int(arr_t->base);
-    return false;
+    this->check_expr(s->expr.get(), b);
 }
 
 
@@ -375,7 +359,6 @@ void Checker::check_statement(Statement *s, Block *b, bool in_loop)
             this->report_error(br->line, br->col, "break outside of loop");
     } else if (auto es = dynamic_cast<ExpressionStatement *>(s)) {
         this->check_expression_statement(es, b);
-
     } else {
         Block *b1 = dynamic_cast<Block *>(s);
         if (b1) {

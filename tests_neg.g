@@ -55,3 +55,8 @@ for (int i=0;i<5;int n = 1)
 
 for (int i=0;i<5;print(2))
   print(2);
+
+
+int x = int.Parse("123")++;
+
+int x = (2 + 2)++;

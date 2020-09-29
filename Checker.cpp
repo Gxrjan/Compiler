@@ -326,8 +326,9 @@ void Checker::check_expression_statement(ExpressionStatement *s, Block *b)
 
 Type *Checker::check_inc_expr(IncExpr *expr, Block *b)
 {
-    if (dynamic_cast<NumLiteral *>(expr->expr.get()))
-        this->report_error(expr->line, expr->col, "can't increment a num literal");
+    if (dynamic_cast<NumLiteral *>(expr->expr.get()) || 
+        dynamic_cast<IntParseExpr *>(expr->expr.get()))
+        this->report_error(expr->line, expr->col, "you can increment a variable or an array element");
     if (this->check_expr(expr->expr.get(), b) != &Int)
         this->report_error(expr->line, expr->col, "must increment int");
     return &Int;

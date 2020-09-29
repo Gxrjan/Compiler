@@ -334,3 +334,10 @@ for (int i = 5;i>-1;i--)
 // expect: 2
 // expect: 1
 // expect: 0
+
+s = "abc";
+t = (s + "d").Substring(1);
+
+
+a = new int[5];
+x = (a)[3];  

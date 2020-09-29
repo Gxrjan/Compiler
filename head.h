@@ -468,6 +468,7 @@ class Parser {
     unique_ptr<Block> parse_outer_block();
     unique_ptr<Statement> try_parse_expression_statement_or_assignment();
     unique_ptr<Statement> parse_expression_statement_or_assignment();
+    unique_ptr<Expr> consume_rest(unique_ptr<Expr> prim, int line, int col);
     void check_expr(Expr *expr);
     void expect(string c);
   public:

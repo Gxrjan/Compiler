@@ -553,4 +553,43 @@ class Translator {
 };
 
 
+// LLVM TRANSLATOR
+class Translator_LLVM {
+    int register_id = 0;
+    int label_id = 0;
+    int string_id = 0;
+    map<Id, string> variables;
+    map<StringLiteral *, int> strings;
+    string concat_cc(Type *left, Type *right);
+    string translate_num_literal(string *s, NumLiteral *l);
+    string translate_bool_literal(string *s, BoolLiteral *l);
+    string translate_char_literal(string *s, CharLiteral *l);
+    string translate_string_literal(string *s, StringLiteral *l);
+    string translate_elem_access_expr(string *s, ElemAccessExpr *expr);
+    string translate_length_expr(string *s, LengthExpr *expr);
+    string translate_type_cast_expr(string *s, TypeCastExpr *expr);
+    string translate_substr_expr(string *s, SubstrExpr *expr);
+    string translate_int_parse_expr(string *s, IntParseExpr *expr);
+    string translate_new_str_expr(string *s, NewStrExpr *expr);
+    string translate_new_arr_expr(string *s, NewArrExpr *expr);
+    string translate_variable(string *s, Variable *var);
+    string translate_op_expr(string *s, OpExpr *expr);
+    string translate_expr(string *s, Expr *expr);
+    void translate_declaration(string *s, Declaration *dec);
+    void translate_assignment(string *s, Assignment *asgn);
+    void translate_print(string *s, Print *p);
+    void translate_if_statement(string *s, IfStatement *st, string loop_end_label);
+    void translate_while_statement(string *s, WhileStatement *st);
+    void translate_for_statement(string *s, ForStatement *for_s);
+    void translate_statement(string *s, Statement *statement, string loop_end_label);
+    void translate_block(string *s, Block *b, string loop_end_label);
+    void translate_expression_statement(string *s, ExpressionStatement *expr);
+    string translate_inc_expr(string *s, IncExpr *expr);
+    string bool_to_op(bool inc);
+    string type_to_cc(Type *t);
+    string operation_to_cc(Operation op);
+    void report_error(int line, int col, string message);
+  public:
+    string translate_program(Program *p);
+};
 #endif

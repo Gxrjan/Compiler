@@ -4,16 +4,16 @@ typedef char16_t *gstring;
 using namespace std;
 
 extern "C" {
-inline long long gstring_len(gstring s) {
+inline int gstring_len(gstring s) {
     if (!s)
         throw runtime_error("null pointer exception");
-    return *((long long *)(s-4));
+    return *((int *)(s-2));
 }
 
 
-gstring concat_chars(const char16_t *s, long long slen, const char16_t *t, long long tlen) {
-    gstring u = (gstring) malloc(2 * (slen + tlen) + 8) + 4;
-    *((long long *)(u - 4)) = slen + tlen;
+gstring concat_chars(const char16_t *s, int slen, const char16_t *t, int tlen) {
+    gstring u = (gstring) malloc(2 * (slen + tlen) + 4) + 2;
+    *((long long *)(u - 2)) = slen + tlen;
     memcpy(u, s, 2*slen);
     memcpy(u+slen, t, 2*tlen);
     return u;
@@ -32,7 +32,7 @@ char16_t get(gstring s, int i)
 {
     if (!s)
         throw runtime_error("null pointer exception");
-    long long slen = gstring_len(s);
+    int slen = gstring_len(s);
     if (i<0 || i>=slen)
         throw runtime_error("index out of bounds");
     return s[i];
@@ -56,7 +56,7 @@ void printg(gstring s)
         printf("\n");
         return;
     }
-    long long slen = gstring_len(s);
+    int slen = gstring_len(s);
     for (int i = 0;i < slen;i++) {
         printf("%lc", s[i]);
     }
@@ -98,7 +98,7 @@ gstring substr_int_int(gstring s, int from, int len)
 {
     if (!s)
         throw runtime_error("null pointer exception");
-    long long s_len = gstring_len(s);
+    int s_len = gstring_len(s);
     if (len < 0)
         throw runtime_error("length of the substring must be >=0");
     if ((from < 0 || from > s_len) || 
@@ -115,11 +115,11 @@ gstring substr_int(gstring s, int from)
 }
 
 
-long long int_parse(gstring s)
+int int_parse(gstring s)
 {
     if (!s)
         throw runtime_error("null pointer exception");
-    long long s_len = gstring_len(s);
+    int s_len = gstring_len(s);
     if (s_len == 0)
         throw runtime_error("Trying to convert empty string to int");
     wstring result;
@@ -136,37 +136,72 @@ long long int_parse(gstring s)
         else
             result += c;
     }
-    return std::stoll(result);
+    return std::stoi(result);
 }
 
 
-gstring new_str_expr(char16_t c, long long len)
+gstring new_str_expr(char16_t c, int len)
 {
     u16string s(len, c);
     return concat_chars(s.c_str(), len, &c, 0);
 }
 
-
-void *new_arr_expr(int size, long long len)
+int *new_int_arr_expr(int len)
 {
-    void *p = malloc(len*size+8);
-    *((long long *)p) = len;
-    p = static_cast<char *>(p) + 8;
+    int *p = (int *)malloc(len*4+4);
+    *(p) = len;
+    p += 1;
+    memset(p, 0, len*4);
+    return p;
+}
+
+char16_t *new_char_arr_expr(int len)
+{
+    char16_t *p = (char16_t *)malloc(len*2+4);
+    *((int *)p) = len;
+    p += 2;
+    memset(p, 0, len*2);
+    return p;
+}
+
+gstring *new_string_arr_expr(int len)
+{
+    gstring *p = (gstring *)malloc(len*8+4);
+    *((int *)p) = len;
+    p += 1;
+    memset(p, 0, len*8);
+    return p;
+}
+
+char *new_bool_arr_expr(int len)
+{
+    char *p = (char *)malloc(len+4);
+    *((int *)p) = len;
+    p += 4;
+    memset(p, 0, len);
+    return p;
+}
+
+void *new_arr_expr(int size, int len)
+{
+    void *p = malloc(len*size+4);
+    *((int *)p) = len;
+    p = static_cast<char *>(p) + 4;
     memset(p, 0, len*size);
     return p;
 }
 
 
-long long arr_len(void *p)
+int arr_len(void *p)
 {
     return gstring_len(static_cast<gstring>(p));
 }
 
-long long getll(long long *arr, int index)
+int getll(int *arr, int index)
 {
     if (!arr)
         throw runtime_error("null pointer exception");
-    long long arr_l = arr_len(arr);
+    int arr_l = arr_len(arr);
     if (index < 0 || index >= arr_l)
         throw runtime_error("index out of bounds");
     return arr[index];
@@ -176,52 +211,52 @@ char getb(char *arr, int index)
 {
     if (!arr)
         throw runtime_error("null pointer exception");
-    long long arr_l = arr_len(arr);
+    int arr_l = arr_len(arr);
     if (index < 0 || index >= arr_l)
         throw runtime_error("index out of bounds");
     return arr[index];
 }
 
 
-void set(gstring arr, long long index, char16_t val)
+void set(gstring arr, int index, char16_t val)
 {
     if (!arr)
         throw runtime_error("null pointer exception");
-    long long arr_l = arr_len(arr);
+    int arr_l = arr_len(arr);
     if (index < 0 || index >= arr_l)
         throw runtime_error("index out of bounds");
     arr[index] = val;
 }
 
-void setll(long long *arr, long long index, long long val)
+void setll(int *arr, int index, int val)
 {
     if (!arr)
         throw runtime_error("null pointer exception");
-    long long arr_l = arr_len(arr);
+    int arr_l = arr_len(arr);
     if (index < 0 || index >= arr_l)
         throw runtime_error("index out of bounds");
     arr[index] = val;
 }
 
-void setb(char *arr, long long index, char val)
+void setb(char *arr, int index, char val)
 {
     if (!arr)
         throw runtime_error("null pointer exception");
-    long long arr_l = arr_len(arr);
+    int arr_l = arr_len(arr);
     if (index < 0 || index >= arr_l)
         throw runtime_error("index out of bounds");
     arr[index] = val;
 }
 
 
-long long cmp_str(gstring s, gstring t)
+int cmp_str(gstring s, gstring t)
 {
     if (!s && !t)
         return 1;
     else if (!s || !t)
         return 0;
-    long long s_len = gstring_len(s);
-    long long t_len = gstring_len(t);
+    int s_len = gstring_len(s);
+    int t_len = gstring_len(t);
     if (s_len != t_len)
         return 0;
     for (int i=0;i<s_len;i++)

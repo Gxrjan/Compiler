@@ -20,12 +20,9 @@ int main(int argc, char *argv[])
         file_name.resize(pos);
         program = file_name;
     }
-    ofstream file{ argc == 1 ? "a.asm" : (file_name+".asm").c_str() , ios::out };
+    ofstream file{ argc == 1 ? "a.ll" : (file_name+".ll").c_str() , ios::out };
     Scanner scan(argc == 2 ? argv[1] : nullptr);
-    // unique_ptr<Token> t;
-    // while (t = scan.next_token())
-    //     cout << t->to_string() << endl;
-    Translator tran;
+    Translator_LLVM tran;
     unique_ptr<Program> prog = Parser(&scan).parse_program();
     Checker c;
     c.check_program(prog.get());
@@ -36,8 +33,9 @@ int main(int argc, char *argv[])
         file_name = "a";
         program = "prog";
     } 
-    string asm_cmd = "nasm -Werror -f elf64 -g -F dwarf "+file_name+".asm -l "+file_name+".lst";
+    // string asm_cmd = "nasm -Werror -f elf64 -g -F dwarf "+file_name+".asm -l "+file_name+".lst";
+    string llvm_cmd = "llc -filetype=obj "+file_name+".ll";
     string gcc_cmd = "gcc -o "+program+" "+file_name+".o G_runtime_library.o -no-pie -lstdc++";
-    system(asm_cmd.c_str());
+    system(llvm_cmd.c_str());
     system(gcc_cmd.c_str());
 }

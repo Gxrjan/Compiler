@@ -560,6 +560,7 @@ class Translator_LLVM {
     int string_id = 0;
     map<Id, string> variables;
     map<StringLiteral *, int> strings;
+    string assign_register();
     string concat_cc(Type *left, Type *right);
     string translate_num_literal(string *s, NumLiteral *l);
     string translate_bool_literal(string *s, BoolLiteral *l);

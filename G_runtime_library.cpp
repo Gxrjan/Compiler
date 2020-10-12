@@ -28,7 +28,7 @@ u16string ascii_to_u16(string s) {
 }
 
 
-char16_t get(gstring s, int i)
+char16_t get16(gstring s, int i)
 {
     if (!s)
         throw runtime_error("null pointer exception");
@@ -197,7 +197,7 @@ int arr_len(void *p)
     return gstring_len(static_cast<gstring>(p));
 }
 
-int getll(int *arr, int index)
+int get32(int *arr, int index)
 {
     if (!arr)
         throw runtime_error("null pointer exception");
@@ -207,7 +207,17 @@ int getll(int *arr, int index)
     return arr[index];
 }
 
-char getb(char *arr, int index)
+void *get64(void **arr, int index)
+{
+    if (!arr)
+        throw runtime_error("null pointer exception");
+    int arr_l = arr_len(arr);
+    if (index < 0 || index >= arr_l)
+        throw runtime_error("index out of bounds");
+    return arr[index];
+}
+
+char get8(char *arr, int index)
 {
     if (!arr)
         throw runtime_error("null pointer exception");
@@ -218,7 +228,7 @@ char getb(char *arr, int index)
 }
 
 
-void set(gstring arr, int index, char16_t val)
+void set16(gstring arr, int index, char16_t val)
 {
     if (!arr)
         throw runtime_error("null pointer exception");
@@ -228,7 +238,7 @@ void set(gstring arr, int index, char16_t val)
     arr[index] = val;
 }
 
-void setll(int *arr, int index, int val)
+void set32(int *arr, int index, int val)
 {
     if (!arr)
         throw runtime_error("null pointer exception");
@@ -238,7 +248,17 @@ void setll(int *arr, int index, int val)
     arr[index] = val;
 }
 
-void setb(char *arr, int index, char val)
+void set64(void **arr, int index, void *val)
+{
+    if (!arr)
+        throw runtime_error("null pointer exception");
+    int arr_l = arr_len(arr);
+    if (index < 0 || index >= arr_l)
+        throw runtime_error("index out of bounds");
+    arr[index] = val;
+}
+
+void set8(char *arr, int index, char val)
 {
     if (!arr)
         throw runtime_error("null pointer exception");
@@ -264,4 +284,5 @@ int cmp_str(gstring s, gstring t)
             return 0;
     return 1;
 }
+
 }

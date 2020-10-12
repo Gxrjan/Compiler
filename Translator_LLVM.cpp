@@ -433,7 +433,6 @@ string Translator_LLVM::translate_op_expr(string *s, OpExpr *expr)
         return result_register;
 
     }
-    return "";
 } 
 
 string Translator_LLVM::translate_expr(string *s, Expr *e)
@@ -766,10 +765,6 @@ string Translator_LLVM::translate_program(Program* prog)
             "declare i32 @int_parse(i16*)\n"
             "declare i16* @new_str_expr(i16, i32)\n"
             "declare i8* @new_arr_expr(i32, i32)\n"
-            "declare i32* @new_int_arr_expr(i32)\n"
-            "declare i32* @new_char_arr_expr(i32)\n"
-            "declare i32* @new_bool_arr_expr(i32)\n"
-            "declare i16** @new_string_arr_expr(i32)\n"
             "declare i32 @gstring_len(i16*)\n"
             "declare i32 @arr_len(i8*)\n"
             "define i32 @main() {\n";

@@ -558,7 +558,7 @@ class Translator_LLVM {
     int register_id = 0;
     int label_id = 0;
     int string_id = 0;
-    map<Id, string> variables;
+    map<Id, pair<string, string>> variables;
     map<StringLiteral *, int> strings;
     string assign_register();
     string concat_cc(Type *left, Type *right);

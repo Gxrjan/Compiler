@@ -84,7 +84,12 @@ string Translator_LLVM::translate_bool_literal(string *s, BoolLiteral *l)
 
 string Translator_LLVM::translate_variable(string *s, Variable *v) 
 {
-    return this->variables.at(v->name);
+    string result_register = this->assign_register();
+    string var_storage = this->variables.at(v->name).first;
+    string var_type = this->variables.at(v->name).second;
+    *s += 
+        " "+result_register+" = load "+var_type+", "+var_type+"* "+var_storage+"\n";
+    return result_register;
 }
 
 string Translator_LLVM::translate_char_literal(string *s, CharLiteral *l)
@@ -190,12 +195,35 @@ string Translator_LLVM::translate_substr_expr(string *s, SubstrExpr *e)
     string str_register = this->translate_expr(s, e->expr.get());
     string result_register = this->assign_register();
     if (e->arguments.size() == 1) {
-        string from_register = this->translate_expr(s, e->arguments[0].get());
+        string from_register = this->assign_register();
+        if (e->arguments[0]->type == &Char) {
+            string temp_from_register = this->translate_expr(s, e->arguments[0].get());
+            *s +=
+                " "+from_register+" = zext i16 "+temp_from_register+" to i32\n";
+        } else {
+            from_register = this->translate_expr(s, e->arguments[0].get());
+        }
         *s +=
             " "+result_register+" = call i16* @substr_int(i16* "+str_register+",i32 "+from_register+")\n";
     } else {
-        string from_register = this->translate_expr(s, e->arguments[0].get());
-        string len_register = this->translate_expr(s, e->arguments[1].get());
+
+        string from_register = this->assign_register();
+        string len_register = this->assign_register();
+        if (e->arguments[0]->type == &Char) {
+            string temp_from_register = this->translate_expr(s, e->arguments[0].get());
+            *s +=
+                " "+from_register+" = zext i16 "+temp_from_register+" to i32\n";
+        } else {
+            from_register = this->translate_expr(s, e->arguments[0].get());
+        }
+
+        if (e->arguments[1]->type == &Char) {
+            string temp_len_register = this->translate_expr(s, e->arguments[1].get());
+            *s +=
+                " "+len_register+" = zext i16 "+temp_len_register+" to i32\n";
+        } else {
+            len_register = this->translate_expr(s, e->arguments[1].get());
+        }
         *s +=
             " "+result_register+" = call i16* @substr_int_int(i16* "+str_register+",i32 "+from_register+", i32 "+len_register+")\n";    
     }
@@ -449,10 +477,46 @@ string Translator_LLVM::translate_expr(string *s, Expr *e)
 
 void Translator_LLVM::translate_declaration(string *s, Declaration *dec)
 {
+    string result_register = this->assign_register();
     *s += // asm comment
         "; " + dec->to_string() + "\n";
-    string register_id = this->translate_expr(s, dec->expr.get());
-    this->variables.insert({dec->id, register_id});
+    string expr_register = this->translate_expr(s, dec->expr.get());
+    string var_type;
+    if (dec->type == &Bool) {
+        var_type = "i1";
+        *s +=
+            " "+result_register+" = alloca i1\n"
+            " store i1 "+expr_register+", i1* "+result_register+"\n";
+    } else if (dec->type == &Char) {
+        var_type = "i16";
+        *s +=
+            " "+result_register+" = alloca i16\n"
+            " store i16 "+expr_register+", i16* "+result_register+"\n";
+    } else if (dec->type == &Int) {
+        var_type = "i32";
+        if (dec->expr->type == &Char) {
+            string temp_register = this->assign_register();
+            *s +=
+                " "+temp_register+" = zext i16 "+expr_register+" to i32\n"
+                " "+result_register+" = alloca i32\n"
+                " store i32 "+temp_register+", i32* "+result_register+"\n";
+        } else {
+            *s +=
+                " "+result_register+" = alloca i32\n"
+                " store i32 "+expr_register+", i32* "+result_register+"\n";
+        }   
+    } else if (dec->type == &String) {
+        var_type = "i16*";
+        *s +=
+            " "+result_register+" = alloca i16*\n"
+            " store i16* "+expr_register+", i16** "+result_register+"\n";
+    } else {
+        var_type = "i8*";
+        *s +=
+            " "+result_register+" = alloca i8*\n"
+            " store i8* "+expr_register+", i8** "+result_register+"\n";
+    }
+    this->variables.insert({dec->id, {result_register, var_type}});
 }
 
 
@@ -462,8 +526,11 @@ void Translator_LLVM::translate_assignment(string *s, Assignment *asgn)
     *s += // asm comment
         "; " + asgn->to_string() + "\n";
     if (auto var = dynamic_cast<Variable *>(asgn->id.get())) {
-        string result_register = this->translate_expr(s, asgn->expr.get());
-        this->variables[var->name] = result_register;
+        string expr_register = this->translate_expr(s, asgn->expr.get());
+        string var_storage = this->variables.at(var->name).first;
+        string var_type = this->variables.at(var->name).second;
+        *s +=
+            " store "+var_type+" "+expr_register+", "+var_type+"* "+var_storage+"\n";
     } else {
         auto el = dynamic_cast<ElemAccessExpr *>(asgn->id.get());
         string expr_register = this->translate_expr(s, el->expr.get());
@@ -530,34 +597,28 @@ void Translator_LLVM::translate_print(string *s, Print *p)
 }
 
 
-// TODO
 void Translator_LLVM::translate_if_statement(string *s, IfStatement *st, string loop_end_label)
 {
     string label_id = std::to_string(this->label_id++);
     *s += // asm comment
         "; if " + st->cond->to_string() + "\n";
 
-    this->translate_expr(s, st->cond.get());
+    string cond_register = this->translate_expr(s, st->cond.get());
     *s +=
-        " pop       rax\n"
-        " cmp       rax, 0\n"
-        " je        else_s"+label_id+"\n";
+        " br i1 "+cond_register+", label %if_s"+label_id+", label %else_s"+label_id+"\n"
+        "if_s"+label_id+":\n";
     this->translate_statement(s, st->if_s.get(), loop_end_label);
-    if (!st->else_s) {
-        *s +=
-            "else_s"+label_id+":\n";
-    } else {
-        *s +=
-            " jmp   end_s"+label_id+"\n"
-            "else_s"+label_id+":\n";
+    *s +=
+        " br label %end_s"+label_id+"\n"
+        "else_s"+label_id+":\n";
+    if (st->else_s)
         this->translate_statement(s, st->else_s.get(), loop_end_label);
-        *s +=
-            "end_s"+label_id+":\n";
-    }
+    *s +=
+        " br label %end_s"+label_id+"\n"
+        "end_s"+label_id+":\n";
 }
 
 
-// TODO
 void Translator_LLVM::translate_while_statement(string *s, WhileStatement *st)
 {
     string label_id = std::to_string(this->label_id++);
@@ -577,7 +638,6 @@ void Translator_LLVM::translate_while_statement(string *s, WhileStatement *st)
 }
 
 
-// TODO
 void Translator_LLVM::translate_for_statement(string *s, ForStatement *for_s)
 {
     string label_id = std::to_string(this->label_id++);
@@ -585,56 +645,57 @@ void Translator_LLVM::translate_for_statement(string *s, ForStatement *for_s)
     this->translate_declaration(s, for_s->init.get());
 
     *s +=
+        " br label %loop"+label_id+"\n"
         "loop" + label_id + ":\n";
     *s +=
         "; for " + for_s->cond->to_string() + "\n";
 
-    this->translate_expr(s, for_s->cond.get());
+    string cond_register = this->translate_expr(s, for_s->cond.get());
     *s +=
-        " pop       rax\n"
-        " cmp       rax, 0\n"
-        " je        loop_end"+label_id+"\n";
+        " br i1 "+cond_register+", label %loop_body"+label_id+" ,label %loop_end"+label_id+"\n"
+        "loop_body"+label_id+":\n";
     this->translate_statement(s, for_s->body.get(), label_id);
     if (auto es = dynamic_cast<ExpressionStatement *>(for_s->iter.get()))
         this->translate_expression_statement(s, es);
     else if (auto asgn = dynamic_cast<Assignment *>(for_s->iter.get()))
         this->translate_assignment(s, asgn);
     *s +=
-        " jmp       loop"+label_id+"\n"
+        " br label %loop"+label_id+"\n"
         "loop_end"+label_id+":\n";
     
 }
 
 string Translator_LLVM::bool_to_op(bool inc)
 {
-    return (inc ? "inc" : "dec");
+    return (inc ? "add" : "sub");
 }
 
 
-// TODO
 string Translator_LLVM::translate_inc_expr(string *s, IncExpr *expr)
 {
-    // TODO
     if (auto var = dynamic_cast<Variable *>(expr->expr.get())) {
-        this->translate_variable(s, var);
+        string var_register = this->translate_variable(s, var);
+        string result_register = this->assign_register();
+        string var_storage = this->variables.at(var->name).first;
         *s +=
-            " "+this->bool_to_op(expr->inc)+"   qword ["+var->name+"]\n";
+            " "+result_register+ " = "+this->bool_to_op(expr->inc)+" i32 "+var_register+", 1\n"
+            " store i32 "+result_register+", i32* "+var_storage+"\n";
+        return var_register;
+        
     } else {
         auto el = dynamic_cast<ElemAccessExpr *>(expr->expr.get());
-        this->translate_expr(s, el->expr.get());
-        this->translate_expr(s, el->index.get());
+        string arr_register = this->translate_expr(s, el->expr.get());
+        string index_register = this->translate_expr(s, el->index.get());
+        string value_register = this->assign_register();
+        string temp_register = this->assign_register();
+        string arr_temp_register = this->assign_register();
         *s +=
-            " mov   rsi, qword [rsp]\n"
-            " mov   rdi, qword [rsp+8]\n"
-            " call  getll\n"
-            " pop   rsi\n"
-            " pop   rdi\n"
-            " mov   rdx, rax\n"
-            " push  rax\n"
-            " "+this->bool_to_op(expr->inc)+"   rdx\n"
-            " call  setll\n";
+            " "+arr_temp_register+" = bitcast i8* "+arr_register+" to i32*\n"
+            " "+value_register+" = call i32 @get32(i32* "+arr_temp_register+", i32 "+index_register+")\n"
+            " "+temp_register+" = "+this->bool_to_op(expr->inc)+" i32 "+value_register+", 1\n"
+            " call void @set32(i32* "+arr_temp_register+", i32 "+index_register+", i32 "+temp_register+")\n";
+        return value_register;
     }
-    return "";
 }
 
 
@@ -664,7 +725,7 @@ void Translator_LLVM::translate_statement(string *s, Statement *statement, strin
         *s += // asm comment
             ";break;\n";
         *s +=
-            " jmp       loop_end"+loop_end_label+"\n";
+            " br label %loop_end"+loop_end_label+"\n";
     } else if (auto es = dynamic_cast<ExpressionStatement *>(statement)) {
         this->translate_expression_statement(s, es);
     } else{

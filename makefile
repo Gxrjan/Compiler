@@ -3,7 +3,7 @@ SOURCES = head.h main.cpp Scanner.cpp Token.cpp Expr.cpp Parser.cpp Translator.c
 all: gc G_runtime_library.o
 
 gc: $(SOURCES)
-	g++ -o gc -Wall -g $(SOURCES)
+	g++ -o gc -Wall -std=c++17 -g $(SOURCES)
 
 G_runtime_library.o: G_runtime_library.cpp
 	gcc -Wall -c  G_runtime_library.cpp

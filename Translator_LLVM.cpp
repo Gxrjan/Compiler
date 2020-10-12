@@ -516,7 +516,7 @@ void Translator_LLVM::translate_declaration(string *s, Declaration *dec)
             " "+result_register+" = alloca i8*\n"
             " store i8* "+expr_register+", i8** "+result_register+"\n";
     }
-    this->variables.insert({dec->id, {result_register, var_type}});
+    this->variables.insert_or_assign(dec->id, std::make_pair(result_register, var_type));
 }
 
 

@@ -14,3 +14,5 @@ expected
 *.exe
 tests
 tmp/
+*.ll
+*.s

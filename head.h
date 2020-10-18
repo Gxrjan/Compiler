@@ -572,8 +572,13 @@ class Translator_LLVM {
     string translate_substr_expr(string *s, SubstrExpr *expr);
     string translate_int_parse_expr(string *s, IntParseExpr *expr);
     string translate_new_str_expr(string *s, NewStrExpr *expr);
+    string type_to_size(ArrayType *t);
+    string arr_type_to_func_size(ArrayType *t);
+    string type_to_llvm_type(Type *t);
     string translate_new_arr_expr(string *s, NewArrExpr *expr);
     string translate_variable(string *s, Variable *var);
+    string translate_bool_expr(string *s, OpExpr *expr);
+    string translate_arithm_expr(string *s, OpExpr *expr);
     string translate_op_expr(string *s, OpExpr *expr);
     string translate_expr(string *s, Expr *expr);
     void translate_declaration(string *s, Declaration *dec);

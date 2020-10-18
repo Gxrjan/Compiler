@@ -34,8 +34,10 @@ int main(int argc, char *argv[])
         program = "prog";
     } 
     // string asm_cmd = "nasm -Werror -f elf64 -g -F dwarf "+file_name+".asm -l "+file_name+".lst";
-    string llvm_cmd = "llc -filetype=obj "+file_name+".ll";
-    string gcc_cmd = "gcc -o "+program+" "+file_name+".o G_runtime_library.o -no-pie -lstdc++";
-    system(llvm_cmd.c_str());
-    system(gcc_cmd.c_str());
+    //string llvm_cmd = "llc -filetype=obj "+file_name+".ll";
+    //string gcc_cmd = "gcc -o "+program+" "+file_name+".o G_runtime_library.o -no-pie -lstdc++";
+    string cmd = "clang++ -Wno-override-module -O2 "+file_name+".ll G_runtime_library.o -o "+program;
+    //system(llvm_cmd.c_str());
+    //system(gcc_cmd.c_str());
+    system(cmd.c_str());
 }

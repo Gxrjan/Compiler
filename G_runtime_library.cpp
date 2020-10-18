@@ -217,7 +217,7 @@ void *get64(void **arr, int index)
     return arr[index];
 }
 
-char get8(char *arr, int index)
+bool get8(bool *arr, int index)
 {
     if (!arr)
         throw runtime_error("null pointer exception");
@@ -258,7 +258,7 @@ void set64(void **arr, int index, void *val)
     arr[index] = val;
 }
 
-void set8(char *arr, int index, char val)
+void set8(bool *arr, int index, bool val)
 {
     if (!arr)
         throw runtime_error("null pointer exception");

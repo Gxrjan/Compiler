@@ -75,10 +75,10 @@ string Translator_LLVM::translate_bool_literal(string *s, BoolLiteral *l)
     string result_register = this->assign_register();
     if (l->b)
         *s +=
-            " "+result_register+" = add i1 1, 0";
+            " "+result_register+" = add i1 1, 0\n";
     else
         *s +=
-            " "+result_register+" = add i1 0, 0";
+            " "+result_register+" = add i1 0, 0\n";
     return result_register;
 }
 
@@ -124,29 +124,34 @@ string Translator_LLVM::translate_elem_access_expr(string *s, ElemAccessExpr *e)
             " "+result_register+" = call i16 @get16(i16* "+expr_register+", i32 "+index_register+")\n";
     else {
         auto arr_t = dynamic_cast<ArrayType *>(e->expr->type);
+        string reg_type = this->type_to_llvm_type(arr_t);
         if (arr_t->base == &Char)
             *s +=
-                " "+temp_register+" = bitcast i8* "+expr_register+" to i16*\n"
+                " "+temp_register+" = bitcast "+reg_type+" "+expr_register+" to i16*\n"
                 " "+result_register+" = call i16 @get16(i16* "+temp_register+", i32 "+index_register+")\n";
         else if (arr_t->base == &Bool) {
             string bool_register = this->assign_register();
             *s +=
-                " "+temp_register+" = bitcast i8* "+expr_register+" to i8*\n"
+                " "+temp_register+" = bitcast "+reg_type+" "+expr_register+" to i8*\n"
                 " "+result_register+" = call i1 @get8(i8* "+temp_register+", i32 "+index_register+")\n";
         } else if (arr_t->base == &Int)
             *s +=
-                " "+temp_register+" = bitcast i8* "+expr_register+" to i32*\n"
+                " "+temp_register+" = bitcast "+reg_type+" "+expr_register+" to i32*\n"
                 " "+result_register+" = call i32 @get32(i32* "+temp_register+", i32 "+index_register+")\n";
         else if (arr_t->base == &String) {
             string str_register = this->assign_register();
             *s +=
-                " "+temp_register+" = bitcast i8* "+expr_register+" to i8**\n"
+                " "+temp_register+" = bitcast "+reg_type+" "+expr_register+" to i8**\n"
                 " "+str_register+" = call i8* @get64(i8** "+temp_register+", i32 "+index_register+")\n"
                 " "+result_register+" = bitcast i8* "+str_register+" to i16*\n";
-        } else
+        } else {
+            string result_reg_type = this->type_to_llvm_type(arr_t->base);
+            string result_temp_register = this->assign_register();
             *s +=
-                " "+temp_register+" = bitcast i8* "+expr_register+" to i8**\n"
-                " "+result_register+" = call i8* @get64(i8** "+temp_register+", i32 "+index_register+")\n";
+                " "+temp_register+" = bitcast "+reg_type+" "+expr_register+" to i8**\n"
+                " "+result_temp_register+" = call i8* @get64(i8** "+temp_register+", i32 "+index_register+")\n"
+                " "+result_register+" = bitcast i8* "+result_temp_register+" to "+result_reg_type+"\n";
+        }
     }
     return result_register;
 }
@@ -161,8 +166,11 @@ string Translator_LLVM::translate_length_expr(string *s, LengthExpr *e)
             " "+result_register+" = call i32 @gstring_len(i16* "+expr_register+")\n";
         return result_register;
     } else {
+        string temp_register = this->assign_register();
+        string var_type = this->type_to_llvm_type(e->expr->type);
         *s +=
-            " "+result_register+" = call i32 @arr_len(i8* "+expr_register+")\n";
+            " "+temp_register+" = bitcast "+var_type+" "+expr_register+" to i8*\n"
+            " "+result_register+" = call i32 @arr_len(i8* "+temp_register+")\n";
         return result_register;
     }
 }
@@ -252,7 +260,33 @@ string Translator_LLVM::translate_new_str_expr(string *s, NewStrExpr *e)
     return result_register;
 }
 
+string Translator_LLVM::type_to_size(ArrayType *t)
+{
+    if (t->base == &Bool) {
+            return "1";
+    } else if (t->base == &Char) 
+        return "2";
+    else if (t->base == &Int)
+        return "4";
+    else
+        return "8";
+}
 
+string Translator_LLVM::type_to_llvm_type(Type *t)
+{
+    if (t == &Bool) {
+        return "i1";
+    } else if (t == &Char) 
+        return "i16";
+    else if (t == &Int)
+        return "i32";
+    else if (t == &String)
+        return "i16*";
+    else {
+        auto st = dynamic_cast<ArrayType *>(t);
+        return this->type_to_llvm_type(st->base)+"*";
+    }
+}
 
 string Translator_LLVM::translate_new_arr_expr(string *s, NewArrExpr *e)
 {
@@ -261,177 +295,181 @@ string Translator_LLVM::translate_new_arr_expr(string *s, NewArrExpr *e)
     string result_register = this->assign_register();
     string temp_register = this->assign_register();
     auto t = dynamic_cast<ArrayType *>(e->type);
-    if (t->base == &Bool) {
-        *s +=
-            " "+size_register+" = add i32 1, 0\n";
-    } else if (t->base == &Char) 
-        *s +=
-            " "+size_register+" = add i32 2, 0\n";
-    else if (t->base == &Int)
-        *s +=
-            " "+size_register+" = add i32 4, 0\n";
-    else
-        *s +=
-            " "+size_register+" = add i32 8, 0\n";
+    *s +=
+        " "+size_register+" = add i32 "+this->type_to_size(t)+", 0\n";
 
     *s +=
         " "+temp_register+" = call i8* @new_arr_expr(i32 "+size_register+", i32 "+len_register+")\n";
-    return temp_register;
+    
+    *s +=
+        " "+result_register+" = bitcast i8* "+temp_register+" to "+type_to_llvm_type(e->type)+"\n";
+    //cout << type_to_llvm_type(e->type) << endl;
+    return result_register;
 }
 
-string Translator_LLVM::translate_op_expr(string *s, OpExpr *expr) 
+string Translator_LLVM::translate_bool_expr(string *s, OpExpr *expr)
 {
     Operation o = TypeConverter::string_to_operation(expr->op);
-    if (expr->op == "&&" || expr->op == "||") {
-        string label_id = std::to_string(this->label_id++);
-        string register_left;
-        string register_right;
-        string register_result = this->assign_register();
-        string register_temp_left = this->assign_register();
-        string register_temp_right = this->assign_register();
-        *s +=
-            " br label %start"+label_id+"\n"
-            "start"+label_id+":\n";
-        switch(o) {
-            case Operation::And:
-                *s += // asm comment 
-                    "; " + expr->left->to_string() + "\n";
-                register_left = this->translate_expr(s, expr->left.get());
-                *s +=
-                    " "+register_temp_left+" = icmp eq i1 "+register_left+", 1\n"
-                    " br i1 "+register_temp_left+", label %continue"+label_id+", label %end"+label_id+"\n"
-                    "continue"+label_id+":\n";
-                *s += // asm comment 
-                    "; " + expr->right->to_string() + "\n";
-                register_right = this->translate_expr(s, expr->right.get());
-                *s +=
-                    " "+register_temp_right+" = icmp eq i1 "+register_right+", 1\n"
-                    " br label %end"+label_id+"\n";
-                break;
-            case Operation::Or:
-                *s += // asm comment 
-                    "; " + expr->left->to_string() + "\n";
-                register_left = this->translate_expr(s, expr->left.get());
-                *s +=
-                    " "+register_temp_left+" = icmp eq i1 "+register_left+", 1\n"
-                    " br i1 "+register_temp_left+", label %end"+label_id+", label %continue"+label_id+"\n"
-                    "continue"+label_id+":\n";
-                *s += // asm comment 
-                    "; " + expr->right->to_string() + "\n";
-                register_right = this->translate_expr(s, expr->right.get());
-                *s +=
-                    " "+register_temp_right+" = icmp eq i1 "+register_right+", 1\n"
-                    " br label %end"+label_id+"\n";
-                break;
-            default:
-                throw runtime_error("Unknown operator");
-                break;
-            
-        }
-        *s +=
-            "end"+label_id+":\n"
-            " "+register_result+" = phi i1 [ "+register_temp_left+", %start"+label_id+"]"
-            ", [ "+register_temp_right+", %continue"+label_id+"]\n";
-        return register_result;
+    string label_id = std::to_string(this->label_id++);
+    string register_left;
+    string register_right;
+    string register_result = this->assign_register();
+    string register_temp_left = this->assign_register();
+    string register_temp_right = this->assign_register();
+    *s +=
+        " br label %start"+label_id+"\n"
+        "start"+label_id+":\n";
+    switch(o) {
+        case Operation::And:
+            *s += // asm comment 
+                "; " + expr->left->to_string() + "\n";
+            register_left = this->translate_expr(s, expr->left.get());
+            *s +=
+                " "+register_temp_left+" = icmp eq i1 "+register_left+", 1\n"
+                " br i1 "+register_temp_left+", label %continue"+label_id+", label %end"+label_id+"\n"
+                "continue"+label_id+":\n";
+            *s += // asm comment 
+                "; " + expr->right->to_string() + "\n";
+            register_right = this->translate_expr(s, expr->right.get());
+            *s +=
+                " "+register_temp_right+" = icmp eq i1 "+register_right+", 1\n"
+                " br label %end"+label_id+"\n";
+            break;
+        case Operation::Or:
+            *s += // asm comment 
+                "; " + expr->left->to_string() + "\n";
+            register_left = this->translate_expr(s, expr->left.get());
+            *s +=
+                " "+register_temp_left+" = icmp eq i1 "+register_left+", 1\n"
+                " br i1 "+register_temp_left+", label %end"+label_id+", label %continue"+label_id+"\n"
+                "continue"+label_id+":\n";
+            *s += // asm comment 
+                "; " + expr->right->to_string() + "\n";
+            register_right = this->translate_expr(s, expr->right.get());
+            *s +=
+                " "+register_temp_right+" = icmp eq i1 "+register_right+", 1\n"
+                " br label %end"+label_id+"\n";
+            break;
+        default:
+            throw runtime_error("Unknown operator");
+            break;
+        
+    }
+    *s +=
+        "end"+label_id+":\n"
+        " "+register_result+" = phi i1 [ "+register_temp_left+", %start"+label_id+"]"
+        ", [ "+register_temp_right+", %continue"+label_id+"]\n";
+    return register_result;
+}
 
-    } else {
-        *s += // asm comment 
-            "; " + expr->left->to_string() + "\n";
-        string register_left = this->translate_expr(s, expr->left.get());
-        *s += // asm comment 
-            "; " + expr->right->to_string() + "\n";
-        string register_right = this->translate_expr(s, expr->right.get());
-        string result_register = this->assign_register();
-        switch(o) {
-            case Operation::Add:
-                if (expr->type == &Int) {
-                    *s +=
-                        " "+result_register+" = add i32 "+register_left+", "+register_right+"\n";
-                } else {
-                    //TODO. It means it's a string
-                    // string + string
-                    // string + int
-                    // int + string
-                    // string + char
-                    // char + string
-                    if (expr->left->type == &String && expr->right->type == &String)
+string Translator_LLVM::translate_arithm_expr(string *s, OpExpr *expr)
+{
+    Operation o = TypeConverter::string_to_operation(expr->op);
+    *s += // asm comment 
+        "; " + expr->left->to_string() + "\n";
+    string register_left = this->translate_expr(s, expr->left.get());
+    *s += // asm comment 
+        "; " + expr->right->to_string() + "\n";
+    string register_right = this->translate_expr(s, expr->right.get());
+    string result_register = this->assign_register();
+    switch(o) {
+        case Operation::Add:
+            if (expr->type == &Int) {
+                *s +=
+                    " "+result_register+" = add i32 "+register_left+", "+register_right+"\n";
+            } else {
+                //TODO. It means it's a string
+                // string + string
+                // string + int
+                // int + string
+                // string + char
+                // char + string
+                if (expr->left->type == &String && expr->right->type == &String)
+                    *s += 
+                        " "+result_register+" = call i16* @concat(i16* "+register_left+"," 
+                        "i16* "+register_right+")";
+                else if (expr->left->type == &String) {
+                    if (expr->right->type == &Int)
                         *s += 
-                            " "+result_register+" = call i16* @concat(i16* "+register_left+"," 
+                            " "+result_register+" = call i16* @concat_str_int(i16* "+register_left+"," 
+                            "i32 "+register_right+")";
+                    else
+                        *s += 
+                            " "+result_register+" = call i16* @concat_str_chr(i16* "+register_left+"," 
+                            "i16 "+register_right+")";
+                } else {
+                    if (expr->left->type == &Int)
+                        *s += 
+                            " "+result_register+" = call i16* @concat_int_str(i32 "+register_left+"," 
                             "i16* "+register_right+")";
-                    else if (expr->left->type == &String) {
-                        if (expr->right->type == &Int)
-                            *s += 
-                                " "+result_register+" = call i16* @concat_str_int(i16* "+register_left+"," 
-                                "i32 "+register_right+")";
-                        else
-                            *s += 
-                                " "+result_register+" = call i16* @concat_str_chr(i16* "+register_left+"," 
-                                "i16 "+register_right+")";
-                    } else {
-                        if (expr->left->type == &Int)
-                            *s += 
-                                " "+result_register+" = call i16* @concat_int_str(i32 "+register_left+"," 
-                                "i16* "+register_right+")";
-                        else
-                            *s += 
-                                " "+result_register+" = call i16* @concat_chr_str(i16 "+register_left+"," 
-                                "i16* "+register_right+")";
-                    }
-                    return result_register;
+                    else
+                        *s += 
+                            " "+result_register+" = call i16* @concat_chr_str(i16 "+register_left+"," 
+                            "i16* "+register_right+")";
                 }
-                break;
-            case Operation::Sub:
+                return result_register;
+            }
+            break;
+        case Operation::Sub:
+            *s +=
+                    " "+result_register+" = sub i32 "+register_left+", "+register_right+"\n";
+            break;
+        case Operation::Mul:
+            *s +=
+                    " "+result_register+" = mul i32 "+register_left+", "+register_right+"\n";
+            break;
+        case Operation::Div:
+            *s +=
+                    " "+result_register+" = sdiv i32 "+register_left+", "+register_right+"\n";
+            break;
+        case Operation::Mod:
+            *s +=
+                    " "+result_register+" = srem i32 "+register_left+", "+register_right+"\n";
+            break;
+        case Operation::L:
+        case Operation::G:
+        case Operation::Le:
+        case Operation::Ge:
+            *s +=
+                " "+result_register+" = icmp "+this->operation_to_cc(o)+" i32 "+
+                register_left+", "+register_right+"\n";
+            return result_register;
+            break;
+        case Operation::E:
+        case Operation::Ne:
+            if (expr->left->type == &String && expr->right->type == &String) {
+                string temp_register = this->assign_register();
                 *s +=
-                        " "+result_register+" = sub i32 "+register_left+", "+register_right+"\n";
-                break;
-            case Operation::Mul:
-                *s +=
-                        " "+result_register+" = mul i32 "+register_left+", "+register_right+"\n";
-                break;
-            case Operation::Div:
-                *s +=
-                        " "+result_register+" = sdiv i32 "+register_left+", "+register_right+"\n";
-                break;
-            case Operation::Mod:
-                *s +=
-                        " "+result_register+" = srem i32 "+register_left+", "+register_right+"\n";
-                break;
-            case Operation::L:
-            case Operation::G:
-            case Operation::Le:
-            case Operation::Ge:
+                    " "+temp_register+" = call i1 @cmp_str(i16* "+register_left+", i16* "+
+                    register_right+")\n";
+                if (o==Operation::Ne)
+                    *s +=
+                        " "+result_register+" = sub i1 1, "+temp_register+"\n";
+                else
+                    *s +=
+                        " "+result_register+" = add i1 0, "+temp_register+"\n";
+                return result_register;
+            } else {
                 *s +=
                     " "+result_register+" = icmp "+this->operation_to_cc(o)+" i32 "+
                     register_left+", "+register_right+"\n";
                 return result_register;
-                break;
-            case Operation::E:
-            case Operation::Ne:
-                if (expr->left->type == &String && expr->right->type == &String) {
-                    string temp_register = this->assign_register();
-                    *s +=
-                        " "+temp_register+" = call i1 @cmp_str(i16* "+register_left+", i16* "+
-                        register_right+")\n";
-                    if (o==Operation::Ne)
-                        *s +=
-                            " "+result_register+" = sub i1 1, "+temp_register+"\n";
-                    else
-                        *s +=
-                            " "+result_register+" = add i1 0, "+temp_register+"\n";
-                    return result_register;
-                } else {
-                    *s +=
-                        " "+result_register+" = icmp "+this->operation_to_cc(o)+" i32 "+
-                        register_left+", "+register_right+"\n";
-                    return result_register;
-                }
-                break;
-            default:
-                throw runtime_error("Unknown operator");
-                break;
-        }
-        return result_register;
+            }
+            break;
+        default:
+            throw runtime_error("Unknown operator");
+            break;
+    }
+    return result_register;
 
+}
+
+string Translator_LLVM::translate_op_expr(string *s, OpExpr *expr) 
+{
+    if (expr->op == "&&" || expr->op == "||") {
+        return this->translate_bool_expr(s, expr);
+    } else {
+        return this->translate_arithm_expr(s, expr);
     }
 } 
 
@@ -481,44 +519,69 @@ void Translator_LLVM::translate_declaration(string *s, Declaration *dec)
         "; " + dec->to_string() + "\n";
     string expr_register = this->translate_expr(s, dec->expr.get());
     string var_type;
-    if (dec->type == &Bool) {
-        var_type = "i1";
+    var_type = this->type_to_llvm_type(dec->type);
+    if (dec->type == &Int && dec->expr->type == &Char) {
+        string temp_register = this->assign_register();
         *s +=
-            " "+result_register+" = alloca i1\n"
-            " store i1 "+expr_register+", i1* "+result_register+"\n";
-    } else if (dec->type == &Char) {
-        var_type = "i16";
-        *s +=
-            " "+result_register+" = alloca i16\n"
-            " store i16 "+expr_register+", i16* "+result_register+"\n";
-    } else if (dec->type == &Int) {
-        var_type = "i32";
-        if (dec->expr->type == &Char) {
-            string temp_register = this->assign_register();
-            *s +=
-                " "+temp_register+" = zext i16 "+expr_register+" to i32\n"
-                " "+result_register+" = alloca i32\n"
-                " store i32 "+temp_register+", i32* "+result_register+"\n";
-        } else {
-            *s +=
-                " "+result_register+" = alloca i32\n"
-                " store i32 "+expr_register+", i32* "+result_register+"\n";
-        }   
-    } else if (dec->type == &String) {
-        var_type = "i16*";
-        *s +=
-            " "+result_register+" = alloca i16*\n"
-            " store i16* "+expr_register+", i16** "+result_register+"\n";
+            " "+temp_register+" = zext i16 "+expr_register+" to i32\n"
+            " "+result_register+" = alloca "+var_type+"\n"
+            " store "+var_type+" "+temp_register+", "+var_type+"* "+result_register+"\n";
     } else {
-        var_type = "i8*";
-        *s +=
-            " "+result_register+" = alloca i8*\n"
-            " store i8* "+expr_register+", i8** "+result_register+"\n";
+        *s += 
+            " "+result_register+" = alloca "+var_type+"\n"
+            " store "+var_type+" "+expr_register+", "+var_type+"* "+result_register+"\n";
     }
+    // if (dec->type == &Bool) {
+    //     var_type = "i1";
+    //     *s +=
+    //         " "+result_register+" = alloca i1\n"
+    //         " store i1 "+expr_register+", i1* "+result_register+"\n";
+    // } else if (dec->type == &Char) {
+    //     var_type = "i16";
+    //     *s +=
+    //         " "+result_register+" = alloca i16\n"
+    //         " store i16 "+expr_register+", i16* "+result_register+"\n";
+    // } else if (dec->type == &Int) {
+    //     var_type = "i32";
+    //     if (dec->expr->type == &Char) {
+    //         string temp_register = this->assign_register();
+    //         *s +=
+    //             " "+temp_register+" = zext i16 "+expr_register+" to i32\n"
+    //             " "+result_register+" = alloca i32\n"
+    //             " store i32 "+temp_register+", i32* "+result_register+"\n";
+    //     } else {
+    //         *s +=
+    //             " "+result_register+" = alloca i32\n"
+    //             " store i32 "+expr_register+", i32* "+result_register+"\n";
+    //     }   
+    // } else if (dec->type == &String) {
+    //     var_type = "i16*";
+    //     *s +=
+    //         " "+result_register+" = alloca i16*\n"
+    //         " store i16* "+expr_register+", i16** "+result_register+"\n";
+    // } else {
+    //     var_type = this->type_to_llvm_type(dec->type);
+    //     *s +=
+    //         " "+result_register+" = alloca "+var_type+"\n"
+    //         " store "+var_type+" "+expr_register+", "+var_type+"* "+result_register+"\n";
+    // }
     this->variables.insert_or_assign(dec->id, std::make_pair(result_register, var_type));
 }
 
 
+string Translator_LLVM::arr_type_to_func_size(ArrayType *t)
+{
+    if (t->base == &Bool)
+        return "8";
+    else if (t->base == &Char)
+        return "16";
+    else if (t->base == &Int)
+        return "32";
+    else if (t->base == &String)
+        return "64";
+    else
+        return "64";
+}
 
 void Translator_LLVM::translate_assignment(string *s, Assignment *asgn)
 {
@@ -537,29 +600,40 @@ void Translator_LLVM::translate_assignment(string *s, Assignment *asgn)
         string asgn_register = this->translate_expr(s, asgn->expr.get());
         auto arr_t = dynamic_cast<ArrayType *>(el->expr->type);
         string temp_register = this->assign_register();
-        if (arr_t->base == &Bool) {
+        string temp_asgn_register = this->assign_register();
+        string var_type = this->type_to_llvm_type(arr_t);
+        string size = this->arr_type_to_func_size(arr_t);
+        string asgn_type = this->type_to_llvm_type(asgn->expr->type);
+        if (arr_t->base == &Bool || 
+            arr_t->base == &Char ||
+            arr_t->base == &Int) {
+            
             *s +=
-                " "+temp_register+" = bitcast i8* "+expr_register+" to i8*\n"
-                " call void @set8(i8* "+temp_register+", i32 "+index_register+", i1 "+asgn_register+")\n";
-        } else if (arr_t->base == &Char)
-            *s +=
-                " "+temp_register+" = bitcast i8* "+expr_register+" to i16*\n"
-                " call void @set16(i16* "+temp_register+", i32 "+index_register+", i16 "+asgn_register+")\n";
-        else if (arr_t->base == &Int)
-            *s +=
-                " "+temp_register+" = bitcast i8* "+expr_register+" to i32*\n"
-                " call void @set32(i32* "+temp_register+", i32 "+index_register+", i32 "+asgn_register+")\n";
-        else if (arr_t->base == &String) {
-            string str_register = this->assign_register();
-            *s +=
-                " "+temp_register+" = bitcast i8* "+expr_register+" to i8**\n"
-                " "+str_register+" = bitcast i16* "+asgn_register+" to i8*\n"
-                " call void @set64(i8** "+temp_register+", i32 "+index_register+", i8* "+str_register+")\n";
+                " call void @set"+size+"("+var_type+" "+expr_register+", i32 "+index_register+", "+asgn_type+" "+asgn_register+")\n";
         } else {
             *s +=
-                " "+temp_register+" = bitcast i8* "+expr_register+" to i8**\n"
-                " call void @set64(i8** "+temp_register+", i32 "+index_register+", i8* "+asgn_register+")\n";
+                " "+temp_register+" = bitcast "+var_type+" "+expr_register+" to i8**\n"
+                " "+temp_asgn_register+" = bitcast "+asgn_type+" "+asgn_register+" to i8*\n"
+                " call void @set"+size+"(i8** "+temp_register+", i32 "+index_register+", i8* "+temp_asgn_register+")\n";
         }
+        // if (arr_t->base == &Bool) {
+        //     *s +=
+        //         " call void @set8(i1* "+expr_register+", i32 "+index_register+", i1 "+asgn_register+")\n";
+        // } else if (arr_t->base == &Char)
+        //     *s +=
+        //         " call void @set16(i16* "+expr_register+", i32 "+index_register+", i16 "+asgn_register+")\n";
+        // else if (arr_t->base == &Int)
+        //     *s +=
+        //         " call void @set32(i32* "+expr_register+", i32 "+index_register+", i32 "+asgn_register+")\n";
+        // else if (arr_t->base == &String) {
+        //     string str_register = this->assign_register();
+        //     *s +=
+        //         " call void @set64(i8** "+expr_register+", i32 "+index_register+", i8* "+asgn_register+")\n";
+        // } else {
+        //     *s +=
+        //         " "+temp_register+" = bitcast i8* "+expr_register+" to i8**\n"
+        //         " call void @set64(i8** "+temp_register+", i32 "+index_register+", i8* "+asgn_register+")\n";
+        // }
     }
 }
 
@@ -689,10 +763,9 @@ string Translator_LLVM::translate_inc_expr(string *s, IncExpr *expr)
         string temp_register = this->assign_register();
         string arr_temp_register = this->assign_register();
         *s +=
-            " "+arr_temp_register+" = bitcast i8* "+arr_register+" to i32*\n"
-            " "+value_register+" = call i32 @get32(i32* "+arr_temp_register+", i32 "+index_register+")\n"
+            " "+value_register+" = call i32 @get32(i32* "+arr_register+", i32 "+index_register+")\n"
             " "+temp_register+" = "+this->bool_to_op(expr->inc)+" i32 "+value_register+", 1\n"
-            " call void @set32(i32* "+arr_temp_register+", i32 "+index_register+", i32 "+temp_register+")\n";
+            " call void @set32(i32* "+arr_register+", i32 "+index_register+", i32 "+temp_register+")\n";
         return value_register;
     }
 }
@@ -751,7 +824,7 @@ string Translator_LLVM::translate_program(Program* prog)
             "declare i32 @get32(i32*, i32)\n"
             "declare i8* @get64(i8**, i32)\n"
             "declare void @set16(i16*, i32, i16)\n"
-            "declare void @set8(i8*, i32, i1)\n"
+            "declare void @set8(i1*, i32, i1)\n"
             "declare void @set32(i32*, i32, i32)\n"
             "declare void @set64(i8**, i32, i8*)\n"
             "declare i16* @concat(i16*, i16*)\n"

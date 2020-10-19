@@ -573,24 +573,13 @@ void Translator_LLVM::translate_print(string *s, Print *p)
         *s +=
             "call void (i16*) @printg(i16* "+result_register+")\n";
         return;
-    } else if (p->expr->type == &Int ){
-        string format_register = this->assign_register();
-        *s +=
-            " "+format_register+" = getelementptr [4 x i8], [4 x i8]* @fmt_i"
-            ", i32 0, i32 0\n"
-            " call i32 (i8*, ...) @printf(i8* "+format_register+", i32 "+result_register+")\n";
-    } else if (p->expr->type == &Char){
-        string format_register = this->assign_register();
-        *s +=
-            ""+format_register+" = getelementptr [4 x i8], [4 x i8]* @fmt_c"
-            ", i32 0, i32 0\n"
-            "call i32 (i8*, ...) @printf(i8* "+format_register+", i16 "+result_register+")\n";
     } else {
+        string reg_type = this->type_to_llvm_type(p->expr->type);
         string format_register = this->assign_register();
         *s +=
-            ""+format_register+" = getelementptr [4 x i8], [4 x i8]* @fmt_i"
+            " "+format_register+" = getelementptr [4 x i8], [4 x i8]* @fmt_"+this->type_to_cc(p->expr->type)+
             ", i32 0, i32 0\n"
-            "call i32 (i8*, ...) @printf(i8* "+format_register+", i1 "+result_register+")\n";
+            " call i32 (i8*, ...) @printf(i8* "+format_register+", "+reg_type+" "+result_register+")\n";
     }
 }
 

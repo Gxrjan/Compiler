@@ -125,27 +125,13 @@ string Translator_LLVM::translate_elem_access_expr(string *s, ElemAccessExpr *e)
     else {
         auto arr_t = dynamic_cast<ArrayType *>(e->expr->type);
         string reg_type = this->type_to_llvm_type(arr_t);
-        *s +=
-            " \n";
-        if (arr_t->base == &Char)
+        string result_type = this->type_to_llvm_type(arr_t->base);
+        string size = this->arr_type_to_func_size(arr_t);
+        if (arr_t->base == &Bool ||
+            arr_t->base == &Char ||
+            arr_t->base == &Int) {
             *s +=
-                " "+temp_register+" = bitcast "+reg_type+" "+expr_register+" to i16*\n"
-                " "+result_register+" = call i16 @get16(i16* "+temp_register+", i32 "+index_register+")\n";
-        else if (arr_t->base == &Bool) {
-            string bool_register = this->assign_register();
-            *s +=
-                " "+temp_register+" = bitcast "+reg_type+" "+expr_register+" to i8*\n"
-                " "+result_register+" = call i1 @get8(i8* "+temp_register+", i32 "+index_register+")\n";
-        } else if (arr_t->base == &Int)
-            *s +=
-                " "+temp_register+" = bitcast "+reg_type+" "+expr_register+" to i32*\n"
-                " "+result_register+" = call i32 @get32(i32* "+temp_register+", i32 "+index_register+")\n";
-        else if (arr_t->base == &String) {
-            string str_register = this->assign_register();
-            *s +=
-                " "+temp_register+" = bitcast "+reg_type+" "+expr_register+" to i8**\n"
-                " "+str_register+" = call i8* @get64(i8** "+temp_register+", i32 "+index_register+")\n"
-                " "+result_register+" = bitcast i8* "+str_register+" to i16*\n";
+                " "+result_register+" = call "+result_type+" @get"+size+"("+reg_type+" "+expr_register+", i32 "+index_register+")\n";
         } else {
             string result_reg_type = this->type_to_llvm_type(arr_t->base);
             string result_temp_register = this->assign_register();
@@ -759,7 +745,7 @@ string Translator_LLVM::translate_program(Program* prog)
             "declare i32 @printf(i8*, ...)\n"
             "declare void @printg(i16*)\n"
             "declare i16 @get16(i16*, i32)\n"
-            "declare i1 @get8(i8*, i32)\n"
+            "declare i1 @get8(i1*, i32)\n"
             "declare i32 @get32(i32*, i32)\n"
             "declare i8* @get64(i8**, i32)\n"
             "declare void @set16(i16*, i32, i16)\n"

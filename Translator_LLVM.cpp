@@ -49,7 +49,7 @@ string Translator_LLVM::operation_to_cc(Operation op)
             return "ne";
             break;
         default:
-            throw runtime_error("Uknown comparing operation");
+            throw runtime_error("Unknown comparing operation");
             break;
     }
 }
@@ -125,6 +125,8 @@ string Translator_LLVM::translate_elem_access_expr(string *s, ElemAccessExpr *e)
     else {
         auto arr_t = dynamic_cast<ArrayType *>(e->expr->type);
         string reg_type = this->type_to_llvm_type(arr_t);
+        *s +=
+            " \n";
         if (arr_t->base == &Char)
             *s +=
                 " "+temp_register+" = bitcast "+reg_type+" "+expr_register+" to i16*\n"
@@ -303,7 +305,6 @@ string Translator_LLVM::translate_new_arr_expr(string *s, NewArrExpr *e)
     
     *s +=
         " "+result_register+" = bitcast i8* "+temp_register+" to "+type_to_llvm_type(e->type)+"\n";
-    //cout << type_to_llvm_type(e->type) << endl;
     return result_register;
 }
 
@@ -378,12 +379,6 @@ string Translator_LLVM::translate_arithm_expr(string *s, OpExpr *expr)
                 *s +=
                     " "+result_register+" = add i32 "+register_left+", "+register_right+"\n";
             } else {
-                //TODO. It means it's a string
-                // string + string
-                // string + int
-                // int + string
-                // string + char
-                // char + string
                 if (expr->left->type == &String && expr->right->type == &String)
                     *s += 
                         " "+result_register+" = call i16* @concat(i16* "+register_left+"," 
@@ -518,8 +513,7 @@ void Translator_LLVM::translate_declaration(string *s, Declaration *dec)
     *s += // asm comment
         "; " + dec->to_string() + "\n";
     string expr_register = this->translate_expr(s, dec->expr.get());
-    string var_type;
-    var_type = this->type_to_llvm_type(dec->type);
+    string var_type = this->type_to_llvm_type(dec->type);
     if (dec->type == &Int && dec->expr->type == &Char) {
         string temp_register = this->assign_register();
         *s +=
@@ -531,40 +525,6 @@ void Translator_LLVM::translate_declaration(string *s, Declaration *dec)
             " "+result_register+" = alloca "+var_type+"\n"
             " store "+var_type+" "+expr_register+", "+var_type+"* "+result_register+"\n";
     }
-    // if (dec->type == &Bool) {
-    //     var_type = "i1";
-    //     *s +=
-    //         " "+result_register+" = alloca i1\n"
-    //         " store i1 "+expr_register+", i1* "+result_register+"\n";
-    // } else if (dec->type == &Char) {
-    //     var_type = "i16";
-    //     *s +=
-    //         " "+result_register+" = alloca i16\n"
-    //         " store i16 "+expr_register+", i16* "+result_register+"\n";
-    // } else if (dec->type == &Int) {
-    //     var_type = "i32";
-    //     if (dec->expr->type == &Char) {
-    //         string temp_register = this->assign_register();
-    //         *s +=
-    //             " "+temp_register+" = zext i16 "+expr_register+" to i32\n"
-    //             " "+result_register+" = alloca i32\n"
-    //             " store i32 "+temp_register+", i32* "+result_register+"\n";
-    //     } else {
-    //         *s +=
-    //             " "+result_register+" = alloca i32\n"
-    //             " store i32 "+expr_register+", i32* "+result_register+"\n";
-    //     }   
-    // } else if (dec->type == &String) {
-    //     var_type = "i16*";
-    //     *s +=
-    //         " "+result_register+" = alloca i16*\n"
-    //         " store i16* "+expr_register+", i16** "+result_register+"\n";
-    // } else {
-    //     var_type = this->type_to_llvm_type(dec->type);
-    //     *s +=
-    //         " "+result_register+" = alloca "+var_type+"\n"
-    //         " store "+var_type+" "+expr_register+", "+var_type+"* "+result_register+"\n";
-    // }
     this->variables.insert_or_assign(dec->id, std::make_pair(result_register, var_type));
 }
 
@@ -577,8 +537,6 @@ string Translator_LLVM::arr_type_to_func_size(ArrayType *t)
         return "16";
     else if (t->base == &Int)
         return "32";
-    else if (t->base == &String)
-        return "64";
     else
         return "64";
 }
@@ -607,7 +565,6 @@ void Translator_LLVM::translate_assignment(string *s, Assignment *asgn)
         if (arr_t->base == &Bool || 
             arr_t->base == &Char ||
             arr_t->base == &Int) {
-            
             *s +=
                 " call void @set"+size+"("+var_type+" "+expr_register+", i32 "+index_register+", "+asgn_type+" "+asgn_register+")\n";
         } else {
@@ -616,24 +573,6 @@ void Translator_LLVM::translate_assignment(string *s, Assignment *asgn)
                 " "+temp_asgn_register+" = bitcast "+asgn_type+" "+asgn_register+" to i8*\n"
                 " call void @set"+size+"(i8** "+temp_register+", i32 "+index_register+", i8* "+temp_asgn_register+")\n";
         }
-        // if (arr_t->base == &Bool) {
-        //     *s +=
-        //         " call void @set8(i1* "+expr_register+", i32 "+index_register+", i1 "+asgn_register+")\n";
-        // } else if (arr_t->base == &Char)
-        //     *s +=
-        //         " call void @set16(i16* "+expr_register+", i32 "+index_register+", i16 "+asgn_register+")\n";
-        // else if (arr_t->base == &Int)
-        //     *s +=
-        //         " call void @set32(i32* "+expr_register+", i32 "+index_register+", i32 "+asgn_register+")\n";
-        // else if (arr_t->base == &String) {
-        //     string str_register = this->assign_register();
-        //     *s +=
-        //         " call void @set64(i8** "+expr_register+", i32 "+index_register+", i8* "+asgn_register+")\n";
-        // } else {
-        //     *s +=
-        //         " "+temp_register+" = bitcast i8* "+expr_register+" to i8**\n"
-        //         " call void @set64(i8** "+temp_register+", i32 "+index_register+", i8* "+asgn_register+")\n";
-        // }
     }
 }
 
@@ -852,6 +791,8 @@ string Translator_LLVM::translate_program(Program* prog)
         int length = str.length();
         string len_str = std::to_string(length);
         int id = p.second;
+        result +=
+            "; string: "+str+"\n";
         result +=
             "@str_"+std::to_string(id)+" = constant"
             "<{ i32, [ "+len_str+" x i16 ]}>"

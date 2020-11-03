@@ -27,3 +27,6 @@ test: gc
 	  done
 	
 	@ echo 'All tests passed.'
+
+benchmark: gc
+	python tester.py

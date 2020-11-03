@@ -84,6 +84,14 @@ string Translator_LLVM::translate_bool_literal(string *s, BoolLiteral *l)
 
 string Translator_LLVM::translate_variable(string *s, Variable *v) 
 {
+    if (v->name == "argc") {
+        string result_register = this->assign_register();
+        *s +=
+            " "+result_register+" = add i32 0, %0\n";
+        return result_register;
+    } else if (v->name == "argv") {
+        return "%argv";
+    }
     string result_register = this->assign_register();
     string var_storage = this->variables.at(v->name).first;
     string var_type = this->variables.at(v->name).second;
@@ -359,11 +367,27 @@ string Translator_LLVM::translate_arithm_expr(string *s, OpExpr *expr)
         "; " + expr->right->to_string() + "\n";
     string register_right = this->translate_expr(s, expr->right.get());
     string result_register = this->assign_register();
+    string temp_register_left = this->assign_register();
+    string temp_register_right = this->assign_register();
+    if (expr->type == &Int) {
+        
+        if (expr->left->type == &Char)
+            *s +=
+                " "+temp_register_left+" = zext i16 "+register_left+" to i32\n";
+        else 
+            temp_register_left = register_left;
+        
+        if (expr->right->type == &Char)
+            *s +=
+                " "+temp_register_right+" = zext i16 "+register_right+" to i32\n";
+        else
+            temp_register_right = register_right;
+    }
     switch(o) {
         case Operation::Add:
             if (expr->type == &Int) {
                 *s +=
-                    " "+result_register+" = add i32 "+register_left+", "+register_right+"\n";
+                    " "+result_register+" = add i32 "+temp_register_left+", "+temp_register_right+"\n";
             } else {
                 if (expr->left->type == &String && expr->right->type == &String)
                     *s += 
@@ -393,19 +417,19 @@ string Translator_LLVM::translate_arithm_expr(string *s, OpExpr *expr)
             break;
         case Operation::Sub:
             *s +=
-                    " "+result_register+" = sub i32 "+register_left+", "+register_right+"\n";
+                    " "+result_register+" = sub i32 "+temp_register_left+", "+temp_register_right+"\n";
             break;
         case Operation::Mul:
             *s +=
-                    " "+result_register+" = mul i32 "+register_left+", "+register_right+"\n";
+                    " "+result_register+" = mul i32 "+temp_register_left+", "+temp_register_right+"\n";
             break;
         case Operation::Div:
             *s +=
-                    " "+result_register+" = sdiv i32 "+register_left+", "+register_right+"\n";
+                    " "+result_register+" = sdiv i32 "+temp_register_left+", "+temp_register_right+"\n";
             break;
         case Operation::Mod:
             *s +=
-                    " "+result_register+" = srem i32 "+register_left+", "+register_right+"\n";
+                    " "+result_register+" = srem i32 "+temp_register_left+", "+temp_register_right+"\n";
             break;
         case Operation::L:
         case Operation::G:
@@ -731,6 +755,7 @@ string Translator_LLVM::translate_program(Program* prog)
     result += 
             "@fmt_i = constant [4 x i8] c\"%d\\0A\\00\"\n"
             "@fmt_c = constant [4 x i8] c\"%c\\0A\\00\"\n"
+            "@fmt_s = constant [4 x i8] c\"%s\\0A\\00\"\n"
             "declare i32 @printf(i8*, ...)\n"
             "declare void @printg(i16*)\n"
             "declare i16 @get16(i16*, i32)\n"
@@ -754,7 +779,12 @@ string Translator_LLVM::translate_program(Program* prog)
             "declare i8* @new_arr_expr(i32, i32)\n"
             "declare i32 @gstring_len(i16*)\n"
             "declare i32 @arr_len(i8*)\n"
-            "define i32 @main() {\n";
+            "declare i16* @to_gstring(i8*)\n"
+            "declare i16** @to_argv(i32, i8**)\n"
+            "define i32 @main(i32, i8**) {\n"
+            "%argc = add i32 %0, 0\n"
+            "%argv = call i16** @to_argv(i32 %0, i8** %1)\n";
+
 
     this->translate_block(&result, prog->block.get(), "");
 

@@ -3,7 +3,37 @@
 typedef char16_t *gstring;
 using namespace std;
 
+
+u16string ascii_to_u16(string s) {
+    u16string u;
+    for (char c : s)
+        u += c;
+    return u;
+}
+
 extern "C" {
+
+gstring to_gstring(char *str) {
+    if (!str)
+        throw runtime_error("null pointer exception");
+    gstring u = (gstring) malloc(2 * strlen(str) + 4);
+    *((int *)u) = strlen(str);
+    u += 2;
+    for (int i=0;i<strlen(str);i++)
+        u[i] = str[i];
+    return u;
+}
+
+gstring* to_argv(int argc, char **args) {
+    char *ptr = (char *)malloc(argc*sizeof(gstring *) + 4);
+    *((int *)ptr) = argc;
+    ptr += 4;
+    gstring *argv = (gstring *)ptr;
+    for (int i=0;i<argc;i++)
+        argv[i] = to_gstring(args[i]);
+    return argv;
+}
+
 inline int gstring_len(gstring s) {
     if (!s)
         throw runtime_error("null pointer exception");
@@ -13,17 +43,9 @@ inline int gstring_len(gstring s) {
 
 gstring concat_chars(const char16_t *s, int slen, const char16_t *t, int tlen) {
     gstring u = (gstring) malloc(2 * (slen + tlen) + 4) + 2;
-    *((long long *)(u - 2)) = slen + tlen;
+    *((int *)(u - 2)) = slen + tlen;
     memcpy(u, s, 2*slen);
     memcpy(u+slen, t, 2*tlen);
-    return u;
-}
-
-
-u16string ascii_to_u16(string s) {
-    u16string u;
-    for (char c : s)
-        u += c;
     return u;
 }
 

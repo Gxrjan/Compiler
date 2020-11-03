@@ -68,7 +68,7 @@ Type *Checker::check_compatability(OpExpr *expr, Block *b)
         case Operation::And:
         case Operation::Or:
             if (left_t != &Bool || right_t != &Bool)
-                this->report_error(expr->line, expr->col, "invalid operand types");
+                this->report_error(expr->line, expr->col, "invalid operand typeshehe");
             return &Bool;
             break;
         default:
@@ -118,6 +118,10 @@ Declaration *Checker::look_up(Id id, Block *b)
 
 Type *Checker::check_variable(Variable *var, Block *b)
 {
+        if (var->name == "argc")
+            return &Int;
+        if (var->name == "argv")
+            return ArrayType::make(&String);
         Declaration *result = this->look_up(var->name, b);
         if (!result)
             this->report_error(var->line, var->col, "variable hasn't been declared");

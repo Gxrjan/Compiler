@@ -15,4 +15,4 @@ for (int i = 1 ; i <= n ; i = i + 1) {
         count = count + 1;
     }
 }
-print("the total is " + count);
+print("the total is: " + count);

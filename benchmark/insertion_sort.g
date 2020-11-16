@@ -1,6 +1,5 @@
 int count = int.Parse(argv[1]);
 int[] a = new int[count];
-
 // fill array with pseudo-random numbers
 int rand = int.Parse(argv[2]);
 
@@ -9,9 +8,9 @@ for (int i = 0 ; i < count ; i = i + 1) {
   a[i] = rand % 1000;
 }
 
-print("before sorting:");
-for (int i = 0 ; i < count ; i = i + 1)
-  print(a[i]);
+//print("before sorting:");
+//for (int i = 0 ; i < count ; i = i + 1)
+//  print(a[i]);
 
 
 // insertion sort
@@ -26,9 +25,9 @@ for (int i = 1 ; i < count ; i = i + 1) {
 }
 
 
-print("after sorting:");
-for (int i = 0 ; i < count ; i = i + 1)
-  print(a[i]);
+//print("after sorting:");
+//for (int i = 0 ; i < count ; i = i + 1)
+//  print(a[i]);
 
 
 

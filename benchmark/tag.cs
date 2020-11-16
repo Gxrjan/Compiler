@@ -18,6 +18,6 @@ class Tag {
         int total = 0;
         for (int i = 1 ; i <= n ; ++i)
             total += iter(new string('a', i));
-        WriteLine("the total is " + total);
+        WriteLine("the total is: " + total);
     }
 }

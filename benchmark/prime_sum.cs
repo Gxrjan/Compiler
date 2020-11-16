@@ -6,7 +6,8 @@ class Prime {
         int prime_count = 0;
         int result = 0;
         int i = 2;
-        while (prime_count < int.Parse(args[0])) {
+        int n = int.Parse(args[0]);
+        while (prime_count < n) {
             bool prime = true;
             int j = 2;
             while (j < i && prime) {
@@ -20,7 +21,7 @@ class Prime {
             }
             i = i + 1;
         }
-        WriteLine(result);
+        WriteLine("Result: " + result);
     }
 
 }

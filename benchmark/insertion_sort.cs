@@ -14,9 +14,9 @@ class Sort {
             a[i] = rand % 1000;
         }
 
-        WriteLine("before sorting:");
-        for (int i = 0 ; i < count ; i = i + 1)
-            WriteLine(a[i]);
+        // WriteLine("before sorting:");
+        // for (int i = 0 ; i < count ; i = i + 1)
+        //     WriteLine(a[i]);
 
 
         // insertion sort
@@ -31,8 +31,8 @@ class Sort {
         }
 
 
-        WriteLine("after sorting:");
-        for (int i = 0 ; i < count ; i = i + 1)
-            WriteLine(a[i]);
+        // WriteLine("after sorting:");
+        // for (int i = 0 ; i < count ; i = i + 1)
+        //     WriteLine(a[i]);
     }
 }

@@ -138,8 +138,12 @@ string Translator_LLVM::translate_elem_access_expr(string *s, ElemAccessExpr *e)
         if (arr_t->base == &Bool ||
             arr_t->base == &Char ||
             arr_t->base == &Int) {
-            *s +=
-                " "+result_register+" = call "+result_type+" @get"+size+"("+reg_type+" "+expr_register+", i32 "+index_register+")\n";
+                string temp_register = this->assign_register();
+                *s +=
+                    " "+temp_register+" = getelementptr "+result_type+", "+reg_type+" "+expr_register+", i32 "+index_register+"\n"
+                    " "+result_register+" = load "+result_type+", "+reg_type+" "+temp_register+"\n";
+            // *s +=
+            //     " "+result_register+" = call "+result_type+" @get"+size+"("+reg_type+" "+expr_register+", i32 "+index_register+")\n";
         } else {
             string result_reg_type = this->type_to_llvm_type(arr_t->base);
             string result_temp_register = this->assign_register();

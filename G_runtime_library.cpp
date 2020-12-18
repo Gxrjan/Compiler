@@ -54,15 +54,7 @@ gstring concat_chars(const char16_t *s, int slen, const char16_t *t, int tlen) {
 }
 
 
-char16_t get16(gstring s, int i)
-{
-    if (!s)
-        throw runtime_error("null pointer exception");
-    int slen = gstring_len(s);
-    if (i<0 || i>=slen)
-        throw runtime_error("index out of bounds get16");
-    return s[i];
-}
+
 
 gstring concat(gstring s, gstring t)
 {
@@ -223,35 +215,9 @@ int arr_len(void *p)
     return gstring_len(static_cast<gstring>(p));
 }
 
-int get32(int *arr, int index)
-{
-    if (!arr)
-        throw runtime_error("null pointer exception");
-    int arr_l = arr_len(arr);
-    if (index < 0 || index >= arr_l)
-        throw runtime_error("index out of bounds get32");
-    return arr[index];
-}
 
-void *get64(void **arr, int index)
-{
-    if (!arr)
-        throw runtime_error("null pointer exception");
-    int arr_l = arr_len(arr);
-    if (index < 0 || index >= arr_l)
-        throw runtime_error("index out of bounds get64");
-    return arr[index];
-}
 
-bool get8(bool *arr, int index)
-{
-    if (!arr)
-        throw runtime_error("null pointer exception");
-    int arr_l = arr_len(arr);
-    if (index < 0 || index >= arr_l)
-        throw runtime_error("index out of bounds get8");
-    return arr[index];
-}
+
 
 
 void set16(gstring arr, int index, char16_t val)

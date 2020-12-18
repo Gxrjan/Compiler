@@ -13,6 +13,10 @@ u16string ascii_to_u16(string s) {
 
 extern "C" {
 
+void report_error(char *msg) {
+    throw runtime_error(string(msg));
+}
+
 gstring to_gstring(char *str) {
     if (!str)
         throw runtime_error("null pointer exception");
@@ -56,7 +60,7 @@ char16_t get16(gstring s, int i)
         throw runtime_error("null pointer exception");
     int slen = gstring_len(s);
     if (i<0 || i>=slen)
-        throw runtime_error("index out of bounds");
+        throw runtime_error("index out of bounds get16");
     return s[i];
 }
 
@@ -125,7 +129,7 @@ gstring substr_int_int(gstring s, int from, int len)
         throw runtime_error("length of the substring must be >=0");
     if ((from < 0 || from > s_len) || 
         ((from + len) > s_len))
-        throw runtime_error("index out of bounds");
+        throw runtime_error("index out of bounds substr");
     return concat_chars(s + from, len, s, 0);
 }
 
@@ -225,7 +229,7 @@ int get32(int *arr, int index)
         throw runtime_error("null pointer exception");
     int arr_l = arr_len(arr);
     if (index < 0 || index >= arr_l)
-        throw runtime_error("index out of bounds");
+        throw runtime_error("index out of bounds get32");
     return arr[index];
 }
 
@@ -235,7 +239,7 @@ void *get64(void **arr, int index)
         throw runtime_error("null pointer exception");
     int arr_l = arr_len(arr);
     if (index < 0 || index >= arr_l)
-        throw runtime_error("index out of bounds");
+        throw runtime_error("index out of bounds get64");
     return arr[index];
 }
 
@@ -245,7 +249,7 @@ bool get8(bool *arr, int index)
         throw runtime_error("null pointer exception");
     int arr_l = arr_len(arr);
     if (index < 0 || index >= arr_l)
-        throw runtime_error("index out of bounds");
+        throw runtime_error("index out of bounds get8");
     return arr[index];
 }
 
@@ -256,7 +260,7 @@ void set16(gstring arr, int index, char16_t val)
         throw runtime_error("null pointer exception");
     int arr_l = arr_len(arr);
     if (index < 0 || index >= arr_l)
-        throw runtime_error("index out of bounds");
+        throw runtime_error("index out of bounds set16");
     arr[index] = val;
 }
 
@@ -266,7 +270,7 @@ void set32(int *arr, int index, int val)
         throw runtime_error("null pointer exception");
     int arr_l = arr_len(arr);
     if (index < 0 || index >= arr_l)
-        throw runtime_error("index out of bounds");
+        throw runtime_error("index out of bounds set32");
     arr[index] = val;
 }
 
@@ -275,8 +279,10 @@ void set64(void **arr, int index, void *val)
     if (!arr)
         throw runtime_error("null pointer exception");
     int arr_l = arr_len(arr);
-    if (index < 0 || index >= arr_l)
-        throw runtime_error("index out of bounds");
+    if (index < 0 || index >= arr_l) {
+        printf("%d\n", arr_l);
+        throw runtime_error("index out of bounds set64");
+    }
     arr[index] = val;
 }
 
@@ -286,7 +292,7 @@ void set8(bool *arr, int index, bool val)
         throw runtime_error("null pointer exception");
     int arr_l = arr_len(arr);
     if (index < 0 || index >= arr_l)
-        throw runtime_error("index out of bounds");
+        throw runtime_error("index out of bounds set8");
     arr[index] = val;
 }
 

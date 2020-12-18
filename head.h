@@ -595,6 +595,7 @@ class Translator_LLVM {
     string type_to_cc(Type *t);
     string operation_to_cc(Operation op);
     void report_error(int line, int col, string message);
+    void create_bounds_check(string *s, string expr_register, string index_register, string reg_type);
   public:
     string translate_program(Program *p);
 };

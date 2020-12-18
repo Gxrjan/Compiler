@@ -121,16 +121,47 @@ string Translator_LLVM::translate_string_literal(string *s, StringLiteral *l)
 }
 
 
+void Translator_LLVM::create_bounds_check(string *s, string expr_register, string index_register, string reg_type) {
+    string label_id = std::to_string(this->label_id++);
+    string conv_register = this->assign_register();
+    string len_register_ptr = this->assign_register();
+    string len_register = this->assign_register();
+    string upper_bound_check = this->assign_register();
+    string lower_bound_check = this->assign_register();
+    string msg_loc = this->assign_register();
+    *s += 
+        " "+conv_register+" = bitcast "+reg_type+" "+expr_register+" to i32*\n"
+        " "+len_register_ptr+" = getelementptr i32 , i32* "+conv_register+", i32 -1\n"
+        " "+len_register+" = load i32, i32* "+len_register_ptr+"\n"
+        " "+upper_bound_check+" = icmp slt i32 "+index_register+", "+len_register+"\n"
+        " br i1 "+upper_bound_check+", label %continue"+label_id+", label %trap"+label_id+"\n"
+        "continue"+label_id+":\n"
+        " "+lower_bound_check+" = icmp sge i32 "+index_register+", 0\n"
+        " br i1 "+lower_bound_check+", label %end"+label_id+", label %trap"+label_id+"\n"
+        "trap"+label_id+":\n"
+        " "+msg_loc+" = getelementptr [21 x i8], [21 x i8]* @index_out_of_bounds_msg, i32 0, i32 0\n"
+        " call void (i8*) @report_error(i8* "+msg_loc+")\n"
+        " br label %end"+label_id+"\n"
+        "end"+label_id+":";
+}
+
 string Translator_LLVM::translate_elem_access_expr(string *s, ElemAccessExpr *e)
 {
     string expr_register = this->translate_expr(s, e->expr.get());
     string index_register = this->translate_expr(s, e->index.get());
     string result_register = this->assign_register();
     string temp_register = this->assign_register();
-    if (e->expr->type == &String)
+    string msg_loc = this->assign_register();
+    string upper_bound_check = this->assign_register();
+    string lower_bound_check = this->assign_register();
+    if (e->expr->type == &String) {
+        string reg_type = this->type_to_llvm_type(&String);
+        string result_type = "i16";
+        this->create_bounds_check(s, expr_register, index_register, reg_type);
         *s +=
-            " "+result_register+" = call i16 @get16(i16* "+expr_register+", i32 "+index_register+")\n";
-    else {
+            " "+temp_register+" = getelementptr "+result_type+", "+reg_type+" "+expr_register+", i32 "+index_register+"\n"
+            " "+result_register+" = load "+result_type+", "+reg_type+" "+temp_register+"\n";
+    } else {
         auto arr_t = dynamic_cast<ArrayType *>(e->expr->type);
         string reg_type = this->type_to_llvm_type(arr_t);
         string result_type = this->type_to_llvm_type(arr_t->base);
@@ -138,19 +169,21 @@ string Translator_LLVM::translate_elem_access_expr(string *s, ElemAccessExpr *e)
         if (arr_t->base == &Bool ||
             arr_t->base == &Char ||
             arr_t->base == &Int) {
+                string conv_register = this->assign_register();
+                string len_register = this->assign_register();
+                string len_register_loc = this->assign_register();
+                this->create_bounds_check(s, expr_register, index_register, reg_type);
                 string temp_register = this->assign_register();
                 *s +=
                     " "+temp_register+" = getelementptr "+result_type+", "+reg_type+" "+expr_register+", i32 "+index_register+"\n"
                     " "+result_register+" = load "+result_type+", "+reg_type+" "+temp_register+"\n";
-            // *s +=
-            //     " "+result_register+" = call "+result_type+" @get"+size+"("+reg_type+" "+expr_register+", i32 "+index_register+")\n";
         } else {
-            string result_reg_type = this->type_to_llvm_type(arr_t->base);
+            string result_type = this->type_to_llvm_type(arr_t->base);
             string result_temp_register = this->assign_register();
+            this->create_bounds_check(s, expr_register, index_register, reg_type);
             *s +=
-                " "+temp_register+" = bitcast "+reg_type+" "+expr_register+" to i8**\n"
-                " "+result_temp_register+" = call i8* @get64(i8** "+temp_register+", i32 "+index_register+")\n"
-                " "+result_register+" = bitcast i8* "+result_temp_register+" to "+result_reg_type+"\n";
+                " "+result_temp_register+" = getelementptr "+result_type+", "+reg_type+" "+expr_register+", i32 "+index_register+"\n"
+                " "+result_register+" = load "+result_type+", "+reg_type+" "+result_temp_register+"\n";
         }
     }
     return result_register;
@@ -760,6 +793,8 @@ string Translator_LLVM::translate_program(Program* prog)
             "@fmt_i = constant [4 x i8] c\"%d\\0A\\00\"\n"
             "@fmt_c = constant [4 x i8] c\"%c\\0A\\00\"\n"
             "@fmt_s = constant [4 x i8] c\"%s\\0A\\00\"\n"
+            "@index_out_of_bounds_msg = constant [21 x i8] c\"index out of bounds\\0A\\00\"\n"
+            "declare void @report_error(i8*)"
             "declare i32 @printf(i8*, ...)\n"
             "declare void @printg(i16*)\n"
             "declare i16 @get16(i16*, i32)\n"

@@ -130,6 +130,7 @@ void Translator_LLVM::create_bounds_check(string *s, string expr_register, strin
     string lower_bound_check = this->assign_register();
     string msg_loc = this->assign_register();
     *s += 
+        "; bounds check start\n"
         " "+conv_register+" = bitcast "+reg_type+" "+expr_register+" to i32*\n"
         " "+len_register_ptr+" = getelementptr i32 , i32* "+conv_register+", i32 -1\n"
         " "+len_register+" = load i32, i32* "+len_register_ptr+"\n"
@@ -142,11 +143,14 @@ void Translator_LLVM::create_bounds_check(string *s, string expr_register, strin
         " "+msg_loc+" = getelementptr [21 x i8], [21 x i8]* @index_out_of_bounds_msg, i32 0, i32 0\n"
         " call void (i8*) @report_error(i8* "+msg_loc+")\n"
         " br label %end"+label_id+"\n"
-        "end"+label_id+":";
+        "end"+label_id+":"
+        "; bounds check end\n";
 }
 
 string Translator_LLVM::translate_elem_access_expr(string *s, ElemAccessExpr *e)
 {
+    *s += // asm comment
+        "; "+e->to_string()+"\n";
     string expr_register = this->translate_expr(s, e->expr.get());
     string index_register = this->translate_expr(s, e->index.get());
     string result_register = this->assign_register();
@@ -721,6 +725,8 @@ string Translator_LLVM::bool_to_op(bool inc)
 
 string Translator_LLVM::translate_inc_expr(string *s, IncExpr *expr)
 {
+    *s += // asm comment
+        "; "+expr->to_string()+"\n";
     if (auto var = dynamic_cast<Variable *>(expr->expr.get())) {
         string var_register = this->translate_variable(s, var);
         string result_register = this->assign_register();
@@ -737,8 +743,10 @@ string Translator_LLVM::translate_inc_expr(string *s, IncExpr *expr)
         string value_register = this->assign_register();
         string temp_register = this->assign_register();
         string arr_temp_register = this->assign_register();
+        string value_register_ptr = this->assign_register();
         *s +=
-            " "+value_register+" = call i32 @get32(i32* "+arr_register+", i32 "+index_register+")\n"
+            " "+value_register_ptr+" = getelementptr i32, i32* "+arr_register+", i32 "+index_register+"\n"
+            " "+value_register+" = load i32, i32* "+value_register_ptr+"\n"
             " "+temp_register+" = "+this->bool_to_op(expr->inc)+" i32 "+value_register+", 1\n"
             " call void @set32(i32* "+arr_register+", i32 "+index_register+", i32 "+temp_register+")\n";
         return value_register;
@@ -797,10 +805,6 @@ string Translator_LLVM::translate_program(Program* prog)
             "declare void @report_error(i8*)"
             "declare i32 @printf(i8*, ...)\n"
             "declare void @printg(i16*)\n"
-            "declare i16 @get16(i16*, i32)\n"
-            "declare i1 @get8(i1*, i32)\n"
-            "declare i32 @get32(i32*, i32)\n"
-            "declare i8* @get64(i8**, i32)\n"
             "declare void @set16(i16*, i32, i16)\n"
             "declare void @set8(i1*, i32, i1)\n"
             "declare void @set32(i32*, i32, i32)\n"

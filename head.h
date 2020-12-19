@@ -28,7 +28,7 @@ class BasicType : public Type {
     string to_string() override;
 };
 
-extern BasicType Bool, Char, Int, String, Empty;
+extern BasicType Bool, Char, Int, String, Empty, Byte;
 
 
 class ArrayType : public Type {
@@ -572,9 +572,9 @@ class Translator_LLVM {
     string translate_substr_expr(string *s, SubstrExpr *expr);
     string translate_int_parse_expr(string *s, IntParseExpr *expr);
     string translate_new_str_expr(string *s, NewStrExpr *expr);
-    string type_to_size(ArrayType *t);
+    string array_type_to_bytes(ArrayType *t);
     string arr_type_to_func_size(ArrayType *t);
-    string type_to_llvm_type(Type *t);
+    string g_type_to_llvm_type(Type *t);
     string translate_new_arr_expr(string *s, NewArrExpr *expr);
     string translate_variable(string *s, Variable *var);
     string translate_bool_expr(string *s, OpExpr *expr);
@@ -595,7 +595,17 @@ class Translator_LLVM {
     string type_to_cc(Type *t);
     string operation_to_cc(Operation op);
     void report_error(int line, int col, string message);
-    void create_bounds_check(string *s, string expr_register, string index_register, string reg_type);
+    void create_bounds_check(string *s, string expr_register, string index_register, Type *type);
+    string create_getelementptr_load(string *s, Type *result_type, Type *expr_type, string expr_register, string index_register);
+    string create_conversion(string *s, string expr_register, Type *from, Type *to);
+    string create_convert_ptr(string *s, string expr_register, Type *from, Type *to);
+    string create_add(string *s, Type *type, string register_left, string register_right);
+    string create_sub(string *s, Type *type, string register_left, string register_right);
+    string create_mul(string *s, Type *type, string register_left, string register_right);
+    string create_div(string *s, Type *type, string register_left, string register_right);
+    string create_mod(string *s, Type *type, string register_left, string register_right);
+    string create_cmp(string *s, Operation o, Type *type, string register_left, string register_right);
+    string create_allocate_and_store(string *s, Type *t, string expr_register);
   public:
     string translate_program(Program *p);
 };

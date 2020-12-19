@@ -121,7 +121,8 @@ string Translator_LLVM::translate_string_literal(string *s, StringLiteral *l)
 }
 
 
-void Translator_LLVM::create_bounds_check(string *s, string expr_register, string index_register, string reg_type) {
+void Translator_LLVM::create_bounds_check(string *s, string expr_register, string index_register, Type *type) {
+    string reg_type = this->g_type_to_llvm_type(type);
     string label_id = std::to_string(this->label_id++);
     string conv_register = this->assign_register();
     string len_register_ptr = this->assign_register();
@@ -147,50 +148,42 @@ void Translator_LLVM::create_bounds_check(string *s, string expr_register, strin
         "; bounds check end\n";
 }
 
+string Translator_LLVM::create_getelementptr_load(string *s, Type *result_type, Type *expr_type, string expr_register, string index_register) {
+    string result_register = this->assign_register();
+    string temp_register = this->assign_register();
+    string result_llvm_type = this->g_type_to_llvm_type(result_type);
+    string expr_llvm_type = this->g_type_to_llvm_type(expr_type);
+    *s +=
+        " "+temp_register+" = getelementptr "+result_llvm_type+", "+expr_llvm_type+" "+expr_register+", i32 "+index_register+"\n"
+        " "+result_register+" = load "+result_llvm_type+", "+expr_llvm_type+" "+temp_register+"\n";
+    return result_register;
+}
+
 string Translator_LLVM::translate_elem_access_expr(string *s, ElemAccessExpr *e)
 {
     *s += // asm comment
         "; "+e->to_string()+"\n";
     string expr_register = this->translate_expr(s, e->expr.get());
     string index_register = this->translate_expr(s, e->index.get());
-    string result_register = this->assign_register();
-    string temp_register = this->assign_register();
-    string msg_loc = this->assign_register();
-    string upper_bound_check = this->assign_register();
-    string lower_bound_check = this->assign_register();
     if (e->expr->type == &String) {
-        string reg_type = this->type_to_llvm_type(&String);
-        string result_type = "i16";
-        this->create_bounds_check(s, expr_register, index_register, reg_type);
-        *s +=
-            " "+temp_register+" = getelementptr "+result_type+", "+reg_type+" "+expr_register+", i32 "+index_register+"\n"
-            " "+result_register+" = load "+result_type+", "+reg_type+" "+temp_register+"\n";
+        this->create_bounds_check(s, expr_register, index_register, &String);
+        return create_getelementptr_load(s, &Char, &String, expr_register, index_register);
     } else {
         auto arr_t = dynamic_cast<ArrayType *>(e->expr->type);
-        string reg_type = this->type_to_llvm_type(arr_t);
-        string result_type = this->type_to_llvm_type(arr_t->base);
-        string size = this->arr_type_to_func_size(arr_t);
+        string expr_llvm_type = this->g_type_to_llvm_type(arr_t);
+        string result_llvm_type = this->g_type_to_llvm_type(arr_t->base);
         if (arr_t->base == &Bool ||
             arr_t->base == &Char ||
             arr_t->base == &Int) {
-                string conv_register = this->assign_register();
-                string len_register = this->assign_register();
-                string len_register_loc = this->assign_register();
-                this->create_bounds_check(s, expr_register, index_register, reg_type);
+                this->create_bounds_check(s, expr_register, index_register, arr_t);
                 string temp_register = this->assign_register();
-                *s +=
-                    " "+temp_register+" = getelementptr "+result_type+", "+reg_type+" "+expr_register+", i32 "+index_register+"\n"
-                    " "+result_register+" = load "+result_type+", "+reg_type+" "+temp_register+"\n";
+                return create_getelementptr_load(s, arr_t->base, arr_t, expr_register, index_register);
         } else {
-            string result_type = this->type_to_llvm_type(arr_t->base);
-            string result_temp_register = this->assign_register();
-            this->create_bounds_check(s, expr_register, index_register, reg_type);
-            *s +=
-                " "+result_temp_register+" = getelementptr "+result_type+", "+reg_type+" "+expr_register+", i32 "+index_register+"\n"
-                " "+result_register+" = load "+result_type+", "+reg_type+" "+result_temp_register+"\n";
+            string result_type = this->g_type_to_llvm_type(arr_t->base);
+            this->create_bounds_check(s, expr_register, index_register, e->expr->type);
+            return create_getelementptr_load(s, e->type, e->expr->type, expr_register, index_register);
         }
     }
-    return result_register;
 }
 
 
@@ -204,7 +197,7 @@ string Translator_LLVM::translate_length_expr(string *s, LengthExpr *e)
         return result_register;
     } else {
         string temp_register = this->assign_register();
-        string var_type = this->type_to_llvm_type(e->expr->type);
+        string var_type = this->g_type_to_llvm_type(e->expr->type);
         *s +=
             " "+temp_register+" = bitcast "+var_type+" "+expr_register+" to i8*\n"
             " "+result_register+" = call i32 @arr_len(i8* "+temp_register+")\n";
@@ -212,25 +205,28 @@ string Translator_LLVM::translate_length_expr(string *s, LengthExpr *e)
     }
 }
 
+string Translator_LLVM::create_conversion(string *s, string expr_register, Type *from, Type *to) {
+    if (from == &Empty || to == &Empty)
+        return expr_register;
+    string result_register = this->assign_register();
+    string llvm_from = this->g_type_to_llvm_type(from);
+    string llvm_to = this->g_type_to_llvm_type(to);
+    if (llvm_from < llvm_to) {
+        *s +=
+            " "+result_register+" = zext "+llvm_from+" "+expr_register+" to "+llvm_to+"\n";
+        return result_register;
+    } else if (llvm_from > llvm_to) {
+        *s +=
+            " "+result_register+" = trunc "+llvm_from+" "+expr_register+" to "+llvm_to+"\n";
+        return result_register;
+    }
+    return expr_register;
+}
 
 string Translator_LLVM::translate_type_cast_expr(string *s, TypeCastExpr *e)
 {
     string expr_register = this->translate_expr(s, e->expr.get());
-    string result_register = this->assign_register();
-    if (e->expr->type == &Int) {
-        if (e->type == &Char) {
-            *s += 
-                " "+result_register+" = trunc i32 "+expr_register+" to i16\n";
-        } else
-            return expr_register;
-    } else {
-        if (e->type == &Int) {
-            *s +=
-                " "+result_register+" = zext i16 "+expr_register+" to i32\n";
-        } else
-            return expr_register;
-    }
-    return result_register;
+    return this->create_conversion(s, expr_register, e->expr->type, e->type);
 }
 
 
@@ -240,11 +236,10 @@ string Translator_LLVM::translate_substr_expr(string *s, SubstrExpr *e)
     string str_register = this->translate_expr(s, e->expr.get());
     string result_register = this->assign_register();
     if (e->arguments.size() == 1) {
-        string from_register = this->assign_register();
+        string from_register;
         if (e->arguments[0]->type == &Char) {
             string temp_from_register = this->translate_expr(s, e->arguments[0].get());
-            *s +=
-                " "+from_register+" = zext i16 "+temp_from_register+" to i32\n";
+            this->create_conversion(s, temp_from_register, e->arguments[0]->type, &Int);
         } else {
             from_register = this->translate_expr(s, e->arguments[0].get());
         }
@@ -252,20 +247,18 @@ string Translator_LLVM::translate_substr_expr(string *s, SubstrExpr *e)
             " "+result_register+" = call i16* @substr_int(i16* "+str_register+",i32 "+from_register+")\n";
     } else {
 
-        string from_register = this->assign_register();
-        string len_register = this->assign_register();
+        string from_register;
+        string len_register;
         if (e->arguments[0]->type == &Char) {
             string temp_from_register = this->translate_expr(s, e->arguments[0].get());
-            *s +=
-                " "+from_register+" = zext i16 "+temp_from_register+" to i32\n";
+            from_register = this->create_conversion(s, temp_from_register, e->arguments[0]->type, &Int);
         } else {
             from_register = this->translate_expr(s, e->arguments[0].get());
         }
 
         if (e->arguments[1]->type == &Char) {
             string temp_len_register = this->translate_expr(s, e->arguments[1].get());
-            *s +=
-                " "+len_register+" = zext i16 "+temp_len_register+" to i32\n";
+            len_register = this->create_conversion(s, temp_len_register, e->arguments[1]->type, &Int);
         } else {
             len_register = this->translate_expr(s, e->arguments[1].get());
         }
@@ -297,9 +290,9 @@ string Translator_LLVM::translate_new_str_expr(string *s, NewStrExpr *e)
     return result_register;
 }
 
-string Translator_LLVM::type_to_size(ArrayType *t)
+string Translator_LLVM::array_type_to_bytes(ArrayType *t)
 {
-    if (t->base == &Bool) {
+    if (t->base == &Bool || t->base == &Byte) {
             return "1";
     } else if (t->base == &Char) 
         return "2";
@@ -309,7 +302,7 @@ string Translator_LLVM::type_to_size(ArrayType *t)
         return "8";
 }
 
-string Translator_LLVM::type_to_llvm_type(Type *t)
+string Translator_LLVM::g_type_to_llvm_type(Type *t)
 {
     if (t == &Bool) {
         return "i1";
@@ -319,10 +312,21 @@ string Translator_LLVM::type_to_llvm_type(Type *t)
         return "i32";
     else if (t == &String)
         return "i16*";
+    else if (t == &Byte)
+        return "i8";
     else {
         auto st = dynamic_cast<ArrayType *>(t);
-        return this->type_to_llvm_type(st->base)+"*";
+        return this->g_type_to_llvm_type(st->base)+"*";
     }
+}
+
+string Translator_LLVM::create_convert_ptr(string *s, string expr_register, Type *from, Type *to) {
+    string result_register = this->assign_register();
+    string llvm_from = this->g_type_to_llvm_type(from);
+    string llvm_to = this->g_type_to_llvm_type(to);
+    *s +=
+        " "+result_register+" = bitcast "+llvm_from+" "+expr_register+" to "+llvm_to+"\n";
+    return result_register;
 }
 
 string Translator_LLVM::translate_new_arr_expr(string *s, NewArrExpr *e)
@@ -333,14 +337,12 @@ string Translator_LLVM::translate_new_arr_expr(string *s, NewArrExpr *e)
     string temp_register = this->assign_register();
     auto t = dynamic_cast<ArrayType *>(e->type);
     *s +=
-        " "+size_register+" = add i32 "+this->type_to_size(t)+", 0\n";
+        " "+size_register+" = add i32 "+this->array_type_to_bytes(t)+", 0\n";
 
     *s +=
         " "+temp_register+" = call i8* @new_arr_expr(i32 "+size_register+", i32 "+len_register+")\n";
-    
-    *s +=
-        " "+result_register+" = bitcast i8* "+temp_register+" to "+type_to_llvm_type(e->type)+"\n";
-    return result_register;
+    //return this->create_conversion(s, temp_register, ArrayType::make(&Byte), e->type);
+    return this->create_convert_ptr(s, temp_register, ArrayType::make(&Byte), e->type);
 }
 
 string Translator_LLVM::translate_bool_expr(string *s, OpExpr *expr)
@@ -398,6 +400,55 @@ string Translator_LLVM::translate_bool_expr(string *s, OpExpr *expr)
     return register_result;
 }
 
+string Translator_LLVM::create_add(string *s, Type *type, string register_left, string register_right) {
+    string result_register = this->assign_register();
+    string llvm_type = this->g_type_to_llvm_type(type);
+    *s +=
+        " "+result_register+" = add "+llvm_type+" "+register_left+", "+register_right+"\n";
+    return result_register;
+}
+
+string Translator_LLVM::create_sub(string *s, Type *type, string register_left, string register_right) {
+    string result_register = this->assign_register();
+    string llvm_type = this->g_type_to_llvm_type(type);
+    *s +=
+        " "+result_register+" = sub "+llvm_type+" "+register_left+", "+register_right+"\n";
+    return result_register;
+}
+
+string Translator_LLVM::create_mul(string *s, Type *type, string register_left, string register_right) {
+    string result_register = this->assign_register();
+    string llvm_type = this->g_type_to_llvm_type(type);
+    *s +=
+        " "+result_register+" = mul "+llvm_type+" "+register_left+", "+register_right+"\n";
+    return result_register;
+}
+
+string Translator_LLVM::create_div(string *s, Type *type, string register_left, string register_right) {
+    string result_register = this->assign_register();
+    string llvm_type = this->g_type_to_llvm_type(type);
+    *s +=
+        " "+result_register+" = sdiv "+llvm_type+" "+register_left+", "+register_right+"\n";
+    return result_register;
+}
+
+string Translator_LLVM::create_mod(string *s, Type *type, string register_left, string register_right) {
+    string result_register = this->assign_register();
+    string llvm_type = this->g_type_to_llvm_type(type);
+    *s +=
+        " "+result_register+" = srem "+llvm_type+" "+register_left+", "+register_right+"\n";
+    return result_register;
+}
+
+string Translator_LLVM::create_cmp(string *s, Operation o, Type *type, string register_left, string register_right) {
+    string result_register = this->assign_register();
+    string llvm_type = this->g_type_to_llvm_type(type);
+    *s +=
+        " "+result_register+" = icmp "+this->operation_to_cc(o)+" "+llvm_type+" "+
+                register_left+", "+register_right+"\n";
+    return result_register;
+}
+
 string Translator_LLVM::translate_arithm_expr(string *s, OpExpr *expr)
 {
     Operation o = TypeConverter::string_to_operation(expr->op);
@@ -408,27 +459,16 @@ string Translator_LLVM::translate_arithm_expr(string *s, OpExpr *expr)
         "; " + expr->right->to_string() + "\n";
     string register_right = this->translate_expr(s, expr->right.get());
     string result_register = this->assign_register();
-    string temp_register_left = this->assign_register();
-    string temp_register_right = this->assign_register();
+    string temp_register_left;
+    string temp_register_right;
     if (expr->type == &Int) {
-        
-        if (expr->left->type == &Char)
-            *s +=
-                " "+temp_register_left+" = zext i16 "+register_left+" to i32\n";
-        else 
-            temp_register_left = register_left;
-        
-        if (expr->right->type == &Char)
-            *s +=
-                " "+temp_register_right+" = zext i16 "+register_right+" to i32\n";
-        else
-            temp_register_right = register_right;
+        temp_register_left = this->create_conversion(s, register_left, expr->left->type, expr->type);
+        temp_register_right = this->create_conversion(s, register_right, expr->right->type, expr->type);
     }
     switch(o) {
         case Operation::Add:
             if (expr->type == &Int) {
-                *s +=
-                    " "+result_register+" = add i32 "+temp_register_left+", "+temp_register_right+"\n";
+                return this->create_add(s, expr->type, temp_register_left, temp_register_right);
             } else {
                 if (expr->left->type == &String && expr->right->type == &String)
                     *s += 
@@ -457,30 +497,18 @@ string Translator_LLVM::translate_arithm_expr(string *s, OpExpr *expr)
             }
             break;
         case Operation::Sub:
-            *s +=
-                    " "+result_register+" = sub i32 "+temp_register_left+", "+temp_register_right+"\n";
-            break;
+            return this->create_sub(s, expr->type, temp_register_left, temp_register_right);
         case Operation::Mul:
-            *s +=
-                    " "+result_register+" = mul i32 "+temp_register_left+", "+temp_register_right+"\n";
-            break;
+            return this->create_mul(s, expr->type, temp_register_left, temp_register_right);
         case Operation::Div:
-            *s +=
-                    " "+result_register+" = sdiv i32 "+temp_register_left+", "+temp_register_right+"\n";
-            break;
+            return this->create_div(s, expr->type, temp_register_left, temp_register_right);
         case Operation::Mod:
-            *s +=
-                    " "+result_register+" = srem i32 "+temp_register_left+", "+temp_register_right+"\n";
-            break;
+            return this->create_mod(s, expr->type, temp_register_left, temp_register_right);
         case Operation::L:
         case Operation::G:
         case Operation::Le:
         case Operation::Ge:
-            *s +=
-                " "+result_register+" = icmp "+this->operation_to_cc(o)+" i32 "+
-                register_left+", "+register_right+"\n";
-            return result_register;
-            break;
+            return this->create_cmp(s, o, expr->left->type, register_left, register_right);
         case Operation::E:
         case Operation::Ne:
             if (expr->left->type == &String && expr->right->type == &String) {
@@ -496,10 +524,7 @@ string Translator_LLVM::translate_arithm_expr(string *s, OpExpr *expr)
                         " "+result_register+" = add i1 0, "+temp_register+"\n";
                 return result_register;
             } else {
-                *s +=
-                    " "+result_register+" = icmp "+this->operation_to_cc(o)+" i32 "+
-                    register_left+", "+register_right+"\n";
-                return result_register;
+                return this->create_cmp(s, o, expr->left->type, register_left, register_right);
             }
             break;
         default:
@@ -557,25 +582,23 @@ string Translator_LLVM::translate_expr(string *s, Expr *e)
 }
 
 
+string Translator_LLVM::create_allocate_and_store(string *s, Type *t, string expr_register) {
+    string result_register = this->assign_register();
+    string llvm_type = this->g_type_to_llvm_type(t);
+    *s +=
+        " "+result_register+" = alloca "+llvm_type+"\n"
+        " store "+llvm_type+" "+expr_register+", "+llvm_type+"* "+result_register+"\n";
+    return result_register;
+}
 
 void Translator_LLVM::translate_declaration(string *s, Declaration *dec)
 {
-    string result_register = this->assign_register();
     *s += // asm comment
         "; " + dec->to_string() + "\n";
+    string var_type = this->g_type_to_llvm_type(dec->type);
     string expr_register = this->translate_expr(s, dec->expr.get());
-    string var_type = this->type_to_llvm_type(dec->type);
-    if (dec->type == &Int && dec->expr->type == &Char) {
-        string temp_register = this->assign_register();
-        *s +=
-            " "+temp_register+" = zext i16 "+expr_register+" to i32\n"
-            " "+result_register+" = alloca "+var_type+"\n"
-            " store "+var_type+" "+temp_register+", "+var_type+"* "+result_register+"\n";
-    } else {
-        *s += 
-            " "+result_register+" = alloca "+var_type+"\n"
-            " store "+var_type+" "+expr_register+", "+var_type+"* "+result_register+"\n";
-    }
+    string temp_register = this->create_conversion(s, expr_register, dec->expr->type, dec->type);
+    string result_register = this->create_allocate_and_store(s, dec->type, temp_register);
     this->variables.insert_or_assign(dec->id, std::make_pair(result_register, var_type));
 }
 
@@ -610,9 +633,9 @@ void Translator_LLVM::translate_assignment(string *s, Assignment *asgn)
         auto arr_t = dynamic_cast<ArrayType *>(el->expr->type);
         string temp_register = this->assign_register();
         string temp_asgn_register = this->assign_register();
-        string var_type = this->type_to_llvm_type(arr_t);
+        string var_type = this->g_type_to_llvm_type(arr_t);
         string size = this->arr_type_to_func_size(arr_t);
-        string asgn_type = this->type_to_llvm_type(asgn->expr->type);
+        string asgn_type = this->g_type_to_llvm_type(asgn->expr->type);
         if (arr_t->base == &Bool || 
             arr_t->base == &Char ||
             arr_t->base == &Int) {
@@ -639,7 +662,7 @@ void Translator_LLVM::translate_print(string *s, Print *p)
             "call void (i16*) @printg(i16* "+result_register+")\n";
         return;
     } else {
-        string reg_type = this->type_to_llvm_type(p->expr->type);
+        string reg_type = this->g_type_to_llvm_type(p->expr->type);
         string format_register = this->assign_register();
         *s +=
             " "+format_register+" = getelementptr [4 x i8], [4 x i8]* @fmt_"+this->type_to_cc(p->expr->type)+
@@ -740,13 +763,9 @@ string Translator_LLVM::translate_inc_expr(string *s, IncExpr *expr)
         auto el = dynamic_cast<ElemAccessExpr *>(expr->expr.get());
         string arr_register = this->translate_expr(s, el->expr.get());
         string index_register = this->translate_expr(s, el->index.get());
-        string value_register = this->assign_register();
+        string value_register = this->create_getelementptr_load(s, el->type, el->expr->type, arr_register, index_register);
         string temp_register = this->assign_register();
-        string arr_temp_register = this->assign_register();
-        string value_register_ptr = this->assign_register();
         *s +=
-            " "+value_register_ptr+" = getelementptr i32, i32* "+arr_register+", i32 "+index_register+"\n"
-            " "+value_register+" = load i32, i32* "+value_register_ptr+"\n"
             " "+temp_register+" = "+this->bool_to_op(expr->inc)+" i32 "+value_register+", 1\n"
             " call void @set32(i32* "+arr_register+", i32 "+index_register+", i32 "+temp_register+")\n";
         return value_register;

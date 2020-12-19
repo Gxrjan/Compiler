@@ -2,7 +2,7 @@
 
 map<Type *, ArrayType*> ArrayType::array_types;
 
-BasicType Bool("bool"), Char("char"), Int("int"), String("string");
+BasicType Bool("bool"), Char("char"), Int("int"), String("string"), Byte("byte");
 
 BasicType Empty("empty");   // type of 'null'
 

@@ -56,6 +56,10 @@ for (int i=0;i<5;int n = 1)
 for (int i=0;i<5;print(2))
   print(2);
 
+int[] arr = new int[10];
+print(arr[10]);
+print(arr[0]);
+
 
 int x = int.Parse("123")++;
 

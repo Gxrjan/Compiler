@@ -124,22 +124,17 @@ string Translator_LLVM::translate_string_literal(string *s, StringLiteral *l)
 void Translator_LLVM::create_bounds_check(string *s, string expr_register, string index_register, Type *type) {
     string reg_type = this->g_type_to_llvm_type(type);
     string label_id = std::to_string(this->label_id++);
-    string conv_register = this->assign_register();
-    string len_register_ptr = this->assign_register();
-    string len_register = this->assign_register();
+    string conv_register = this->create_convert_ptr(s, expr_register, type, ArrayType::make(&Int));
+    string minus_one = this->assign_register();
+    *s +=
+        " "+minus_one+" = add i32 0, -1\n";
+    string len_register = this->create_getelementptr_load(s, &Int, ArrayType::make(&Int), conv_register, minus_one);
     string upper_bound_check = this->assign_register();
-    string lower_bound_check = this->assign_register();
     string msg_loc = this->assign_register();
     *s += 
         "; bounds check start\n"
-        " "+conv_register+" = bitcast "+reg_type+" "+expr_register+" to i32*\n"
-        " "+len_register_ptr+" = getelementptr i32 , i32* "+conv_register+", i32 -1\n"
-        " "+len_register+" = load i32, i32* "+len_register_ptr+"\n"
         " "+upper_bound_check+" = icmp ult i32 "+index_register+", "+len_register+"\n"
         " br i1 "+upper_bound_check+", label %end"+label_id+", label %trap"+label_id+"\n"
-        // "continue"+label_id+":\n"
-        // " "+lower_bound_check+" = icmp sge i32 "+index_register+", 0\n"
-        // " br i1 "+lower_bound_check+", label %end"+label_id+", label %trap"+label_id+"\n"
         "trap"+label_id+":\n"
         " "+msg_loc+" = getelementptr [21 x i8], [21 x i8]* @index_out_of_bounds_msg, i32 0, i32 0\n"
         " call void (i8*) @report_error(i8* "+msg_loc+")\n"
@@ -615,38 +610,38 @@ string Translator_LLVM::arr_type_to_func_size(ArrayType *t)
         return "64";
 }
 
+string Translator_LLVM::create_store(string *s, string llvm_type, string expr_register, string ptr_register) {
+    *s +=
+        " store "+llvm_type+" "+expr_register+", "+llvm_type+"* "+ptr_register+"\n";
+    return ptr_register;
+}
+
+string Translator_LLVM::create_getelementptr(string *s, string llvm_type, string expr_llvm_type, string expr_register, string index_register) {
+    string result_register = this->assign_register();
+    *s +=
+        " "+result_register+" = getelementptr "+llvm_type+", "+expr_llvm_type+" "+expr_register+", i32 "+index_register+"\n";
+    return result_register;
+}
+
 void Translator_LLVM::translate_assignment(string *s, Assignment *asgn)
 {
     *s += // asm comment
         "; " + asgn->to_string() + "\n";
     if (auto var = dynamic_cast<Variable *>(asgn->id.get())) {
         string expr_register = this->translate_expr(s, asgn->expr.get());
-        string var_storage = this->variables.at(var->name).first;
-        string var_type = this->variables.at(var->name).second;
-        *s +=
-            " store "+var_type+" "+expr_register+", "+var_type+"* "+var_storage+"\n";
+        string ptr_register = this->variables.at(var->name).first;
+        string expr_llvm_type = this->variables.at(var->name).second;
+        this->create_store(s, expr_llvm_type, expr_register, ptr_register);
     } else {
         auto el = dynamic_cast<ElemAccessExpr *>(asgn->id.get());
         string expr_register = this->translate_expr(s, el->expr.get());
         string index_register = this->translate_expr(s, el->index.get());
         string asgn_register = this->translate_expr(s, asgn->expr.get());
         auto arr_t = dynamic_cast<ArrayType *>(el->expr->type);
-        string temp_register = this->assign_register();
-        string temp_asgn_register = this->assign_register();
-        string var_type = this->g_type_to_llvm_type(arr_t);
-        string size = this->arr_type_to_func_size(arr_t);
-        string asgn_type = this->g_type_to_llvm_type(asgn->expr->type);
-        if (arr_t->base == &Bool || 
-            arr_t->base == &Char ||
-            arr_t->base == &Int) {
-            *s +=
-                " call void @set"+size+"("+var_type+" "+expr_register+", i32 "+index_register+", "+asgn_type+" "+asgn_register+")\n";
-        } else {
-            *s +=
-                " "+temp_register+" = bitcast "+var_type+" "+expr_register+" to i8**\n"
-                " "+temp_asgn_register+" = bitcast "+asgn_type+" "+asgn_register+" to i8*\n"
-                " call void @set"+size+"(i8** "+temp_register+", i32 "+index_register+", i8* "+temp_asgn_register+")\n";
-        }
+        string expr_llvm_type = this->g_type_to_llvm_type(arr_t);
+        string asgn_llvm_type = this->g_type_to_llvm_type(asgn->expr->type);
+        string ptr_register = this->create_getelementptr(s, asgn_llvm_type, expr_llvm_type, expr_register, index_register);
+        this->create_store(s, asgn_llvm_type, asgn_register, ptr_register);
     }
 }
 
@@ -745,6 +740,13 @@ string Translator_LLVM::bool_to_op(bool inc)
     return (inc ? "add" : "sub");
 }
 
+string Translator_LLVM::create_inc_dec(string *s, bool inc_dec, string expr_register) {
+    string result_register = this->assign_register();
+    *s +=
+        " "+result_register+ " = "+this->bool_to_op(inc_dec)+" i32 "+expr_register+", 1\n";
+    return result_register;
+
+}
 
 string Translator_LLVM::translate_inc_expr(string *s, IncExpr *expr)
 {
@@ -752,22 +754,23 @@ string Translator_LLVM::translate_inc_expr(string *s, IncExpr *expr)
         "; "+expr->to_string()+"\n";
     if (auto var = dynamic_cast<Variable *>(expr->expr.get())) {
         string var_register = this->translate_variable(s, var);
-        string result_register = this->assign_register();
         string var_storage = this->variables.at(var->name).first;
-        *s +=
-            " "+result_register+ " = "+this->bool_to_op(expr->inc)+" i32 "+var_register+", 1\n"
-            " store i32 "+result_register+", i32* "+var_storage+"\n";
+        string llvm_type = this->variables.at(var->name).second;
+        string result_register = this->create_inc_dec(s, expr->inc, var_register);
+        this->create_store(s, llvm_type, result_register, var_storage);
         return var_register;
         
     } else {
         auto el = dynamic_cast<ElemAccessExpr *>(expr->expr.get());
-        string arr_register = this->translate_expr(s, el->expr.get());
+        auto arr_t = dynamic_cast<ArrayType *>(el->expr->type);
+        string expr_llvm_type = this->g_type_to_llvm_type(arr_t);
+        string asgn_llvm_type = this->g_type_to_llvm_type(arr_t->base);
+        string expr_register = this->translate_expr(s, el->expr.get());
         string index_register = this->translate_expr(s, el->index.get());
-        string value_register = this->create_getelementptr_load(s, el->type, el->expr->type, arr_register, index_register);
-        string temp_register = this->assign_register();
-        *s +=
-            " "+temp_register+" = "+this->bool_to_op(expr->inc)+" i32 "+value_register+", 1\n"
-            " call void @set32(i32* "+arr_register+", i32 "+index_register+", i32 "+temp_register+")\n";
+        string value_register = this->create_getelementptr_load(s, el->type, el->expr->type, expr_register, index_register);
+        string temp_register = this->create_inc_dec(s, expr->inc, value_register);
+        string ptr_register = this->create_getelementptr(s, asgn_llvm_type, expr_llvm_type, expr_register, index_register);
+        this->create_store(s, asgn_llvm_type, temp_register, ptr_register);
         return value_register;
     }
 }
@@ -824,10 +827,6 @@ string Translator_LLVM::translate_program(Program* prog)
             "declare void @report_error(i8*)"
             "declare i32 @printf(i8*, ...)\n"
             "declare void @printg(i16*)\n"
-            "declare void @set16(i16*, i32, i16)\n"
-            "declare void @set8(i1*, i32, i1)\n"
-            "declare void @set32(i32*, i32, i32)\n"
-            "declare void @set64(i8**, i32, i8*)\n"
             "declare i16* @concat(i16*, i16*)\n"
             "declare i1 @cmp_str(i16*, i16*)\n"
             "declare i16* @concat_str_int(i16*, i32)\n"

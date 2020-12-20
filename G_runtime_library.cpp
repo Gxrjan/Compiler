@@ -216,53 +216,6 @@ int arr_len(void *p)
 }
 
 
-
-
-
-
-void set16(gstring arr, int index, char16_t val)
-{
-    if (!arr)
-        throw runtime_error("null pointer exception");
-    int arr_l = arr_len(arr);
-    if (index < 0 || index >= arr_l)
-        throw runtime_error("index out of bounds set16");
-    arr[index] = val;
-}
-
-void set32(int *arr, int index, int val)
-{
-    if (!arr)
-        throw runtime_error("null pointer exception");
-    int arr_l = arr_len(arr);
-    if (index < 0 || index >= arr_l)
-        throw runtime_error("index out of bounds set32");
-    arr[index] = val;
-}
-
-void set64(void **arr, int index, void *val)
-{
-    if (!arr)
-        throw runtime_error("null pointer exception");
-    int arr_l = arr_len(arr);
-    if (index < 0 || index >= arr_l) {
-        printf("%d\n", arr_l);
-        throw runtime_error("index out of bounds set64");
-    }
-    arr[index] = val;
-}
-
-void set8(bool *arr, int index, bool val)
-{
-    if (!arr)
-        throw runtime_error("null pointer exception");
-    int arr_l = arr_len(arr);
-    if (index < 0 || index >= arr_l)
-        throw runtime_error("index out of bounds set8");
-    arr[index] = val;
-}
-
-
 int cmp_str(gstring s, gstring t)
 {
     if (!s && !t)

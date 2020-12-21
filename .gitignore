@@ -15,9 +15,13 @@ tests
 tmp/
 *.ll
 *.s
+*.cpp
 benchmark/insertion_sort
 benchmark/prime_sum
 benchmark/tag
 benchmark/insertion_sort.exe
 benchmark/prime_sum.exe
 benchmark/tag.exe
+benchmark/insertion_sort_cpp
+benchmark/prime_sum_cpp
+benchmark/tag_cpp

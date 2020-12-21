@@ -27,7 +27,7 @@ test: gc
 	
 	@ echo 'All tests passed.'
 
-benchmark: benchmark/insertion_sort benchmark/prime_sum benchmark/tag benchmark/insertion_sort.exe benchmark/prime_sum.exe benchmark/tag.exe
+benchmark: benchmark/insertion_sort benchmark/prime_sum benchmark/tag benchmark/insertion_sort.exe benchmark/prime_sum.exe benchmark/tag.exe benchmark/insertion_sort_cpp benchmark/prime_sum_cpp benchmark/tag_cpp
 	python tester.py
 
 
@@ -48,3 +48,13 @@ benchmark/tag: gc benchmark/tag.g
 
 benchmark/tag.exe: benchmark/tag.cs
 	mcs benchmark/tag.cs
+
+
+benchmark/insertion_sort_cpp: benchmark/insertion_sort.cpp
+	g++ -o benchmark/insertion_sort_cpp benchmark/insertion_sort.cpp
+
+benchmark/prime_sum_cpp: benchmark/prime_sum.cpp
+	g++ -o benchmark/prime_sum_cpp benchmark/prime_sum.cpp
+
+benchmark/tag_cpp: benchmark/tag.cs
+	g++ -o benchmark/tag_cpp benchmark/tag.cpp

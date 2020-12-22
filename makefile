@@ -8,27 +8,12 @@ G_runtime_library.o: G_runtime_library.cpp
 	clang++ -Wall -c  G_runtime_library.cpp
 
 
-test: gc
-	./gc tests.g
-	
-	@ echo Running tests in tests.g...
-	@ sed -n -e 's/^.*expect: *//p' tests.g > expected
-	./tests > actual || true
-	@ diff expected actual || (echo 'Error: some tests in tests.g failed.'; false)
+test: gc tests.g tests_neg.g
+	python tester.py
 
-	@ echo Running negative tests...
-	@ rm -rf tmp
-	@ mkdir tmp
-	@ awk -v RS= '{print > ("tmp/test" NR ".g")}' tests_neg.g
-	@ for f in tmp/*.g ; do \
-		[ "$$( (./gc $$f || false) 2>&1)" ] || \
-			(echo "Error: compilation of $$f succeeded unexpectedly:"; cat $$f; false) ; \
-	  done
-	
-	@ echo 'All tests passed.'
 
 benchmark: benchmark/insertion_sort benchmark/prime_sum benchmark/tag benchmark/insertion_sort.exe benchmark/prime_sum.exe benchmark/tag.exe benchmark/insertion_sort_cpp benchmark/prime_sum_cpp benchmark/tag_cpp
-	python tester.py
+	python benchmark.py
 
 
 benchmark/insertion_sort: gc benchmark/insertion_sort.g

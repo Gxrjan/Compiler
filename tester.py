@@ -1,115 +1,96 @@
+from pathlib import Path
+import os
+import re
 import subprocess
-import time
+
+def positive_test():
+    gc_output_file = Path('result')
+    tests_bin_file = Path('tests')
+    pattern = re.compile(r'//[ ]*expect:(.*)')
+    file = open(Path.cwd() / 'tests.g')
+    gold = list()
+    line = 1
+    for l in file.readlines():
+        mo = pattern.search(l)
+        if mo is not None:
+            gold.append((line, mo.group(1).strip()))
+        line = line + 1
+
+
+    outfile = open(gc_output_file, 'w')
+    subprocess.run(['./gc', 'tests.g'])
+    subprocess.run('./'+str(tests_bin_file), stdout=outfile)
+    output = list()
+    outfile = open(gc_output_file)
+    for l in outfile.readlines():
+        output.append(l.rstrip())
+
+    # fill output list so it has the same number of elements as gold standart
+    for i in range(len(gold)-len(output)):
+        output.append(None)
+
+    error_count = 0
+    for i in range(len(gold)):
+        if gold[i][1] != output[i]:
+            error_count = error_count + 1
+            print(F'error on line {gold[i][0]}: {gold[i][1]} != {output[i]}')
+
+    file.close()
+    os.unlink(gc_output_file)
+    os.unlink(tests_bin_file)
+
+
+    return error_count
+
+
+def negative_test():
+    test_home = Path('tmp')
+    file = open('tests_neg.g')
+    lines = file.readlines()
+    
+    file_index = 0
+    index = 0
+
+    current_test = Path('test_prog0.g')
+    outfile = open(test_home / current_test, 'w')
+
+    while index < len(lines):
+        if not lines[index].strip():
+            outfile.close()
+            file_index = file_index + 1
+            current_test = Path('test_prog' + str(file_index)+'.g')
+            outfile = open(test_home / current_test, 'w')
+            while index < len(lines) and not lines[index].strip():
+                index = index + 1
+            index = index - 1
+        else:
+            outfile.write(lines[index])
+        index = index + 1
+    
+    outfile.close()
+
+    error_count = 0
+
+    for folderName, subfolder, filenames in os.walk(test_home):
+        for filename in filenames:
+            msg = subprocess.run(['./gc', (test_home / filename)], capture_output=True)
+            if (msg.returncode == 0):
+                error_count = error_count + 1
+                print(F'Error: compilation of tmp/{filename} succeeded unexpectedly:')
+                test_file = open(test_home / filename)
+                print(test_file.read())
+
+    for folderName, subfolder, filenames in os.walk('tmp'):
+        for filename in filenames:
+            os.unlink(test_home / filename)
+    return error_count
 
 def main():
-    print("Running benchmarks...")
-    print("")
-    # ===========================================================================
-    # Insertion sort
-    print("========================================================")
-    print("")
-    n = 40000
-    rand_seed = 100
-    print(F"Insertion sort on {n} elements")
-    start_time = time.time()
-    subprocess.call(['./benchmark/insertion_sort', str(n), str(rand_seed)])
-    g_time = (time.time() - start_time)
-    print(F"G Execution time: {(1000*g_time):.0f}ms")
-
-    start_time = time.time()
-    subprocess.call(['./benchmark/insertion_sort.exe', str(n), str(rand_seed)])
-    cs_time = (time.time() - start_time)
-    print(F"CS Execution time: {(1000*cs_time):.0f}ms")
-
-
-    start_time = time.time()
-    subprocess.call(['./benchmark/insertion_sort_cpp', str(n), str(rand_seed)])
-    cpp_time = (time.time() - start_time)
-    print(F"C++ Execution time: {(1000*cpp_time):.0f}ms")
-
-    print("")
-    print("Results of Insertion Sort")
-    # Results of Insertion sort
-    if g_time < cs_time:
-        print(F"G is ~{(cs_time / g_time):.2f} times faster than C#")
-    else:
-        print(F"G is ~{(g_time / cs_time):.2f} times slower than C#")
-
-    if g_time < cpp_time:
-        print(F"G is ~{(cpp_time / g_time):.2f} times faster than C++")
-    else:
-        print(F"G is ~{g_time / cpp_time:.2f} times slower than C++")
-    print("")
-    print("========================================================")
-    print("")
-    # ===========================================================================
-    # prime sum
-    n = 20000
-    print(F"Prime_sum with prime_count={n}")
-    start_time = time.time()
-    subprocess.call(['./benchmark/prime_sum', str(n)])
-    g_time = (time.time() - start_time)
-    print(F"G Execution time: {(1000*g_time):.0f}ms")
-
-    start_time = time.time()
-    subprocess.call(['./benchmark/prime_sum.exe', str(n)])
-    cs_time = (time.time() - start_time)
-    print(F"CS Execution time: {(1000*cs_time):.0f}ms")
-
-
-    start_time = time.time()
-    subprocess.call(['./benchmark/prime_sum_cpp', str(n)])
-    cpp_time = (time.time() - start_time)
-    print(F"C++ Execution time: {(1000*cpp_time):.0f}ms")
-
-    print("")
-    print("Results of Prime sum")
-    # Results of Prime sum
-    if g_time < cs_time:
-        print(F"G is ~{(cs_time / g_time):.2f} times faster than C#")
-    else:
-        print(F"G is ~{(g_time / cs_time):.2f} times slower than C#")
-
-    if g_time < cpp_time:
-        print(F"G is ~{(cpp_time / g_time):.2f} times faster than C++")
-    else:
-        print(F"G is ~{(g_time / cpp_time):.2f} times slower than C++")
-    print("")
-    print("========================================================")
-    print("")
-    # ===========================================================================
-    # Tag
-    n = 60
-    print(F"Tag with n={n}")
-    start_time = time.time()
-    subprocess.call(['./benchmark/tag', str(n)])
-    g_time = (time.time() - start_time)
-    print(F"G Execution time: {(1000*g_time):.0f}ms")
-
-    start_time = time.time()
-    subprocess.call(['./benchmark/tag.exe', str(n)])
-    cs_time = (time.time() - start_time)
-    print(F"CS Execution time: {(1000*cs_time):.0f}ms")
-
-    start_time = time.time()
-    subprocess.call(['./benchmark/tag_cpp', str(n)])
-    cpp_time = (time.time() - start_time)
-    print(F"C++ Execution time: {(1000*cpp_time):.0f}ms")
-
-    print("")
-    print("Results of Tag")
-    # Results of Tag
-    if g_time < cs_time:
-        print(F"G is ~{(cs_time / g_time):.2f} times faster than C#")
-    else:
-        print(F"G is ~{(g_time / cs_time):.2f} times slower than C#")
-
-    if g_time < cpp_time:
-        print(F"G is ~{(cpp_time / g_time):.2f} times faster than C++")
-    else:
-        print(F"G is ~{(g_time / cpp_time):.2f} times slower than C++")
-    print("")
-    print("========================================================")
+    pos_count = positive_test()
+    neg_count = negative_test()
+    print(F'There were total {pos_count} errors in positive test')
+    print(F'There were total {neg_count} errors in negative test')
+    
 
 
 

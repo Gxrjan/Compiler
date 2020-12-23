@@ -15,7 +15,6 @@ tests
 tmp/
 *.ll
 *.s
-*.cpp
 benchmark/insertion_sort
 benchmark/prime_sum
 benchmark/tag

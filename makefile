@@ -36,10 +36,10 @@ benchmark/tag.exe: benchmark/tag.cs
 
 
 benchmark/insertion_sort_cpp: benchmark/insertion_sort.cpp
-	g++ -o benchmark/insertion_sort_cpp benchmark/insertion_sort.cpp
+	clang++ -O2 -o benchmark/insertion_sort_cpp benchmark/insertion_sort.cpp
 
 benchmark/prime_sum_cpp: benchmark/prime_sum.cpp
-	g++ -o benchmark/prime_sum_cpp benchmark/prime_sum.cpp
+	clang++ -O2 -o benchmark/prime_sum_cpp benchmark/prime_sum.cpp
 
 benchmark/tag_cpp: benchmark/tag.cs
-	g++ -o benchmark/tag_cpp benchmark/tag.cpp
+	clang++ -O2 -o benchmark/tag_cpp benchmark/tag.cpp

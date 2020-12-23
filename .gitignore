@@ -24,3 +24,6 @@ benchmark/tag.exe
 benchmark/insertion_sort_cpp
 benchmark/prime_sum_cpp
 benchmark/tag_cpp
+benchmark/insertion_sort_cs
+benchmark/prime_sum_cs
+benchmark/tag_cs

@@ -1,35 +1,28 @@
 import subprocess
 import time
+from pathlib import Path
 
-def main():
-    print("Running benchmarks...")
-    print("")
-    # ===========================================================================
-    # Insertion sort
-    print("========================================================")
-    print("")
-    n = 40000
-    rand_seed = 100
-    print(F"Insertion sort on {n} elements")
+def run_tests(name, args):
     start_time = time.time()
-    subprocess.call(['./benchmark/insertion_sort', str(n), str(rand_seed)])
+    subprocess.call(([str(name)] + args))
     g_time = (time.time() - start_time)
     print(F"G Execution time: {(1000*g_time):.0f}ms")
 
     start_time = time.time()
-    subprocess.call(['./benchmark/insertion_sort.exe', str(n), str(rand_seed)])
+    subprocess.call([str(name) + '_cs'] + args)
     cs_time = (time.time() - start_time)
     print(F"CS Execution time: {(1000*cs_time):.0f}ms")
 
 
     start_time = time.time()
-    subprocess.call(['./benchmark/insertion_sort_cpp', str(n), str(rand_seed)])
+    subprocess.call([str(name) + '_cpp'] + args)
     cpp_time = (time.time() - start_time)
     print(F"C++ Execution time: {(1000*cpp_time):.0f}ms")
+    return (g_time, cs_time, cpp_time)
 
+def show_results(benchmark_name, g_time, cs_time, cpp_time):
     print("")
-    print("Results of Insertion Sort")
-    # Results of Insertion sort
+    print("Results of "+benchmark_name)
     if g_time < cs_time:
         print(F"G is ~{(cs_time / g_time):.2f} times faster than C#")
     else:
@@ -39,77 +32,37 @@ def main():
         print(F"G is ~{(cpp_time / g_time):.2f} times faster than C++")
     else:
         print(F"G is ~{g_time / cpp_time:.2f} times slower than C++")
+
+def print_separator():
     print("")
     print("========================================================")
     print("")
-    # ===========================================================================
-    # prime sum
-    n = 20000
-    print(F"Prime_sum with prime_count={n}")
-    start_time = time.time()
-    subprocess.call(['./benchmark/prime_sum', str(n)])
-    g_time = (time.time() - start_time)
-    print(F"G Execution time: {(1000*g_time):.0f}ms")
 
-    start_time = time.time()
-    subprocess.call(['./benchmark/prime_sum.exe', str(n)])
-    cs_time = (time.time() - start_time)
-    print(F"CS Execution time: {(1000*cs_time):.0f}ms")
+def process_args(args):
+    result = list()
+    for a in args:
+        result.append(str(a))
+    return result
 
+def do_test(name, bin_name, args):
+    benchmark_home = Path.cwd() / 'benchmark'
+    print_separator()
+    print(F"{name}. {args[0]} elements")
+    (g_time, cs_time, cpp_time) = run_tests(benchmark_home / bin_name, process_args(args))
+    show_results(name, g_time, cs_time, cpp_time)
 
-    start_time = time.time()
-    subprocess.call(['./benchmark/prime_sum_cpp', str(n)])
-    cpp_time = (time.time() - start_time)
-    print(F"C++ Execution time: {(1000*cpp_time):.0f}ms")
+def main():
+    print("Running benchmarks...")
 
-    print("")
-    print("Results of Prime sum")
-    # Results of Prime sum
-    if g_time < cs_time:
-        print(F"G is ~{(cs_time / g_time):.2f} times faster than C#")
-    else:
-        print(F"G is ~{(g_time / cs_time):.2f} times slower than C#")
+    # Insertion sort 40000 elements, 100 - random seed
+    do_test("Insertion sort", 'insertion_sort', [40000, 100])
 
-    if g_time < cpp_time:
-        print(F"G is ~{(cpp_time / g_time):.2f} times faster than C++")
-    else:
-        print(F"G is ~{(g_time / cpp_time):.2f} times slower than C++")
-    print("")
-    print("========================================================")
-    print("")
-    # ===========================================================================
-    # Tag
-    n = 60
-    print(F"Tag with n={n}")
-    start_time = time.time()
-    subprocess.call(['./benchmark/tag', str(n)])
-    g_time = (time.time() - start_time)
-    print(F"G Execution time: {(1000*g_time):.0f}ms")
+    # prime sum 20000 elements
+    do_test("Prime sum", 'prime_sum', [20000])
 
-    start_time = time.time()
-    subprocess.call(['./benchmark/tag.exe', str(n)])
-    cs_time = (time.time() - start_time)
-    print(F"CS Execution time: {(1000*cs_time):.0f}ms")
+    # Tag 60 elements
+    do_test("Tag", 'tag', [60])
 
-    start_time = time.time()
-    subprocess.call(['./benchmark/tag_cpp', str(n)])
-    cpp_time = (time.time() - start_time)
-    print(F"C++ Execution time: {(1000*cpp_time):.0f}ms")
-
-    print("")
-    print("Results of Tag")
-    # Results of Tag
-    if g_time < cs_time:
-        print(F"G is ~{(cs_time / g_time):.2f} times faster than C#")
-    else:
-        print(F"G is ~{(g_time / cs_time):.2f} times slower than C#")
-
-    if g_time < cpp_time:
-        print(F"G is ~{(cpp_time / g_time):.2f} times faster than C++")
-    else:
-        print(F"G is ~{(g_time / cpp_time):.2f} times slower than C++")
-    print("")
-    print("========================================================")
 
 
 

@@ -12,27 +12,27 @@ test: gc tests.g tests_neg.g
 	python tester.py
 
 
-benchmark: benchmark/insertion_sort benchmark/prime_sum benchmark/tag benchmark/insertion_sort.exe benchmark/prime_sum.exe benchmark/tag.exe benchmark/insertion_sort_cpp benchmark/prime_sum_cpp benchmark/tag_cpp
+benchmark: benchmark/insertion_sort benchmark/prime_sum benchmark/tag benchmark/insertion_sort_cs benchmark/prime_sum_cs benchmark/tag_cs benchmark/insertion_sort_cpp benchmark/prime_sum_cpp benchmark/tag_cpp
 	python benchmark.py
 
 
 benchmark/insertion_sort: gc benchmark/insertion_sort.g
 	./gc benchmark/insertion_sort.g
 
-benchmark/insertion_sort.exe: benchmark/insertion_sort.cs
-	mcs benchmark/insertion_sort.cs
+benchmark/insertion_sort_cs: benchmark/insertion_sort.cs
+	mcs -o benchmark/insertion_sort_cs benchmark/insertion_sort.cs
 
 benchmark/prime_sum: gc benchmark/prime_sum.g
 	./gc benchmark/prime_sum.g
 
-benchmark/prime_sum.exe: benchmark/prime_sum.cs
-	mcs benchmark/prime_sum.cs
+benchmark/prime_sum_cs: benchmark/prime_sum.cs
+	mcs -o benchmark/prime_sum_cs benchmark/prime_sum.cs
 
 benchmark/tag: gc benchmark/tag.g
 	./gc benchmark/tag.g
 
-benchmark/tag.exe: benchmark/tag.cs
-	mcs benchmark/tag.cs
+benchmark/tag_cs: benchmark/tag.cs
+	mcs -o benchmark/tag_cs benchmark/tag.cs
 
 
 benchmark/insertion_sort_cpp: benchmark/insertion_sort.cpp

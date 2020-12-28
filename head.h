@@ -12,14 +12,17 @@
 #include <vector>
 #include <set>
 #include <cstring>
-
+#include <stack>
 using namespace std;
 using Id = string;
+
 
 class Type { 
   public:
     virtual string to_string()=0;
 };
+
+using g_type = Type*;
 
 class BasicType : public Type {
     string name;
@@ -558,8 +561,8 @@ class Translator_LLVM {
     int register_id = 0;
     int label_id = 0;
     int string_id = 0;
-    vector<pair<string,string>> references; // first: address, second: llvm_type
-    map<Id, pair<string, string>> variables;  // first: address, second: llvm_type
+    stack<pair<string,g_type>> references; // first: address, second: llvm_type
+    map<Id, pair<string, g_type>> variables;  // first: address, second: llvm_type
     map<StringLiteral *, int> strings;
     string assign_register();
     string concat_cc(Type *left, Type *right);
@@ -610,7 +613,9 @@ class Translator_LLVM {
     string create_store(string *s, string llvm_type, string expr_register, string ptr);
     string create_getelementptr(string *s, string llvm_type, string expr_llvm_type, string expr_register, string index_register);
     string create_inc_dec(string *s, bool inc_dec, string expr_register);
-    void decrement_reference_count(string *s, Type *g_type, string ptr_register);
+    void change_reference_count(string *s, Type *g_type, string ptr_register, int i);
+    void free_unused_memory(string *s);
+    //void increment_reference_count(string *s, g_type type, string expr_register);
   public:
     string translate_program(Program *p);
 };

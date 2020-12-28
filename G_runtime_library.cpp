@@ -14,10 +14,20 @@ u16string ascii_to_u16(string s) {
 
 extern "C" {
 
-void decrement_reference_count(void *ptr) {
-    int *p = (int*)ptr;
-    int ref_count = *(p-2);
-    printf("%d\n", ref_count);
+void change_reference_count(void *ptr, int i) {
+    if (!ptr)
+        return;
+    int *p = (int*)ptr; // convert to int pointer
+    p -= 2;             // scroll back to ref count
+    int ref_count = *p; // get the actual ref count integer
+    ref_count += i;     // change it
+    *p = ref_count;     // write down the changed ref count
+    if (ref_count == 0) {
+        //printf("ref count is zero. I will free memory.\n");
+        free(p);
+        return;
+    }
+    //printf("ref count: %d\n", ref_count);
 }
 
 void report_error(char *msg) {
@@ -174,7 +184,7 @@ gstring new_str_expr(char16_t c, int len)
 void *new_arr_expr(int size, int len)
 {
     byte *p = (byte*)malloc(len*size+4+4); // 4 for ref count, 4 for length
-    *((int *)p) = 199; // initialize ref count
+    *((int *)p) = 0; // initialize ref count
     p += 4;
     *((int *)p) = len; // initialize length
     p += 4;

@@ -558,7 +558,8 @@ class Translator_LLVM {
     int register_id = 0;
     int label_id = 0;
     int string_id = 0;
-    map<Id, pair<string, string>> variables;
+    vector<pair<string,string>> references; // first: address, second: llvm_type
+    map<Id, pair<string, string>> variables;  // first: address, second: llvm_type
     map<StringLiteral *, int> strings;
     string assign_register();
     string concat_cc(Type *left, Type *right);
@@ -609,6 +610,7 @@ class Translator_LLVM {
     string create_store(string *s, string llvm_type, string expr_register, string ptr);
     string create_getelementptr(string *s, string llvm_type, string expr_llvm_type, string expr_register, string index_register);
     string create_inc_dec(string *s, bool inc_dec, string expr_register);
+    void decrement_reference_count(string *s, Type *g_type, string ptr_register);
   public:
     string translate_program(Program *p);
 };

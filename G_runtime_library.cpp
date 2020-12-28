@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cstring>
 typedef char16_t *gstring;
+typedef char byte;
 using namespace std;
 
 
@@ -12,6 +13,12 @@ u16string ascii_to_u16(string s) {
 }
 
 extern "C" {
+
+void decrement_reference_count(void *ptr) {
+    int *p = (int*)ptr;
+    int ref_count = *(p-2);
+    printf("%d\n", ref_count);
+}
 
 void report_error(char *msg) {
     throw runtime_error(string(msg));
@@ -164,49 +171,23 @@ gstring new_str_expr(char16_t c, int len)
     return concat_chars(s.c_str(), len, &c, 0);
 }
 
-int *new_int_arr_expr(int len)
-{
-    int *p = (int *)malloc(len*4+4);
-    *(p) = len;
-    p += 1;
-    memset(p, 0, len*4);
-    return p;
-}
-
-char16_t *new_char_arr_expr(int len)
-{
-    char16_t *p = (char16_t *)malloc(len*2+4);
-    *((int *)p) = len;
-    p += 2;
-    memset(p, 0, len*2);
-    return p;
-}
-
-gstring *new_string_arr_expr(int len)
-{
-    gstring *p = (gstring *)malloc(len*8+4);
-    *((int *)p) = len;
-    p += 1;
-    memset(p, 0, len*8);
-    return p;
-}
-
-char *new_bool_arr_expr(int len)
-{
-    char *p = (char *)malloc(len+4);
-    *((int *)p) = len;
-    p += 4;
-    memset(p, 0, len);
-    return p;
-}
-
 void *new_arr_expr(int size, int len)
 {
-    void *p = malloc(len*size+4);
-    *((int *)p) = len;
-    p = static_cast<char *>(p) + 4;
+    byte *p = (byte*)malloc(len*size+4+4); // 4 for ref count, 4 for length
+    *((int *)p) = 199; // initialize ref count
+    p += 4;
+    *((int *)p) = len; // initialize length
+    p += 4;
     memset(p, 0, len*size);
     return p;
+}
+
+void free_if_zero_ref(void *p) {
+    int *ptr = (int*)p;
+    ptr = ptr-2;
+    int ref_count = *(ptr);
+    if (ref_count == 0) 
+        free(ptr);
 }
 
 

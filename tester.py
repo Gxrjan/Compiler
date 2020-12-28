@@ -18,7 +18,7 @@ def positive_test():
 
 
     outfile = open(gc_output_file, 'w')
-    subprocess.run(['./gc', 'tests.g'])
+    # subprocess.run(['./gc', 'tests.g'])
     subprocess.run('./'+str(tests_bin_file), stdout=outfile)
     output = list()
     outfile = open(gc_output_file)

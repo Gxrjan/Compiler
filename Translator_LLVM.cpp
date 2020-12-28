@@ -309,6 +309,8 @@ string Translator_LLVM::g_type_to_llvm_type(Type *t)
         return "i16*";
     else if (t == &Byte)
         return "i8";
+    else if (t == &Empty)
+        throw runtime_error("Trying to convert null to llvm_type");
     else {
         auto st = dynamic_cast<ArrayType *>(t);
         return this->g_type_to_llvm_type(st->base)+"*";
@@ -328,7 +330,6 @@ string Translator_LLVM::translate_new_arr_expr(string *s, NewArrExpr *e)
 {
     string len_register = this->translate_expr(s, e->expr.get());
     string size_register = this->assign_register();
-    string result_register = this->assign_register();
     string temp_register = this->assign_register();
     auto t = dynamic_cast<ArrayType *>(e->type);
     *s +=
@@ -337,7 +338,9 @@ string Translator_LLVM::translate_new_arr_expr(string *s, NewArrExpr *e)
     *s +=
         " "+temp_register+" = call i8* @new_arr_expr(i32 "+size_register+", i32 "+len_register+")\n";
     //return this->create_conversion(s, temp_register, ArrayType::make(&Byte), e->type);
-    return this->create_convert_ptr(s, temp_register, ArrayType::make(&Byte), e->type);
+    string result_register = this->create_convert_ptr(s, temp_register, ArrayType::make(&Byte), e->type);
+    references.push_back({result_register, g_type_to_llvm_type(e->type)});
+    return result_register;
 }
 
 string Translator_LLVM::translate_bool_expr(string *s, OpExpr *expr)
@@ -623,6 +626,25 @@ string Translator_LLVM::create_getelementptr(string *s, string llvm_type, string
     return result_register;
 }
 
+void Translator_LLVM::decrement_reference_count(string *s, Type *g_type, string ptr_register) {
+    string temp_register = this->assign_register();
+    string conv_register = this->assign_register();
+    *s +=
+        " "+temp_register+" = load "+this->g_type_to_llvm_type(g_type)+", "+this->g_type_to_llvm_type(g_type)+"* "+ptr_register+"\n"
+        " "+conv_register+" = bitcast "+this->g_type_to_llvm_type(g_type)+" "+temp_register+" to i32*\n";
+    cout <<"here"<<endl;
+    string ref_count_register = this->create_getelementptr_load(s, &Int,ArrayType::make(&Int), conv_register, "-2");
+    cout <<"here"<<endl;
+    *s +=
+        " %msg = getelementptr [4 x i8], [4 x i8]* @fmt_i, i32 0, i32 0\n"
+        " call i32 (i8*, ...) @printf(i8* %msg, i32 "+ref_count_register+")\n";
+    // *s +=
+    //     " "+temp_register+" = load "+llvm_type+", "+llvm_type+"* "+ptr_register+"\n"
+    //     " "+conv_register+" = bitcast "+llvm_type+" "+temp_register+" to i8*\n"
+    //     " call void (i8*) @decrement_reference_count(i8* "+conv_register+")\n";
+    
+}
+
 void Translator_LLVM::translate_assignment(string *s, Assignment *asgn)
 {
     *s += // asm comment
@@ -631,6 +653,8 @@ void Translator_LLVM::translate_assignment(string *s, Assignment *asgn)
         string expr_register = this->translate_expr(s, asgn->expr.get());
         string ptr_register = this->variables.at(var->name).first;
         string expr_llvm_type = this->variables.at(var->name).second;
+        // if (asgn->expr.get()->type == &Empty)
+        //     decrement_reference_count(s, asgn->id.get()->type, ptr_register);
         this->create_store(s, expr_llvm_type, expr_register, ptr_register);
     } else {
         auto el = dynamic_cast<ElemAccessExpr *>(asgn->id.get());
@@ -842,6 +866,7 @@ string Translator_LLVM::translate_program(Program* prog)
             "declare i32 @arr_len(i8*)\n"
             "declare i16* @to_gstring(i8*)\n"
             "declare i16** @to_argv(i32, i8**)\n"
+            "declare void @decrement_reference_count(i8*)\n"
             "define i32 @main(i32, i8**) {\n"
             "%argc = add i32 %0, 0\n"
             "%argv = call i16** @to_argv(i32 %0, i8** %1)\n";

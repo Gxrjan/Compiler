@@ -33,6 +33,9 @@ class BasicType : public Type {
 
 extern BasicType Bool, Char, Int, String, Empty, Byte;
 
+static inline bool is_ref_type(g_type t) {
+    return !(t==&Bool || t==&Int || t==&Char || t==&Byte);
+}
 
 class ArrayType : public Type {
     ArrayType(Type *base);
@@ -184,7 +187,7 @@ class CharToken : public Token {
   public:
     char c;
     CharToken(char c);
-    string to_string();
+    string to_string() override;
     bool isChar(char *c) override;
 };
 
@@ -431,7 +434,7 @@ class Scanner {
     bool has_next = false;
     int line = 1;
     int column = 1;
-    unique_ptr<Token> next = nullptr;
+    unique_ptr<Token> next;
     ifstream file;
     void report_error(string message);
     char getc();
@@ -615,7 +618,9 @@ class Translator_LLVM {
     string create_inc_dec(string *s, bool inc_dec, string expr_register);
     void change_reference_count(string *s, Type *g_type, string ptr_register, int i);
     void free_unused_memory(string *s);
-    //void increment_reference_count(string *s, g_type type, string expr_register);
+    void free_variables(string *s);
+    void free_argv(string *s);
+    void create_free_memory(string *s, g_type type, string ptr_register);
   public:
     string translate_program(Program *p);
 };

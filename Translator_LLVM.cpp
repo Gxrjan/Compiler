@@ -872,6 +872,41 @@ void Translator_LLVM::translate_block(string *s, Block *b, string loop_end_label
         this->translate_statement(s, statement.get(), loop_end_label);
 }
 
+void Translator_LLVM::free_argv(string *s) {
+    *s +=
+        " call void (i32, i16**) @free_argv(i32 %argc, i16** %argv)\n";
+}
+
+void Translator_LLVM::free_variables(string *s) {
+    for (auto p : this->variables) {
+
+    }
+}
+
+
+void Translator_LLVM::create_free_memory(string *s, g_type type, string ptr_register) {
+    if (!is_ref_type(type))
+        return;
+    if (type==&String) {
+        string conv_register = this->assign_register();
+        *s +=
+            " "+conv_register+" = bitcast i16* "+ptr_register+" to i32*\n";
+        string temp_register = this->create_getelementptr_load(s, &Int,ArrayType::make(&Int), conv_register, "-1");
+        *s +=
+            " call void (i32*) @free_memory(i32* "+temp_register+")\n";
+    }
+    if (auto at = dynamic_cast<ArrayType*>(type)) {
+
+    }
+    // string conv_register = this->assign_register();
+    // *s +=
+    //         " "+conv_register+" = bitcast i16* "+ptr_register+" to i32*\n";
+    // string temp_register = this->create_getelementptr_load(s, &Int,ArrayType::make(&Int), conv_register, "-2");
+    // *s +=
+    //     " "+temp_register+" = "
+    //     " call "
+}
+
 string Translator_LLVM::translate_program(Program* prog)
 {
     string result = "";
@@ -899,13 +934,15 @@ string Translator_LLVM::translate_program(Program* prog)
             "declare i16* @to_gstring(i8*)\n"
             "declare i16** @to_argv(i32, i8**)\n"
             "declare void @change_reference_count(i8*, i32)\n"
+            "declare void @free_memory(i8*)\n"
+            "declare void @free_argv(i32, i16**)\n"
             "define i32 @main(i32, i8**) {\n"
             "%argc = add i32 %0, 0\n"
             "%argv = call i16** @to_argv(i32 %0, i8** %1)\n";
 
 
     this->translate_block(&result, prog->block.get(), "");
-
+    this->free_argv(&result);
     result += 
         "ret i32 0\n"
         "}\n";

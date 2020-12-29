@@ -1,5 +1,7 @@
 #include <iostream>
 #include <cstring>
+#include "head.h"
+
 typedef char16_t *gstring;
 typedef char byte;
 using namespace std;
@@ -13,6 +15,17 @@ u16string ascii_to_u16(string s) {
 }
 
 extern "C" {
+
+inline int gstring_len(gstring s) {
+    if (!s)
+        throw runtime_error("null pointer exception");
+    return *((int *)(s-2));
+}
+
+int arr_len(void *p)
+{
+    return gstring_len(static_cast<gstring>(p));
+}
 
 void change_reference_count(void *ptr, int i) {
     if (!ptr)
@@ -45,8 +58,26 @@ gstring to_gstring(char *str) {
     return u;
 }
 
+void free_memory(byte *p, g_type type) {
+    if (!is_ref_type(type))
+        return;
+    if (type == &String) {
+        int *ptr = (int*)p;
+        free((ptr-2));
+        return;
+    }
+    auto at = dynamic_cast<ArrayType*>(type);
+    int len = arr_len(p);
+    for (int i=0;i<len;i++) {
+        free_memory(&p[i*8], at->base);
+    }
+    int *ptr = (int*)p;
+    free((ptr-2));
+}
 gstring* to_argv(int argc, char **args) {
-    char *ptr = (char *)malloc(argc*sizeof(gstring *) + 4);
+    char *ptr = (char *)malloc(argc*sizeof(gstring *) + 4 + 4); // 4 for ref count, 4 for length
+    *((int *)ptr) = 1;
+    ptr += 4;
     *((int *)ptr) = argc;
     ptr += 4;
     gstring *argv = (gstring *)ptr;
@@ -54,12 +85,19 @@ gstring* to_argv(int argc, char **args) {
         argv[i] = to_gstring(args[i]);
     return argv;
 }
-
-inline int gstring_len(gstring s) {
-    if (!s)
-        throw runtime_error("null pointer exception");
-    return *((int *)(s-2));
+void free_argv(int argc, gstring *argv) {
+    free_memory((byte*)argv, ArrayType::make(&String));
+    // for (int i=0;i<argc;i++) {
+    //     gstring str = argv[i];
+    //     int *ptr = (int*)str;
+    //     free((ptr-1));
+    // }
+    // int *ptr = (int*)argv;
+    // free((ptr-2));
 }
+
+
+
 
 
 gstring concat_chars(const char16_t *s, int slen, const char16_t *t, int tlen) {
@@ -201,10 +239,7 @@ void free_if_zero_ref(void *p) {
 }
 
 
-int arr_len(void *p)
-{
-    return gstring_len(static_cast<gstring>(p));
-}
+
 
 
 int cmp_str(gstring s, gstring t)

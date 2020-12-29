@@ -1,11 +1,14 @@
-SOURCES = head.h main.cpp Scanner.cpp Token.cpp Expr.cpp Parser.cpp Translator.cpp Program.cpp Statement.cpp Variable.cpp Checker.cpp Types.cpp Translator_LLVM.cpp
-all: gc G_runtime_library.o
+SOURCES = head.h main.cpp Scanner.cpp Token.cpp Expr.cpp Parser.cpp Translator.cpp Types.cpp Program.cpp Statement.cpp Variable.cpp Checker.cpp Translator_LLVM.cpp
+all: gc G_runtime_library.o Types.o
 
-gc: $(SOURCES)
+gc: $(SOURCES) 
 	g++ -o gc -Wall -std=c++17 -g $(SOURCES)
 
 G_runtime_library.o: G_runtime_library.cpp
-	clang++ -Wall -c  G_runtime_library.cpp
+	clang++ -Wall -c  G_runtime_library.cpp 
+
+Tests.o: Types.cpp
+	clang++ -Wall -c Types.cpp
 
 
 test: gc tests.g tests_neg.g

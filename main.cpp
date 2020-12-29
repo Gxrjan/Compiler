@@ -33,6 +33,6 @@ int main(int argc, char *argv[])
         file_name = "a";
         program = "prog";
     } 
-    string cmd = "clang++ -Wno-override-module -O2 "+file_name+".ll G_runtime_library.o -o "+program;
+    string cmd = "clang++ -Wno-override-module -O2 "+file_name+".ll G_runtime_library.o Types.o -o "+program;
     system(cmd.c_str());
 }

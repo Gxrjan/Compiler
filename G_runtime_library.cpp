@@ -7,6 +7,12 @@ typedef char byte;
 using namespace std;
 
 
+
+
+
+
+
+
 u16string ascii_to_u16(string s) {
     u16string u;
     for (char c : s)
@@ -16,10 +22,25 @@ u16string ascii_to_u16(string s) {
 
 extern "C" {
 
+
+
 inline int gstring_len(gstring s) {
     if (!s)
         throw runtime_error("null pointer exception");
     return *((int *)(s-2));
+}
+
+void printg(gstring s)
+{
+    if (!s) {
+        printf("\n");
+        return;
+    }
+    int slen = gstring_len(s);
+    for (int i = 0;i < slen;i++) {
+        printf("%lc", s[i]);
+    }
+    printf("\n");
 }
 
 int arr_len(void *p)
@@ -58,24 +79,28 @@ gstring to_gstring(char *str) {
     return u;
 }
 
-void free_memory(byte *p, g_type type) {
+void free_memory(void *p, g_type type) {
     if (!is_ref_type(type))
         return;
     if (type == &String) {
+        gstring str = (gstring)p;
+        printg(str);
         int *ptr = (int*)p;
-        free((ptr-2));
+        free((ptr-1));
         return;
     }
-    auto at = dynamic_cast<ArrayType*>(type);
+    auto at = dynamic_cast<ArrayType*>(type); // Segfault here
     int len = arr_len(p);
+    cout << "Length of argv: " << len << endl;
+    gstring *argv = (gstring*)p;
     for (int i=0;i<len;i++) {
-        free_memory(&p[i*8], at->base);
+        free_memory(argv[i], at->base);
     }
     int *ptr = (int*)p;
     free((ptr-2));
 }
 gstring* to_argv(int argc, char **args) {
-    char *ptr = (char *)malloc(argc*sizeof(gstring *) + 4 + 4); // 4 for ref count, 4 for length
+    char *ptr = (char *)malloc(argc*sizeof(gstring) + 4 + 4); // 4 for ref count, 4 for length
     *((int *)ptr) = 1;
     ptr += 4;
     *((int *)ptr) = argc;
@@ -87,6 +112,7 @@ gstring* to_argv(int argc, char **args) {
 }
 void free_argv(int argc, gstring *argv) {
     free_memory((byte*)argv, ArrayType::make(&String));
+
     // for (int i=0;i<argc;i++) {
     //     gstring str = argv[i];
     //     int *ptr = (int*)str;
@@ -123,18 +149,6 @@ gstring concat(gstring s, gstring t)
     return concat_chars(s, gstring_len(s), t, gstring_len(t));
 }
 
-void printg(gstring s)
-{
-    if (!s) {
-        printf("\n");
-        return;
-    }
-    int slen = gstring_len(s);
-    for (int i = 0;i < slen;i++) {
-        printf("%lc", s[i]);
-    }
-    printf("\n");
-}
 
 
 gstring concat_str_int(gstring s, int i)

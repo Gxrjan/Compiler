@@ -22,7 +22,7 @@ u16string ascii_to_u16(string s) {
 
 extern "C" {
 
-
+void change_reference_count(void *ptr, int i, int depth);
 
 inline int gstring_len(gstring s) {
     if (!s)
@@ -48,7 +48,31 @@ int arr_len(void *p)
     return gstring_len(static_cast<gstring>(p));
 }
 
-void change_reference_count(void *ptr, int i) {
+void free_memory(void *p, int depth) {
+    cout << "Want to free: " << p << endl;
+    if (depth==1) {
+        int *ptr = (int*)p;
+        cout << "arr len depth1: " << arr_len(p) << endl;
+        free((ptr-2));
+    } else {
+        void **ptr = (void**)p;
+        int len = arr_len(ptr);
+        cout << "arr len: " << arr_len(p) << endl;
+        for (int i=0;i<len;i++) {
+            if (*(ptr+i)) {
+                cout << i << endl;
+                change_reference_count(*(ptr+i), -1, (depth-1));
+                //free_memory(*(ptr+i), (depth-1));
+            }
+        }
+        free((ptr-1));
+    }
+}
+
+void change_reference_count(void *ptr, int i, int depth) {
+    cout << "Changing ref count at " << ptr << endl;
+    cout << "Depth is " << depth << endl;
+    cout << i << endl;
     if (!ptr)
         return;
     int *p = (int*)ptr; // convert to int pointer
@@ -58,7 +82,7 @@ void change_reference_count(void *ptr, int i) {
     *p = ref_count;     // write down the changed ref count
     if (ref_count == 0) {
         //printf("ref count is zero. I will free memory.\n");
-        free(p);
+        free_memory(p+2, depth);
         return;
     }
     //printf("ref count: %d\n", ref_count);
@@ -72,7 +96,7 @@ gstring to_gstring(char *str) {
     if (!str)
         throw runtime_error("null pointer exception");
     byte *u = (byte*) malloc(2 * strlen(str) + 4 + 4);
-    *((int *)u) = 99; //ref count, 99 for testing purposes
+    *((int *)u) = 1; //ref count, 99 for testing purposes
     u += 4;
     *((int *)u) = strlen(str);
     u += 4;
@@ -82,19 +106,6 @@ gstring to_gstring(char *str) {
     return result;
 }
 
-void free_memory(void *p, int depth) {
-    if (depth==1) {
-        int *ptr = (int*)p;
-        free((ptr-2));
-    } else {
-        void **ptr = (void**)p;
-        int len = arr_len(ptr);
-        for (int i=0;i<len;i++) {
-            free_memory(*(ptr+i), (depth-1));
-        }
-        free((ptr-1));
-    }
-}
 gstring* to_argv(int argc, char **args) {
     char *ptr = (char *)malloc(argc*sizeof(gstring) + 4 + 4); // 4 for ref count, 4 for length
     *((int *)ptr) = 1;
@@ -237,6 +248,7 @@ void *new_arr_expr(int size, int len)
     *((int *)p) = len; // initialize length
     p += 4;
     memset(p, 0, len*size);
+    cout << "address at creation: " << (int*)p << endl;
     return p;
 }
 

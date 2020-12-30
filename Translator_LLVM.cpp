@@ -661,7 +661,7 @@ void Translator_LLVM::change_reference_count(string *s, g_type type, string ptr_
     *s +=
         //" "+temp_register+" = load "+llvm_type+", "+llvm_type+"* "+ptr_register+"\n"
         " "+conv_register+" = bitcast "+llvm_type+" "+ptr_register+" to i8*\n"
-        " call void (i8*, i32) @change_reference_count(i8* "+conv_register+", i32 "+std::to_string(i)+")\n";
+        " call void (i8*, i32, i32) @change_reference_count(i8* "+conv_register+", i32 "+std::to_string(i)+", i32 "+std::to_string(this->g_type_to_depth(type))+")\n";
     
 }
 
@@ -678,6 +678,9 @@ void Translator_LLVM::translate_assignment(string *s, Assignment *asgn)
         *s +=
             " "+temp_register+" = load "+this->g_type_to_llvm_type(t)+", "+this->g_type_to_llvm_type(t)+"* "+ptr_register+"\n";
         if (auto at = dynamic_cast<ArrayType*>(t)) {
+            // cout << "Depth at gc: " << this->g_type_to_depth(at) << endl;
+            // if (dynamic_cast<NullExpr*>(asgn->expr.get()))
+            //     cout << "it's null" << endl;
             change_reference_count(s, at, temp_register, -1);
             change_reference_count(s, asgn->expr->type, expr_register, +1);
         }
@@ -697,7 +700,7 @@ void Translator_LLVM::translate_assignment(string *s, Assignment *asgn)
             " "+temp_register+" = load "+this->g_type_to_llvm_type(arr_t->base)+", "+this->g_type_to_llvm_type(arr_t->base)+"* "+ptr_register+"\n";
         if (auto at = dynamic_cast<ArrayType*>(arr_t->base)) {
             change_reference_count(s, at, temp_register, -1);
-            change_reference_count(s, arr_t, expr_register, +1);
+            change_reference_count(s, at, asgn_register, +1);
         }
         this->create_store(s, asgn_llvm_type, asgn_register, ptr_register);
     }
@@ -956,7 +959,7 @@ string Translator_LLVM::translate_program(Program* prog)
             "declare i32 @arr_len(i8*)\n"
             "declare i16* @to_gstring(i8*)\n"
             "declare i16** @to_argv(i32, i8**)\n"
-            "declare void @change_reference_count(i8*, i32)\n"
+            "declare void @change_reference_count(i8*, i32, i32)\n"
             "declare void @free_memory(i8*, i32)\n"
             "define i32 @main(i32, i8**) {\n"
             "%argc = add i32 %0, 0\n"
@@ -965,7 +968,7 @@ string Translator_LLVM::translate_program(Program* prog)
 
     this->translate_block(&result, prog->block.get(), "");
     this->free_argv(&result);
-    this->free_variables(&result);
+    //this->free_variables(&result);
     result += 
         "ret i32 0\n"
         "}\n";

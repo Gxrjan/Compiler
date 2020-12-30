@@ -72,7 +72,6 @@ gstring to_gstring(char *str) {
     if (!str)
         throw runtime_error("null pointer exception");
     byte *u = (byte*) malloc(2 * strlen(str) + 4 + 4);
-    cout << "Address at creation: " << (int*)u << endl;
     *((int *)u) = 99; //ref count, 99 for testing purposes
     u += 4;
     *((int *)u) = strlen(str);
@@ -86,35 +85,15 @@ gstring to_gstring(char *str) {
 void free_memory(void *p, int depth) {
     if (depth==1) {
         int *ptr = (int*)p;
-        cout << "string length: " << gstring_len((gstring)p) << endl;
-        cout << "Ref count: " << *(ptr-2) << endl;
-        cout << "Address at freeing: " << (ptr-2) << endl;
         free((ptr-2));
     } else {
         void **ptr = (void**)p;
         int len = arr_len(ptr);
-        cout << "Length of argv: " << len << endl;
         for (int i=0;i<len;i++) {
             free_memory(*(ptr+i), (depth-1));
         }
-        free((ptr-2));
+        free((ptr-1));
     }
-    // if (type == &String) {
-    //     gstring str = (gstring)p;
-    //     printg(str);
-    //     int *ptr = (int*)p;
-    //     free((ptr-1));
-    //     return;
-    // }
-    // auto at = dynamic_cast<ArrayType*>(type); // Segfault here
-    // int len = arr_len(p);
-    // cout << "Length of argv: " << len << endl;
-    // gstring *argv = (gstring*)p;
-    // for (int i=0;i<len;i++) {
-    //     free_memory(argv[i], at->base);
-    // }
-    // int *ptr = (int*)p;
-    // free((ptr-2));
 }
 gstring* to_argv(int argc, char **args) {
     char *ptr = (char *)malloc(argc*sizeof(gstring) + 4 + 4); // 4 for ref count, 4 for length

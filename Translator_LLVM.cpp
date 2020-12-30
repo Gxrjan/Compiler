@@ -1,5 +1,16 @@
 #include "head.h"
 
+int Translator_LLVM::g_type_to_depth(g_type type) {
+    if (type==&Int || type==&Char || type==&Byte || type==&Bool || type==&Empty)
+        return 0;
+    else if (type == &String)
+        return 1;
+    else {
+        auto at = dynamic_cast<ArrayType*>(type);
+        return 1 + g_type_to_depth(at->base);
+    }
+}
+
 string Translator_LLVM::assign_register()
 {
     return "%r"+std::to_string(this->register_id++);
@@ -883,7 +894,14 @@ void Translator_LLVM::free_argv(string *s) {
 
 void Translator_LLVM::free_variables(string *s) {
     for (auto p : this->variables) {
-
+        if (p.second.second == &String || p.second.second == &Bool || 
+        p.second.second == &Int || p.second.second == &Char ||
+        p.second.second == &Empty || p.second.second == &Byte )
+            continue;
+        string ptr_register = this->assign_register();
+        *s +=
+            " "+ptr_register+" = load "+this->g_type_to_llvm_type(p.second.second)+", "+this->g_type_to_llvm_type(p.second.second)+"* "+p.second.first+"\n";
+        this->change_reference_count(s, p.second.second, ptr_register, -1);
     }
 }
 
@@ -947,6 +965,7 @@ string Translator_LLVM::translate_program(Program* prog)
 
     this->translate_block(&result, prog->block.get(), "");
     this->free_argv(&result);
+    this->free_variables(&result);
     result += 
         "ret i32 0\n"
         "}\n";

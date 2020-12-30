@@ -876,7 +876,7 @@ void Translator_LLVM::free_argv(string *s) {
     string conv_register = this->assign_register();
     *s +=
         " "+conv_register+" = bitcast i16** %argv to i8*\n"
-        " call void (i8*, i64) @free_memory(i8* "+conv_register+", i64 "+std::to_string((long long)(ArrayType::make(&String)))+")\n";
+        " call void (i8*, i32) @free_memory(i8* "+conv_register+", i32 2)\n";
     // *s +=
     //     " call void (i32, i16**) @free_argv(i32 %argc, i16** %argv)\n";
 }
@@ -939,7 +939,7 @@ string Translator_LLVM::translate_program(Program* prog)
             "declare i16* @to_gstring(i8*)\n"
             "declare i16** @to_argv(i32, i8**)\n"
             "declare void @change_reference_count(i8*, i32)\n"
-            "declare void @free_memory(i8*, i64)\n"
+            "declare void @free_memory(i8*, i32)\n"
             "define i32 @main(i32, i8**) {\n"
             "%argc = add i32 %0, 0\n"
             "%argv = call i16** @to_argv(i32 %0, i8** %1)\n";

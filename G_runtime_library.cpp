@@ -49,18 +49,18 @@ int arr_len(void *p)
 }
 
 void free_memory(void *p, int depth) {
-    cout << "Want to free: " << p << endl;
+    // cout << "Want to free: " << p << endl;
     if (depth==1) {
         int *ptr = (int*)p;
-        cout << "arr len depth1: " << arr_len(p) << endl;
+        // cout << "arr len depth1: " << arr_len(p) << endl;
         free((ptr-2));
     } else {
         void **ptr = (void**)p;
         int len = arr_len(ptr);
-        cout << "arr len: " << arr_len(p) << endl;
+        // cout << "arr len: " << arr_len(p) << endl;
         for (int i=0;i<len;i++) {
             if (*(ptr+i)) {
-                cout << i << endl;
+                // cout << i << endl;
                 change_reference_count(*(ptr+i), -1, (depth-1));
                 //free_memory(*(ptr+i), (depth-1));
             }
@@ -70,9 +70,9 @@ void free_memory(void *p, int depth) {
 }
 
 void change_reference_count(void *ptr, int i, int depth) {
-    cout << "Changing ref count at " << ptr << endl;
-    cout << "Depth is " << depth << endl;
-    cout << i << endl;
+    // cout << "Changing ref count at " << ptr << endl;
+    // cout << "Depth is " << depth << endl;
+    // cout << i << endl;
     if (!ptr)
         return;
     int *p = (int*)ptr; // convert to int pointer
@@ -248,7 +248,7 @@ void *new_arr_expr(int size, int len)
     *((int *)p) = len; // initialize length
     p += 4;
     memset(p, 0, len*size);
-    cout << "address at creation: " << (int*)p << endl;
+    //cout << "address at creation: " << (int*)p << endl;
     return p;
 }
 

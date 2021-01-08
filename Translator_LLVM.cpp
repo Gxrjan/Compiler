@@ -968,7 +968,7 @@ string Translator_LLVM::translate_program(Program* prog)
 
     this->translate_block(&result, prog->block.get(), "");
     this->free_argv(&result);
-    //this->free_variables(&result);
+    this->free_variables(&result);
     result += 
         "ret i32 0\n"
         "}\n";

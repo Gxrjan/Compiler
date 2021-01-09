@@ -124,9 +124,17 @@ string Translator_LLVM::translate_string_literal(string *s, StringLiteral *l)
     int id = this->string_id++;
     string result_register = this->assign_register();
     string len_str = std::to_string(l->s.length());
+    // *s +=
+    //     " "+result_register+" = call i16* (i32, ...) @create_gstring(i32 "+len_str+", ";
+    // for (size_t i=0;i<l->s.length();i++) {
+    //     *s +=
+    //         "i32 " + std::to_string(l->s[i]);
+    //     *s +=
+    //         ((i==l->s.length()-1) ? ")\n" : ", ");
+    // }
     *s +=
-        ""+result_register+" = getelementptr <{ i32, ["+len_str+" x i16]}>, "
-        "<{ i32, ["+len_str+" x i16]}>* @str_"+std::to_string(id)+", i32 0, i32 1, i32 0\n";
+        ""+result_register+" = getelementptr <{ i32, i32, ["+len_str+" x i16]}>, "
+        "<{ i32, i32, ["+len_str+" x i16]}>* @str_"+std::to_string(id)+", i32 0, i32 2, i32 0\n";
     this->strings.insert({l, id});
     return result_register;
 }
@@ -271,6 +279,7 @@ string Translator_LLVM::translate_substr_expr(string *s, SubstrExpr *e)
         *s +=
             " "+result_register+" = call i16* @substr_int_int(i16* "+str_register+",i32 "+from_register+", i32 "+len_register+")\n";    
     }
+    references.push({result_register, e->type});
     return result_register;
 }
 
@@ -293,6 +302,7 @@ string Translator_LLVM::translate_new_str_expr(string *s, NewStrExpr *e)
     string result_register = this->assign_register();
     *s +=
         " "+result_register+" = call i16* @new_str_expr(i16 "+chr_register+", i32 "+len_register+")\n";
+    references.push({result_register, e->type});
     return result_register;
 }
 
@@ -503,6 +513,7 @@ string Translator_LLVM::translate_arithm_expr(string *s, OpExpr *expr)
                             " "+result_register+" = call i16* @concat_chr_str(i16 "+register_left+"," 
                             "i16* "+register_right+")";
                 }
+                this->references.push({result_register, &String});
                 return result_register;
             }
             break;
@@ -613,6 +624,8 @@ void Translator_LLVM::translate_declaration(string *s, Declaration *dec)
     string result_register = this->create_allocate_and_store(s, dec->type, temp_register);
     if (auto arr_type = dynamic_cast<ArrayType*>(dec->type)) {
         change_reference_count(s, arr_type, expr_register, +1);
+    } else if (dec->type == &String) {
+        change_reference_count(s, dec->type, expr_register, +1);
     }
     this->variables.insert_or_assign(dec->id, std::make_pair(result_register, dec->type));
 }
@@ -658,6 +671,7 @@ void Translator_LLVM::change_reference_count(string *s, g_type type, string ptr_
     // *s +=
     //     " %msg = getelementptr [4 x i8], [4 x i8]* @fmt_i, i32 0, i32 0\n"
     //     " call i32 (i8*, ...) @printf(i8* %msg, i32 "+ref_count_register+")\n";
+    //cout << "depth is " << this->g_type_to_depth(type) << endl;
     *s +=
         //" "+temp_register+" = load "+llvm_type+", "+llvm_type+"* "+ptr_register+"\n"
         " "+conv_register+" = bitcast "+llvm_type+" "+ptr_register+" to i8*\n"
@@ -683,6 +697,9 @@ void Translator_LLVM::translate_assignment(string *s, Assignment *asgn)
             //     cout << "it's null" << endl;
             change_reference_count(s, at, temp_register, -1);
             change_reference_count(s, asgn->expr->type, expr_register, +1);
+        } else if (t == &String) {
+            change_reference_count(s, t, temp_register, -1);
+            change_reference_count(s, asgn->expr->type, expr_register, +1);
         }
         this->create_store(s, expr_llvm_type, expr_register, ptr_register);
     } else {
@@ -701,6 +718,9 @@ void Translator_LLVM::translate_assignment(string *s, Assignment *asgn)
         if (auto at = dynamic_cast<ArrayType*>(arr_t->base)) {
             change_reference_count(s, at, temp_register, -1);
             change_reference_count(s, at, asgn_register, +1);
+        } else if (arr_t->base == &String) {
+            change_reference_count(s, arr_t->base, temp_register, -1);
+            change_reference_count(s, arr_t->base, asgn_register, +1);
         }
         this->create_store(s, asgn_llvm_type, asgn_register, ptr_register);
     }
@@ -897,7 +917,7 @@ void Translator_LLVM::free_argv(string *s) {
 
 void Translator_LLVM::free_variables(string *s) {
     for (auto p : this->variables) {
-        if (p.second.second == &String || p.second.second == &Bool || 
+        if (p.second.second == &Bool || 
         p.second.second == &Int || p.second.second == &Char ||
         p.second.second == &Empty || p.second.second == &Byte )
             continue;
@@ -961,6 +981,7 @@ string Translator_LLVM::translate_program(Program* prog)
             "declare i16** @to_argv(i32, i8**)\n"
             "declare void @change_reference_count(i8*, i32, i32)\n"
             "declare void @free_memory(i8*, i32)\n"
+            "declare i16* @create_gstring(i32, ...)\n"
             "define i32 @main(i32, i8**) {\n"
             "%argc = add i32 %0, 0\n"
             "%argv = call i16** @to_argv(i32 %0, i8** %1)\n";
@@ -981,8 +1002,8 @@ string Translator_LLVM::translate_program(Program* prog)
             "; string: "+str+"\n";
         result +=
             "@str_"+std::to_string(id)+" = constant"
-            "<{ i32, [ "+len_str+" x i16 ]}>"
-            "<{ i32 "+len_str+", [ "+len_str+" x i16] [";
+            "<{ i32, i32, [ "+len_str+" x i16 ]}>"
+            "<{ i32 -1, i32 "+len_str+", [ "+len_str+" x i16] [";
         for (int i=0;i<length;i++)
             result += (i==length-1) ? "i16 "+std::to_string((int)str[i])+"] }>\n" :
                                         "i16 "+std::to_string((int)str[i])+",";

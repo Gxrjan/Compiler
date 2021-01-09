@@ -70,7 +70,7 @@ void free_memory(void *p, int depth) {
 }
 
 void change_reference_count(void *ptr, int i, int depth) {
-    // cout << "Changing ref count at " << ptr << endl;
+    //cout << "Changing ref count at " << ptr << endl;
     // cout << "Depth is " << depth << endl;
     // cout << i << endl;
     if (!ptr)
@@ -78,10 +78,12 @@ void change_reference_count(void *ptr, int i, int depth) {
     int *p = (int*)ptr; // convert to int pointer
     p -= 2;             // scroll back to ref count
     int ref_count = *p; // get the actual ref count integer
+    if (ref_count==-1)
+        return;
     ref_count += i;     // change it
     *p = ref_count;     // write down the changed ref count
     if (ref_count == 0) {
-        //printf("ref count is zero. I will free memory.\n");
+        // printf("ref count is zero. I will free memory.\n");
         free_memory(p+2, depth);
         return;
     }
@@ -103,6 +105,33 @@ gstring to_gstring(char *str) {
     gstring result = (gstring)u;
     for (int i=0;i<strlen(str);i++)
         result[i] = str[i];
+    return result;
+}
+
+gstring to_gstring_2(char *str, int ref_count) {
+    if (!str)
+        throw runtime_error("null pointer exception");
+    byte *u = (byte*) malloc(2 * strlen(str) + 4 + 4);
+    *((int *)u) = ref_count; 
+    u += 4;
+    *((int *)u) = strlen(str);
+    u += 4;
+    gstring result = (gstring)u;
+    for (int i=0;i<strlen(str);i++)
+        result[i] = str[i];
+    return result;
+}
+
+
+gstring create_gstring(int len, ...) {
+    va_list args;
+    va_start(args, len);
+    char *buffer = (char*)malloc(sizeof(char)*len);
+    for (int i=0;i<len;i++) {
+        buffer[i] = va_arg(args, int);
+    }
+    gstring result = to_gstring_2(buffer, 0);
+    free(buffer);
     return result;
 }
 
@@ -134,10 +163,12 @@ void free_argv(int argc, gstring *argv) {
 
 
 gstring concat_chars(const char16_t *s, int slen, const char16_t *t, int tlen) {
-    gstring u = (gstring) malloc(2 * (slen + tlen) + 4) + 2;
+    gstring u = (gstring) malloc(2 * (slen + tlen) + 4 + 4) + 4;
+    *((int *)(u - 4)) = 0;
     *((int *)(u - 2)) = slen + tlen;
     memcpy(u, s, 2*slen);
     memcpy(u+slen, t, 2*tlen);
+    //printf("Address at creation: %p\n", (void*)u);
     return u;
 }
 

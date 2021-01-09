@@ -692,9 +692,6 @@ void Translator_LLVM::translate_assignment(string *s, Assignment *asgn)
         *s +=
             " "+temp_register+" = load "+this->g_type_to_llvm_type(t)+", "+this->g_type_to_llvm_type(t)+"* "+ptr_register+"\n";
         if (auto at = dynamic_cast<ArrayType*>(t)) {
-            // cout << "Depth at gc: " << this->g_type_to_depth(at) << endl;
-            // if (dynamic_cast<NullExpr*>(asgn->expr.get()))
-            //     cout << "it's null" << endl;
             change_reference_count(s, at, temp_register, -1);
             change_reference_count(s, asgn->expr->type, expr_register, +1);
         } else if (t == &String) {
@@ -911,8 +908,6 @@ void Translator_LLVM::free_argv(string *s) {
     *s +=
         " "+conv_register+" = bitcast i16** %argv to i8*\n"
         " call void (i8*, i32) @free_memory(i8* "+conv_register+", i32 2)\n";
-    // *s +=
-    //     " call void (i32, i16**) @free_argv(i32 %argc, i16** %argv)\n";
 }
 
 void Translator_LLVM::free_variables(string *s) {
@@ -928,29 +923,6 @@ void Translator_LLVM::free_variables(string *s) {
     }
 }
 
-
-void Translator_LLVM::create_free_memory(string *s, g_type type, string ptr_register) {
-    // if (!is_ref_type(type))
-    //     return;
-    // if (type==&String) {
-    //     string conv_register = this->assign_register();
-    //     *s +=
-    //         " "+conv_register+" = bitcast i16* "+ptr_register+" to i32*\n";
-    //     string temp_register = this->create_getelementptr_load(s, &Int,ArrayType::make(&Int), conv_register, "-1");
-    //     *s +=
-    //         " call void (i32*) @free_memory(i32* "+temp_register+")\n";
-    // }
-    // if (auto at = dynamic_cast<ArrayType*>(type)) {
-
-    // }
-    // string conv_register = this->assign_register();
-    // *s +=
-    //         " "+conv_register+" = bitcast i16* "+ptr_register+" to i32*\n";
-    // string temp_register = this->create_getelementptr_load(s, &Int,ArrayType::make(&Int), conv_register, "-2");
-    // *s +=
-    //     " "+temp_register+" = "
-    //     " call "
-}
 
 
 string Translator_LLVM::translate_program(Program* prog)

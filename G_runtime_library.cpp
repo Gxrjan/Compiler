@@ -146,20 +146,6 @@ gstring* to_argv(int argc, char **args) {
         argv[i] = to_gstring(args[i]);
     return argv;
 }
-void free_argv(int argc, gstring *argv) {
-    //free_memory((byte*)argv, ArrayType::make(&String));
-
-    // for (int i=0;i<argc;i++) {
-    //     gstring str = argv[i];
-    //     int *ptr = (int*)str;
-    //     free((ptr-1));
-    // }
-    // int *ptr = (int*)argv;
-    // free((ptr-2));
-}
-
-
-
 
 
 gstring concat_chars(const char16_t *s, int slen, const char16_t *t, int tlen) {

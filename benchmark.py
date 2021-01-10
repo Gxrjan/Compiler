@@ -60,8 +60,11 @@ def main():
     # prime sum 20000 elements
     do_test("Prime sum", 'prime_sum', [20000])
 
-    # Tag 60 elements
+    # Tag 300 elements
     do_test("Tag", 'tag', [300])
+
+    # String permutations on ABCDEFGHI
+    do_test("String permutations", 'perm', ["ABCDEFGHIJ"])
 
 
 

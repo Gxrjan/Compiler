@@ -85,6 +85,8 @@ def negative_test():
             os.unlink(test_home / filename)
     return error_count
 
+
+
 def main():
     pos_count = positive_test()
     neg_count = negative_test()

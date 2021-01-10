@@ -27,4 +27,8 @@ benchmark/tag_cpp
 benchmark/insertion_sort_cs
 benchmark/prime_sum_cs
 benchmark/tag_cs
+benchmark/perm
+benchmark/perm_cs
+benchmark/perm_cpp
 Prog*
+test_mem

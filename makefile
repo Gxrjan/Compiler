@@ -12,7 +12,6 @@ Tests.o: Types.cpp
 
 
 test: gc tests.g tests_neg.g test_mem.g
-	./gc test_mem.g
 	./gc tests.g
 	python tester.py
 

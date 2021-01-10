@@ -61,7 +61,7 @@ def main():
     do_test("Prime sum", 'prime_sum', [20000])
 
     # Tag 60 elements
-    do_test("Tag", 'tag', [60])
+    do_test("Tag", 'tag', [300])
 
 
 

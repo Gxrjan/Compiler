@@ -901,6 +901,18 @@ void Translator_LLVM::translate_block(string *s, Block *b, string loop_end_label
 {
     for (auto &statement : b->statements)
         this->translate_statement(s, statement.get(), loop_end_label);
+    for (auto var : b->variables) {
+        auto p = this->variables[var.first];
+        if (p.second == &Bool || 
+        p.second == &Int || p.second == &Char ||
+        p.second == &Empty || p.second == &Byte )
+            continue;
+        string ptr_register = this->assign_register();
+        *s +=
+            " "+ptr_register+" = load "+this->g_type_to_llvm_type(p.second)+", "+this->g_type_to_llvm_type(p.second)+"* "+p.first+"\n";
+        this->change_reference_count(s, p.second, ptr_register, -1);
+    }
+    
 }
 
 void Translator_LLVM::free_argv(string *s) {
@@ -961,7 +973,7 @@ string Translator_LLVM::translate_program(Program* prog)
 
     this->translate_block(&result, prog->block.get(), "");
     this->free_argv(&result);
-    this->free_variables(&result);
+    //this->free_variables(&result);
     result += 
         "ret i32 0\n"
         "}\n";
@@ -977,8 +989,9 @@ string Translator_LLVM::translate_program(Program* prog)
             "<{ i32, i32, [ "+len_str+" x i16 ]}>"
             "<{ i32 -1, i32 "+len_str+", [ "+len_str+" x i16] [";
         for (int i=0;i<length;i++)
-            result += (i==length-1) ? "i16 "+std::to_string((int)str[i])+"] }>\n" :
+            result += (i==length-1) ? "i16 "+std::to_string((int)str[i])+"" :
                                         "i16 "+std::to_string((int)str[i])+",";
+        result += "] }>\n";
     }
     return result;
 }

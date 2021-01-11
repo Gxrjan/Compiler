@@ -10,7 +10,17 @@ Type ->
 
 
 Program ->
-        | Block
+        | external_declaration_list
+
+
+external_declaration_list ->
+        | external_declaration
+        | external_declaration_list external_declaration
+
+
+external_declaration ->
+        | Declaration
+        | Function_definition
 
 
 Block -> 
@@ -28,6 +38,7 @@ Statement ->
         | 'while' '(' CompExpr ')' Statement
         | 'for' '(' Declaration ';' Expression ';' ForIter ')' Statement
         | 'break' ';'
+        | return Expression ';'
 
 
 ForIter ->
@@ -70,6 +81,7 @@ PrimaryNoArrayCreation ->
         | ''' character '''
         | '"' string '"' 
         | id 
+        | id '.' '(' Args ')'
         | PrimaryNoArrayCreation '[' Expression ']'
         | Primary '.' id
         | Primary '.' id '(' Args ')'
@@ -93,3 +105,8 @@ character ->
 Args ->
         | Expression
         | Expression, Args
+
+
+Function_definition -> Type id '(' Args ')' Block
+
+

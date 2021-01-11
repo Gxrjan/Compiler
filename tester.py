@@ -44,6 +44,10 @@ def positive_test():
 
 
 def negative_test():
+    try:
+        os.mkdir('tmp')
+    except:
+        pass
     test_home = Path('tmp')
     file = open('tests_neg.g')
     lines = file.readlines()
@@ -83,6 +87,7 @@ def negative_test():
     for folderName, subfolder, filenames in os.walk('tmp'):
         for filename in filenames:
             os.unlink(test_home / filename)
+    os.rmdir('tmp')
     return error_count
 
 

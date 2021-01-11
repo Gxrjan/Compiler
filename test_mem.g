@@ -52,6 +52,16 @@ for (int i=0;i<dim;i++) {
     }
 }
 
+for (int i=0;i<dim;i++) {
+    string_arr_3d[i] = new string[dim][];
+    for (int ii=0;ii<dim;ii++) {
+        string_arr_3d[i][ii] = new string[dim];
+        for (int iii=0;iii<dim;iii++) {
+            string_arr_3d[i][ii][iii] = "Hello";
+        }
+    }
+}
+
 string s = "Hello world!";
 string t = s.Substring(0);
 
@@ -79,3 +89,6 @@ for (int j=0;j<s.Length;j++) {
 {
     string test = s.Substring(0);
 }
+
+string tes = null;
+tes = "Wow";

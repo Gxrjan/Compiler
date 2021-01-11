@@ -9,7 +9,7 @@ class Prog {
         WriteLine(test);   
         char[] a = new char[test.Length];
         for (int iter=0;iter<a.Length;iter++)
-        a[iter] = test[iter];
+            a[iter] = test[iter];
         int a_len = a.Length;
         int[] p = new int[a_len];  // Weight index control array initially all zeros. Of course, same size of the char array.
         int i = 1;            //Upper bound index. i.e: if string is "abc" then index i could be at "c"
@@ -26,7 +26,7 @@ class Prog {
                 string combine = "";
                 
                 for (int k=0;k<a.Length;k++)
-                combine = combine + a[k];
+                    combine = combine + a[k];
                 // Print current
                 string result = combine;
                 p[i]++; //Adding 1 to the specific weight that relates to the char array.

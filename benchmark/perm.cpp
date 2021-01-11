@@ -10,7 +10,7 @@ int main(int argc, char *argv[]) {
     cout << test << endl;   
     char *a = new char[strlen(test)];
     for (int i=0;i<strlen(test);i++)
-    a[i] = test[i];
+        a[i] = test[i];
     int a_len = strlen(test);
     int *p = new int[a_len];  // Weight index control array initially all zeros. Of course, same size of the char array.
     int i = 1;            //Upper bound index. i.e: if string is "abc" then index i could be at "c"
@@ -27,7 +27,7 @@ int main(int argc, char *argv[]) {
             string combine = "";
             
             for (int k=0;k<strlen(test);k++)
-            combine = combine + a[k];
+                combine = combine + a[k];
             // Print current
             string result = combine;
             p[i]++; //Adding 1 to the specific weight that relates to the char array.

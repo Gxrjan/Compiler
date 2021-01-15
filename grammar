@@ -3,11 +3,11 @@ BasicType ->
         | 'bool'
         | 'char'
         | 'string'
+        | 'void'
 
 Type ->
         | BasicType
         | Type '[' ']'
-        | 'void'
 
 
 Program ->
@@ -41,6 +41,7 @@ Statement ->
         | 'for' '(' Declaration ';' Expression ';' ForIter ')' Statement
         | 'break' ';'
         | return Expression ';'
+        | return ';'
 
 
 ForIter ->

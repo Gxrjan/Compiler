@@ -7,20 +7,22 @@ BasicType ->
 Type ->
         | BasicType
         | Type '[' ']'
+        | 'void'
 
 
 Program ->
-        | external_declaration_list
+        | ExternalDeclarationList
 
 
-external_declaration_list ->
-        | external_declaration
-        | external_declaration_list external_declaration
+ExternalDeclarationList ->
+        | ExternalDeclaration
+        | ExternalDeclarationList ExternalDeclaration
 
 
-external_declaration ->
+ExternalDeclaration ->
         | Declaration
-        | Function_definition
+        | FunctionDefinition
+        | FunctionDefinitionWithBody
 
 
 Block -> 
@@ -81,7 +83,7 @@ PrimaryNoArrayCreation ->
         | ''' character '''
         | '"' string '"' 
         | id 
-        | id '.' '(' Args ')'
+        | id '(' Args ')'
         | PrimaryNoArrayCreation '[' Expression ']'
         | Primary '.' id
         | Primary '.' id '(' Args ')'
@@ -107,6 +109,17 @@ Args ->
         | Expression, Args
 
 
-Function_definition -> Type id '(' Args ')' Block
+Param -> Type id
+
+Params ->
+        | Param
+        | Param ',' Params
+
+
+FunctionHead -> Type id '(' Params ')'
+
+FunctionDefinition -> FunctionHead ';'
+
+FunctionDefinitionWithBody -> FunctionHead Block
 
 

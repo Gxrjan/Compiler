@@ -49,6 +49,7 @@ ForIter ->
 
 ExpressionStatement ->
         | PostIncrementExpression
+        | FunctionCall
 
 Declaration ->
         | Type id '=' Expression
@@ -83,7 +84,7 @@ PrimaryNoArrayCreation ->
         | ''' character '''
         | '"' string '"' 
         | id 
-        | id '(' Args ')'
+        | FunctionCall
         | PrimaryNoArrayCreation '[' Expression ']'
         | Primary '.' id
         | Primary '.' id '(' Args ')'
@@ -91,6 +92,9 @@ PrimaryNoArrayCreation ->
         | 'new' 'string' '(' Args ')'
         | 'null'
         | PostIncrementExpression
+
+FunctionCall ->
+        | id '(' ArgsOpt ')'
 
 PostIncrementExpression ->
         | PrimaryNoArrayCreation '++'
@@ -104,18 +108,30 @@ character ->
         | any character other than a single quote or new line
 
 
+
 Args ->
         | Expression
         | Expression, Args
 
 
+ArgsOpt -> 
+        | \epsilon
+        | Args
+
+
 Param -> Type id
+
 
 Params ->
         | Param
         | Param ',' Params
 
 
-FunctionDefinition -> Type id '(' Params ')' Block
+ParamsOpt ->
+        | \epsilon
+        | Params
+
+
+FunctionDefinition -> Type id '(' ParamsOpt ')' '{' Block '}'
 
 

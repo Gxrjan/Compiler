@@ -22,7 +22,6 @@ ExternalDeclarationList ->
 ExternalDeclaration ->
         | Declaration
         | FunctionDefinition
-        | FunctionDefinitionWithBody
 
 
 Block -> 
@@ -117,10 +116,6 @@ Params ->
         | Param ',' Params
 
 
-FunctionHead -> Type id '(' Params ')'
-
-FunctionDefinition -> FunctionHead ';'
-
-FunctionDefinitionWithBody -> FunctionHead Block
+FunctionDefinition -> Type id '(' Params ')' Block
 
 

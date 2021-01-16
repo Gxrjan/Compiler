@@ -373,16 +373,6 @@ void Checker::check_statement(Statement *s, Block *b, bool in_loop)
 
 }
 
-bool Checker::compare_arguments(vector<Type*> params, vector<Expr*> args, Block *b) {
-    
-    if (params.size() != args.size())
-        return false;
-    for (size_t i=0;i<params.size();i++) {
-        if (params[i] != this->check_expr(args[i], b))
-            return false;
-    }
-    return true;
-}
 
 Type *Checker::check_function_call(FunctionCall *fc, Block *b) {
     vector<pair<Type*, vector<Type*>>> overloads = this->functions[fc->name];

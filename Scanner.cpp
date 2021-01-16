@@ -179,6 +179,8 @@ unique_ptr<Token> Scanner::next_token() {
             return make_unique<TypeToken>(&Char);
         if (name == "string")
             return make_unique<TypeToken>(&String);
+        if (name == "void")
+            return make_unique<TypeToken>(&Void);
         if (name == "true")
             return make_unique<BoolToken>(true);
         if (name == "false")

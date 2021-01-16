@@ -31,7 +31,7 @@ class BasicType : public Type {
     string to_string() override;
 };
 
-extern BasicType Bool, Char, Int, String, Empty, Byte;
+extern BasicType Bool, Char, Int, String, Empty, Byte, Void;
 
 static inline bool is_ref_type(g_type t) {
     return !(t==&Bool || t==&Int || t==&Char || t==&Byte);
@@ -72,6 +72,16 @@ enum class Operation {
 
 class TypeConverter {
   public:
+
+    static Type *get_base_type(Type *a) {
+        if (a==&Bool || a==&Char || a==&Int || a==&String ||  a==&Void)
+          return a;
+        else { 
+          auto arr = dynamic_cast<ArrayType*>(a);
+          return get_base_type(arr->base);
+        }
+        
+    }
 
     static Operation string_to_operation(string op)
     {

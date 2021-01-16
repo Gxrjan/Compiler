@@ -146,8 +146,15 @@ unique_ptr<Expr> Parser::parse_primary() {
     } else if (t->isBool(&b)) {
         prim =  make_unique<BoolLiteral>(b, line, col);
     } else if (t->isId(&id)) {
-        prim = make_unique<Variable>(id, line, col);
-    }else if (t->isChar(&wc)) {
+        Token *peek = this->scan->peek_token();
+        if (peek && peek->isSymbol("(")) {
+            this->scan->next_token();
+            vector<unique_ptr<Expr>> args = this->parse_arguments();
+            this->expect(")");
+            prim = make_unique<FunctionCall>(id, move(args), line, col);
+        } else
+            prim = make_unique<Variable>(id, line, col);
+    } else if (t->isChar(&wc)) {
         prim = make_unique<CharLiteral>(wc, line, col);
     } else if (t->isString(&s)) {
         prim = make_unique<StringLiteral>(s, line, col);
@@ -290,7 +297,7 @@ unique_ptr<Statement> Parser::try_parse_expression_statement_or_assignment()
         unique_ptr<Expr> expr = this->parse_primary();
         int line = this->scan->last_line;
         int col = this->scan->last_column;
-        if (dynamic_cast<IncExpr *>(expr.get()))
+        if (dynamic_cast<IncExpr *>(expr.get()) || dynamic_cast<FunctionCall *>(expr.get()))
             return make_unique<ExpressionStatement>(move(expr), line, col);
         this->expect("=");
         unique_ptr<Expr> e = this->parse_expr();
@@ -309,18 +316,7 @@ unique_ptr<Assignment> Parser::parse_assignment()
     return asgn;
 }
 
-unique_ptr<Print> Parser::try_parse_print()
-{
-    Token *t = this->scan->peek_token();
-    if (t && t->isKeyword("print")) {
-        this->scan->next_token();
-        this->expect("(");
-        unique_ptr<Expr> e = this->parse_expr();
-        this->expect(")");
-        return make_unique<Print>(move(e));
-    }
-    return nullptr;
-}
+
 
 unique_ptr<IfStatement> Parser::try_parse_if()
 {
@@ -400,12 +396,6 @@ unique_ptr<Statement> Parser::parse_statement()
 
     // Assignment or incexpr
     if ((s=this->try_parse_expression_statement_or_assignment())) {
-        this->expect(";");
-        return s;
-    }
-
-    // Print
-    if ((s=this->try_parse_print())) {
         this->expect(";");
         return s;
     }

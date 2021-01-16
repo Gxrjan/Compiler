@@ -252,6 +252,9 @@ Type *Checker::check_expr_type(Expr *expr, Block *b)
 
     if (auto inc = dynamic_cast<IncExpr *>(expr))
         return this->check_inc_expr(inc, b);
+    
+    if (auto fc = dynamic_cast<FunctionCall *>(expr))
+        return this->check_function_call(fc, b);
 
     throw runtime_error("Unrecognized expression");
 }
@@ -348,11 +351,6 @@ void Checker::check_statement(Statement *s, Block *b, bool in_loop)
         this->check_declaration(dec, b);
     }else if (auto asgn = dynamic_cast<Assignment *>(s)) {
         this->check_assignment(asgn, b);
-    }else if (auto print = dynamic_cast<Print *>(s)) {
-        this->check_expr(print->expr.get(), b);
-        if (print->expr->type == &Empty)
-            this->report_error(print->expr->line, 
-                               print->expr->col, "Can't print null");
     } else if (auto st = dynamic_cast<IfStatement *>(s)) {
         this->check_if_statement(st, b, in_loop);
     } else if (auto st = dynamic_cast<WhileStatement *>(s)) {
@@ -375,6 +373,30 @@ void Checker::check_statement(Statement *s, Block *b, bool in_loop)
 
 }
 
+bool Checker::compare_arguments(vector<Type*> params, vector<Expr*> args, Block *b) {
+    
+    if (params.size() != args.size())
+        return false;
+    for (size_t i=0;i<params.size();i++) {
+        if (params[i] != this->check_expr(args[i], b))
+            return false;
+    }
+    return true;
+}
+
+Type *Checker::check_function_call(FunctionCall *fc, Block *b) {
+    vector<pair<Type*, vector<Type*>>> overloads = this->functions[fc->name];
+    vector<Type*> types;
+    for (auto &a : fc->args)
+        types.push_back(this->check_expr(a.get(), b));
+    for (auto o : overloads) {
+        if (o.second == types)
+            return o.first;
+    }
+
+    this->report_error(fc->line, fc->col, "No function mathces these arguments");
+    return nullptr;
+}
 
 void Checker::check_block(Block *b, bool in_loop)
 {
@@ -386,6 +408,9 @@ void Checker::check_block(Block *b, bool in_loop)
 
 void Checker::check_program(Program *p)
 {
+    this->functions["print"].push_back({&Void, vector<Type*>(1, &Char)});
+    this->functions["print"].push_back({&Void, vector<Type*>(1, &Int)});
+    this->functions["print"].push_back({&Void, vector<Type*>(1, &String)});
     this->check_block(p->block.get(), false);
 }
 

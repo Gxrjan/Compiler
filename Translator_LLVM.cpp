@@ -72,6 +72,33 @@ string Translator_LLVM::type_to_cc(Type *t)
     return "i";
 }
 
+string Translator_LLVM::translate_function_call(string *s, FunctionCall *fc) {
+    string ret_register = "";
+    if (fc->type!=&Void)
+        ret_register = this->assign_register();
+    vector<string> args;
+    for (auto &a : fc->args)
+        args.push_back(this->translate_expr(s, a.get()));
+    if (fc->name == "print") {
+        string result_register = args[0];
+        if (fc->args[0]->type == &String) {
+            *s +=
+                "call void (i16*) @printg(i16* "+result_register+")\n";
+            return ret_register;
+        } else {
+            string reg_type = this->g_type_to_llvm_type(fc->args[0]->type);
+            string format_register = this->assign_register();
+            *s +=
+                " "+format_register+" = getelementptr [4 x i8], [4 x i8]* @fmt_"+this->type_to_cc(fc->args[0]->type)+
+                ", i32 0, i32 0\n"
+                " call i32 (i8*, ...) @printf(i8* "+format_register+", "+reg_type+" "+result_register+")\n";
+        }
+    } else {
+        // handle other functions
+    }
+    return ret_register;
+}
+
 string Translator_LLVM::translate_num_literal(string *s, NumLiteral *l)
 {
     string result_register = this->assign_register();
@@ -725,26 +752,6 @@ void Translator_LLVM::translate_assignment(string *s, Assignment *asgn)
 
 
 
-void Translator_LLVM::translate_print(string *s, Print *p)
-{
-    *s += // asm comment 
-        "; " + p->to_string() + "\n";
-    string result_register = this->translate_expr(s, p->expr.get());
-    if (p->expr->type == &String) {
-        *s +=
-            "call void (i16*) @printg(i16* "+result_register+")\n";
-        return;
-    } else {
-        string reg_type = this->g_type_to_llvm_type(p->expr->type);
-        string format_register = this->assign_register();
-        *s +=
-            " "+format_register+" = getelementptr [4 x i8], [4 x i8]* @fmt_"+this->type_to_cc(p->expr->type)+
-            ", i32 0, i32 0\n"
-            " call i32 (i8*, ...) @printf(i8* "+format_register+", "+reg_type+" "+result_register+")\n";
-    }
-}
-
-
 void Translator_LLVM::translate_if_statement(string *s, IfStatement *st, string loop_end_label)
 {
     string label_id = std::to_string(this->label_id++);
@@ -856,7 +863,10 @@ string Translator_LLVM::translate_inc_expr(string *s, IncExpr *expr)
 
 void Translator_LLVM::translate_expression_statement(string *s, ExpressionStatement *expr)
 {
-    this->translate_inc_expr(s, dynamic_cast<IncExpr *>(expr->expr.get()));
+    if (auto inc = dynamic_cast<IncExpr *>(expr->expr.get()))
+        this->translate_inc_expr(s, inc);
+    else if (auto fc = dynamic_cast<FunctionCall *>(expr->expr.get()))
+        this->translate_function_call(s, fc);
 }
 
 void Translator_LLVM::free_unused_memory(string *s) {
@@ -873,8 +883,6 @@ void Translator_LLVM::translate_statement(string *s, Statement *statement, strin
         this->translate_declaration(s, dec);
     } else if (auto asgn = dynamic_cast<Assignment *>(statement)) {
         this->translate_assignment(s, asgn);
-    } else if (auto p = dynamic_cast<Print *>(statement)) {
-        this->translate_print(s, p);
     } else if (auto b = dynamic_cast<Block *>(statement)) {
         this->translate_block(s, b, loop_end_label);
     } else if (auto st = dynamic_cast<IfStatement *>(statement)) {

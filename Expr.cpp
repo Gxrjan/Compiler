@@ -219,3 +219,19 @@ string IncExpr::to_string()
     return this->expr->to_string() + " ++";
 }
 
+
+FunctionCall::FunctionCall(Id name, vector<unique_ptr<Expr>> args, int line, int col) : Expr(line, col)
+{
+    this->name = name;
+    this->args = move(args);
+}
+
+string FunctionCall::to_string()
+{
+    string result = this->name + "(";
+    for (auto &e : this->args)
+        result += e->to_string();
+    result += ")";
+    return result;
+}
+

@@ -427,6 +427,14 @@ class BreakStatement : public Statement {
     string to_string() override;
 };
 
+class FunctionCall : public Expr {
+  public:
+    Id name;
+    vector<unique_ptr<Expr>> args;
+    FunctionCall(Id name, vector<unique_ptr<Expr>> args, int line, int col);
+    string to_string() override;
+};
+
 
 
 // Program
@@ -474,7 +482,6 @@ class Parser {
     unique_ptr<Assignment> try_parse_assignment();
     unique_ptr<Assignment> parse_assignment();
     vector<unique_ptr<Expr>> parse_arguments();
-    unique_ptr<Print> try_parse_print();
     unique_ptr<IfStatement> try_parse_if();
     unique_ptr<WhileStatement> try_parse_while();
     unique_ptr<ForStatement> try_parse_for();
@@ -520,52 +527,15 @@ class Checker {
     void check_statement(Statement *s, Block *b, bool in_loop);
     void check_block(Block *b, bool in_loop);
     void check_expression_statement(ExpressionStatement *s, Block *b);
+    Type *check_function_call(FunctionCall *fc, Block *b);
     Type *check_inc_expr(IncExpr *expr, Block *b);
     bool verify_int(Type *t);
     Type *check_compatability(OpExpr *expr, Block *b);
     void report_error(int line, int col, string message);
+    bool compare_arguments(vector<Type*> params, vector<Expr*> args, Block *b);
   public:
     void check_program(Program *p);
-};
-
-
-// TRANSLATOR
-class Translator {
-    int label_id = 0;
-    int string_id = 0;
-    set<Id> variables;
-    map<StringLiteral *, int> strings;
-    string concat_cc(Type *left, Type *right);
-    void translate_num_literal(string *s, NumLiteral *l);
-    void translate_bool_literal(string *s, BoolLiteral *l);
-    void translate_char_literal(string *s, CharLiteral *l);
-    void translate_string_literal(string *s, StringLiteral *l);
-    void translate_elem_access_expr(string *s, ElemAccessExpr *expr);
-    void translate_length_expr(string *s, LengthExpr *expr);
-    void translate_type_cast_expr(string *s, TypeCastExpr *expr);
-    void translate_substr_expr(string *s, SubstrExpr *expr);
-    void translate_int_parse_expr(string *s, IntParseExpr *expr);
-    void translate_new_str_expr(string *s, NewStrExpr *expr);
-    void translate_new_arr_expr(string *s, NewArrExpr *expr);
-    void translate_variable(string *s, Variable *var);
-    void translate_op_expr(string *s, OpExpr *expr);
-    void translate_expr(string *s, Expr *expr);
-    void translate_declaration(string *s, Declaration *dec);
-    void translate_assignment(string *s, Assignment *asgn);
-    void translate_print(string *s, Print *p);
-    void translate_if_statement(string *s, IfStatement *st, string loop_end_label);
-    void translate_while_statement(string *s, WhileStatement *st);
-    void translate_for_statement(string *s, ForStatement *for_s);
-    void translate_statement(string *s, Statement *statement, string loop_end_label);
-    void translate_block(string *s, Block *b, string loop_end_label);
-    void translate_expression_statement(string *s, ExpressionStatement *expr);
-    void translate_inc_expr(string *s, IncExpr *expr);
-    string bool_to_op(bool inc);
-    string type_to_cc(Type *t);
-    string operation_to_cc(Operation op);
-    void report_error(int line, int col, string message);
-  public:
-    string translate_program(Program *p);
+    map<Id, vector<pair<Type*, vector<Type*>>>> functions; // function map from names to all possible overloads
 };
 
 
@@ -600,7 +570,6 @@ class Translator_LLVM {
     string translate_expr(string *s, Expr *expr);
     void translate_declaration(string *s, Declaration *dec);
     void translate_assignment(string *s, Assignment *asgn);
-    void translate_print(string *s, Print *p);
     void translate_if_statement(string *s, IfStatement *st, string loop_end_label);
     void translate_while_statement(string *s, WhileStatement *st);
     void translate_for_statement(string *s, ForStatement *for_s);
@@ -626,6 +595,7 @@ class Translator_LLVM {
     string create_store(string *s, string llvm_type, string expr_register, string ptr);
     string create_getelementptr(string *s, string llvm_type, string expr_llvm_type, string expr_register, string index_register);
     string create_inc_dec(string *s, bool inc_dec, string expr_register);
+    string translate_function_call(string *s, FunctionCall *fc);
     void change_reference_count(string *s, Type *g_type, string ptr_register, int i);
     void free_unused_memory(string *s);
     void free_variables(string *s);

@@ -435,6 +435,30 @@ class FunctionCall : public Expr {
     string to_string() override;
 };
 
+class FunctionDefinition : public Statement {
+  public:
+    Id name;
+    Type *ret_type;
+    vector<pair<Type *, string>> params;
+    unique_ptr<Block> body;
+    FunctionDefinition(Id name, Type *ret_type, vector<pair<Type *, string>> params, unique_ptr<Block> body, int line, int col);
+    string to_string() override;
+};
+
+class ExternalDefinition : public Statement {
+  public:
+    unique_ptr<Statement> s;
+    ExternalDefinition(unique_ptr<Statement> s, int line, int col);
+    string to_string() override;
+};
+
+class ReturnStatement : public Statement {
+  public:
+    unique_ptr<Expr> expr;
+    ReturnStatement(unique_ptr<Expr> expr, int line, int col);
+    string to_string() override;
+};
+
 
 
 // Program
@@ -492,6 +516,9 @@ class Parser {
     unique_ptr<Statement> try_parse_expression_statement_or_assignment();
     unique_ptr<Statement> parse_expression_statement_or_assignment();
     unique_ptr<Expr> consume_rest(unique_ptr<Expr> prim, int line, int col);
+    unique_ptr<ExternalDefinition> parse_external_definition();
+    unique_ptr<ReturnStatement> try_parse_return_statement();
+    vector<pair<Type*, string>> parse_params();
     void check_expr(Expr *expr);
     void expect(string c);
   public:
@@ -506,6 +533,7 @@ class Checker {
     Declaration *look_up(Id id, Block *b);
     Type *check_expr(Expr *expr, Block *b);
     Type *check_expr_type(Expr *expr, Block *b);
+    FunctionDefinition *current;    // points to the current function that is being checked
     void expect_type(Expr *e, Block *b, Type *t);
     bool convertible_to_int(Type *t);
     bool nullable(Type *t);
@@ -532,7 +560,15 @@ class Checker {
     bool verify_int(Type *t);
     Type *check_compatability(OpExpr *expr, Block *b);
     void report_error(int line, int col, string message);
+    void check_outer_block(Block *b);
+    void check_external_definition(ExternalDefinition *s, Block *b);
+    void check_function_definition(FunctionDefinition* fd, Block *b);
+    void check_external_declaration(Declaration *dec, Block *b);
+    void populate_functions(Block *b);
+    void check_return_statement(ReturnStatement *rs, Block *b);
     bool compare_arguments(vector<Type*> params, vector<Expr*> args, Block *b);
+    void compare_types(Type *left_t, Type *right_t);
+    bool function_inside(Expr *expr);
   public:
     void check_program(Program *p);
     map<Id, vector<pair<Type*, vector<Type*>>>> functions; // function map from names to all possible overloads
@@ -596,6 +632,10 @@ class Translator_LLVM {
     string create_getelementptr(string *s, string llvm_type, string expr_llvm_type, string expr_register, string index_register);
     string create_inc_dec(string *s, bool inc_dec, string expr_register);
     string translate_function_call(string *s, FunctionCall *fc);
+    void translate_return_statement(string *s, ReturnStatement *rs);
+    void translate_external_definition(string *s, ExternalDefinition *ed);
+    void translate_function_definition(string *s, FunctionDefinition *fd);
+    void translate_outer_block(string *s, Block *b);
     void change_reference_count(string *s, Type *g_type, string ptr_register, int i);
     void free_unused_memory(string *s);
     void free_variables(string *s);

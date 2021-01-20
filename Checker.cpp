@@ -97,6 +97,22 @@ void Checker::verify_assignment(Expr *left, Expr *right, Block *b)
             this->report_error(right->line, right->col, left_t->to_string() + " or null expected");
 }
 
+void Checker::compare_types(Type *left_t, Type *right_t) {
+    // if (left_t == &Int) {
+    //     if (!this->convertible_to_int(right_t))
+    //         this->report_error(right->line, right->col, "int or char expected");
+    // } else if (left_t == &Bool) {
+    //     if (right_t != &Bool)
+    //         this->report_error(right->line, right->col, "bool expected");
+    // } else if (left_t == &Char) {
+    //     if (right_t != &Char)
+    //         this->report_error(right->line, right->col, "char expected");
+    // } else
+    //     if (!((left_t == right_t) || 
+    //             (right_t == &Empty)))
+    //         this->report_error(right->line, right->col, left_t->to_string() + " or null expected");
+}
+
 void Checker::report_error(int line, int col, string message)
 {
     throw runtime_error("Checker error line " + std::to_string(line)
@@ -362,13 +378,17 @@ void Checker::check_statement(Statement *s, Block *b, bool in_loop)
             this->report_error(br->line, br->col, "break outside of loop");
     } else if (auto es = dynamic_cast<ExpressionStatement *>(s)) {
         this->check_expression_statement(es, b);
+    } else if (auto rs = dynamic_cast<ReturnStatement *>(s)) {
+        this->check_return_statement(rs, b);
     } else {
         Block *b1 = dynamic_cast<Block *>(s);
         if (b1) {
             b1->parent = b;
             this->check_block(b1, in_loop);
-        } else
+        } else {
+            cout << s->to_string() << endl;
             throw runtime_error("Unknown statement type");
+        }
     }
 
 }
@@ -398,10 +418,140 @@ void Checker::check_block(Block *b, bool in_loop)
 
 void Checker::check_program(Program *p)
 {
-    this->functions["print"].push_back({&Void, vector<Type*>(1, &Char)});
-    this->functions["print"].push_back({&Void, vector<Type*>(1, &Int)});
-    this->functions["print"].push_back({&Void, vector<Type*>(1, &String)});
-    this->check_block(p->block.get(), false);
+    this->check_outer_block(p->block.get());
 }
 
 
+void Checker::check_outer_block(Block *b) {
+    this->populate_functions(b);
+    for (auto &s : b->statements) {
+        if (auto ed = dynamic_cast<ExternalDefinition*>(s.get()))
+            this->check_external_definition(ed, b);
+        else
+            this->report_error(s->line, s->col, "External definition expected");
+    }
+}
+
+
+void Checker::check_external_definition(ExternalDefinition *s, Block *b) {
+    if (auto dec = dynamic_cast<Declaration*>(s->s.get()))
+        this->check_external_declaration(dec, b);
+    else if (auto fd = dynamic_cast<FunctionDefinition*>(s->s.get()))
+        this->check_function_definition(fd, b);
+}
+
+void Checker::populate_functions(Block *b) {
+    this->functions["print"].push_back({&Void, vector<Type*>(1, &Char)});
+    this->functions["print"].push_back({&Void, vector<Type*>(1, &Int)});
+    this->functions["print"].push_back({&Void, vector<Type*>(1, &String)});
+    for (auto &s : b->statements) {
+        if (auto ed = dynamic_cast<ExternalDefinition*>(s.get())) {
+            if (auto fd = dynamic_cast<FunctionDefinition*>(ed->s.get())) {
+                vector<Type*> types;
+                for (auto &p : fd->params)
+                    types.push_back(p.first);
+                pair<Type*, vector<Type*>> overload = make_pair(fd->ret_type, types);
+                for (auto over : this->functions[fd->name]) {
+                    if (over == overload)
+                        this->report_error(fd->line, fd->col, "Function with the same signature has already been defined");
+                }
+                this->functions[fd->name].push_back(overload);
+            }
+        } else
+            this->report_error(s->line, s->col, "External definition expected");
+    }
+}
+
+
+void Checker::check_function_definition(FunctionDefinition* fd, Block *b) {
+    this->current = fd;
+    for (auto &p : fd->params) {
+        Declaration *dec = new Declaration(p.first, p.second, nullptr, 0, 0);
+        b->variables.insert({dec->id, dec});
+    }
+    fd->body->parent = b;
+    this->check_block(fd->body.get(), false);
+    this->current = nullptr;
+}
+
+void Checker::check_return_statement(ReturnStatement *rs, Block *b) {
+    if (rs->expr) {
+        if (current->ret_type == &Void)
+            this->report_error(rs->line, rs->col, "A return keyword must not be followed by any expression when method returns void");
+        Type *left_t = current->ret_type;
+        Type *right_t = this->check_expr(rs->expr.get(), b);
+        if (left_t == &Int) {
+            if (!this->convertible_to_int(right_t))
+                this->report_error(rs->line, rs->col, "int or char expected");
+        } else if (left_t == &Bool) {
+            if (right_t != &Bool)
+                this->report_error(rs->line, rs->col, "bool expected");
+        } else if (left_t == &Char) {
+            if (right_t != &Char)
+                this->report_error(rs->line, rs->col, "char expected");
+        } else
+            if (!((left_t == right_t) || 
+                    (right_t == &Empty)))
+                this->report_error(rs->line, rs->col, left_t->to_string() + " or null expected");
+    }
+
+    
+}
+
+
+bool Checker::function_inside(Expr *expr) {
+    if (auto e = dynamic_cast<OpExpr *>(expr))
+        return function_inside(e->right.get()) || function_inside(e->left.get());
+    
+    if (auto e = dynamic_cast<ElemAccessExpr *>(expr))
+        return function_inside(e->expr.get()) || function_inside(e->index.get());
+
+    if (auto e = dynamic_cast<LengthExpr *>(expr))
+        return function_inside(e->expr.get());
+    
+    if (auto e = dynamic_cast<TypeCastExpr *>(expr))
+        return function_inside(e->expr.get());
+
+    if (auto e = dynamic_cast<SubstrExpr *>(expr)) {
+        for (auto &ex : e->arguments)
+            if (function_inside(ex.get()))
+                return true;
+        return e->expr.get();
+    }
+
+    if (auto e = dynamic_cast<IntParseExpr *>(expr)) {
+        for (auto &ex : e->arguments)
+            if (function_inside(ex.get()))
+                return true;
+    }
+
+    if (auto e = dynamic_cast<NewStrExpr *>(expr)) {
+        for (auto &ex : e->arguments)
+            if (function_inside(ex.get()))
+                return true;
+    }
+
+    if (auto e = dynamic_cast<NewArrExpr *>(expr))
+        return function_inside(e->expr.get());
+
+    if (auto inc = dynamic_cast<IncExpr *>(expr))
+        return function_inside(inc->expr.get());
+    
+    if (dynamic_cast<FunctionCall *>(expr))
+        return true;
+    
+    return false;
+
+}
+
+void Checker::check_external_declaration(Declaration *dec, Block *b) {
+    if (TypeConverter::get_base_type(dec->type)==&Void)
+        this->report_error(dec->line, dec->col, "Can't declare void type variable");
+    if (this->look_up(dec->id, b))
+        this->report_error(dec->line, dec->col, "variable has already been declared");
+    if (this->function_inside(dec->expr.get()))
+        this->report_error(dec->line, dec->col, "Can't use functions to declare global variables");
+    Variable v(dec->id, dec->line, dec->col);
+    b->variables.insert({dec->id, dec});
+    this->verify_assignment(&v, dec->expr.get(), b);
+}

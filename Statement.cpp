@@ -133,3 +133,31 @@ string ExpressionStatement::to_string()
 {
     return this->expr->to_string();
 }
+
+
+
+FunctionDefinition::FunctionDefinition(Id name, Type *ret_type, vector<pair<Type*, string>> params, unique_ptr<Block> body, int line, int col) : Statement(line, col) {
+        this->name = name;
+        this->ret_type = ret_type;
+        this->params = move(params);
+        this->body = move(body);
+}
+
+string FunctionDefinition::to_string() {
+    return "Function definition";
+}
+
+
+ReturnStatement::ReturnStatement(unique_ptr<Expr> expr, int line, int col) : Statement(line, col) {
+    this->expr = move(expr);
+}
+
+string ReturnStatement::to_string() {
+    string result = "return ";
+    if (this->expr)
+        result += this->expr->to_string();
+    return result;
+}
+
+ExternalDefinition::ExternalDefinition(unique_ptr<Statement> s, int line, int col) : Statement(line, col) { this->s = move(s); }
+string ExternalDefinition::to_string() { return this->s->to_string(); }

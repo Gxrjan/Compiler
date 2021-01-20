@@ -16,7 +16,8 @@ Type *Parser::parse_type()
 {
     unique_ptr<Token> type = this->scan->next_token();
     Type *t;
-    type->isType(&t);
+    if (!type->isType(&t))
+        this->report_error("Type expteced");
     Token *peek;
     while ((peek = this->scan->peek_token()) && peek->isSymbol("[")) {
         this->scan->next_token();
@@ -384,6 +385,24 @@ unique_ptr<BreakStatement> Parser::try_parse_break()
     return nullptr;
 }
 
+unique_ptr<ReturnStatement> Parser::try_parse_return_statement() {
+    int line = this->scan->last_line;
+    int col = this->scan->last_column;
+    Token *t = this->scan->peek_token();
+    if (t && t->isKeyword("return")) {
+        this->scan->next_token();
+        t = this->scan->peek_token();
+        if (t && t->isSymbol(";")) {
+            this->expect(";");
+            return make_unique<ReturnStatement>(nullptr, line, col);
+        }
+        unique_ptr<Expr> expr = this->parse_expr();
+        this->expect(";");
+        return make_unique<ReturnStatement>(move(expr), line, col);
+    }
+    return nullptr;
+}
+
 unique_ptr<Statement> Parser::parse_statement()
 {
     unique_ptr<Statement> s;
@@ -420,6 +439,9 @@ unique_ptr<Statement> Parser::parse_statement()
     if ((s=this->try_parse_break()))
         return s;
 
+    if ((s=this->try_parse_return_statement()))
+        return s;
+
 
     this->report_error("Statement expected");
     return nullptr; // Unreached
@@ -447,11 +469,11 @@ unique_ptr<Block> Parser::try_parse_block()
 
 unique_ptr<Block> Parser::parse_outer_block()
 {
-    unique_ptr<Statement> statement;
+    unique_ptr<Statement> external_definition;
     vector<unique_ptr<Statement>> statements;
     while (this->scan->peek_token()) {
-        statement = this->parse_statement();
-        statements.push_back(move(statement));
+        external_definition = this->parse_external_definition();
+        statements.push_back(move(external_definition));
     }
     return make_unique<Block>(move(statements));
 }
@@ -460,4 +482,50 @@ unique_ptr<Program> Parser::parse_program()
 {
     unique_ptr<Block> block = this->parse_outer_block();
     return make_unique<Program>(move(block));
+}
+
+
+vector<pair<Type*, string>> Parser::parse_params() {
+    vector<pair<Type*, string>> result;
+    Token *t;
+    while ((t=this->scan->peek_token()) && !t->isSymbol(")")) {
+        Type *type = this->parse_type();
+        unique_ptr<Token> next = this->scan->next_token();
+        Id name;
+        if (!next || !next->isId(&name))
+            this->report_error("Identifier expected");
+        result.push_back({type, name});
+        t = this->scan->peek_token();
+        if (t && !t->isSymbol(","))
+            break;
+        this->scan->next_token();
+    }
+    return result;
+}
+
+unique_ptr<ExternalDefinition> Parser::parse_external_definition() {
+    int line = this->scan->last_line;
+    int col = this->scan->last_column;
+    Type *type = this->parse_type();
+    unique_ptr<Token> next = this->scan->next_token();
+    Id name;
+    if (!next || !next->isId(&name))
+        this->report_error("Identifier expected");
+    Token *peek = this->scan->peek_token();
+    if (peek && peek->isSymbol("=")) {
+        this->scan->next_token();
+        unique_ptr<Expr> expr = this->parse_expr();
+        this->expect(";");
+        unique_ptr<Declaration> dec = make_unique<Declaration>(type, name, move(expr), line, col);
+        return make_unique<ExternalDefinition>(move(dec), line, col);
+    } else if (peek && peek->isSymbol("(")) {
+        this->scan->next_token();
+        vector<pair<Type*, string>> params = this->parse_params();
+        this->expect(")");
+        unique_ptr<Block> body = this->try_parse_block();
+        unique_ptr<FunctionDefinition> fd = make_unique<FunctionDefinition>(name, type, params, move(body), line, col);
+        return make_unique<ExternalDefinition>(move(fd), line, col);
+    }
+    this->report_error("Declaration or Function definition expected");
+    return nullptr;
 }

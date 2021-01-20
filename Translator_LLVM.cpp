@@ -73,6 +73,8 @@ string Translator_LLVM::type_to_cc(Type *t)
 }
 
 string Translator_LLVM::translate_function_call(string *s, FunctionCall *fc) {
+    *s += // cooment
+        ";"+fc->to_string()+"\n";
     string ret_register = "";
     if (fc->type!=&Void)
         ret_register = this->assign_register();
@@ -95,6 +97,25 @@ string Translator_LLVM::translate_function_call(string *s, FunctionCall *fc) {
         }
     } else {
         // handle other functions
+        *s +=
+            " "+ret_register+" = call "+this->g_type_to_llvm_type(fc->type)+" (";
+        for (size_t i=0;i<fc->args.size();i++) {
+            *s +=
+                this->g_type_to_llvm_type(fc->args[i]->type);
+            *s +=
+                (i==fc->args.size()-1) ? ")" : ",";
+        }
+        // vector<string> arg_registers;
+        // for (auto &a : fc->args)
+        //     arg_registers.push_back(this->translate_expr(s, a.get()));
+        *s +=
+            " @"+fc->name+"(";
+        for (size_t i=0;i<fc->args.size();i++) {
+            *s +=
+                this->g_type_to_llvm_type(fc->args[i]->type)+" "+args[i];
+            *s +=
+                (i==fc->args.size()-1) ? ")\n" : ",";
+        }
     }
     return ret_register;
 }
@@ -347,7 +368,9 @@ string Translator_LLVM::array_type_to_bytes(ArrayType *t)
 
 string Translator_LLVM::g_type_to_llvm_type(Type *t)
 {
-    if (t == &Bool) {
+    if (t == &Void)
+        return "void";
+    else if (t == &Bool) {
         return "i1";
     } else if (t == &Char) 
         return "i16";
@@ -624,7 +647,9 @@ string Translator_LLVM::translate_expr(string *s, Expr *e)
         return this->translate_new_arr_expr(s, expr);
     } else if (auto expr = dynamic_cast<IncExpr *>(e)) {
         return this->translate_inc_expr(s, expr);
-    } else
+    } else if (auto fc = dynamic_cast<FunctionCall *>(e))
+        return this->translate_function_call(s, fc);
+    else
         throw runtime_error("Unknown type of expression");
     return "";
 }
@@ -899,6 +924,8 @@ void Translator_LLVM::translate_statement(string *s, Statement *statement, strin
             " br label %loop_end"+loop_end_label+"\n";
     } else if (auto es = dynamic_cast<ExpressionStatement *>(statement)) {
         this->translate_expression_statement(s, es);
+    } else if (auto rs = dynamic_cast<ReturnStatement *>(statement)) {
+        this->translate_return_statement(s, rs);
     } else{
         throw runtime_error("Unknown statement");
     }
@@ -924,6 +951,8 @@ void Translator_LLVM::translate_block(string *s, Block *b, string loop_end_label
 }
 
 void Translator_LLVM::free_argv(string *s) {
+    *s += // comment
+        "; freeing argv\n";
     string conv_register = this->assign_register();
     *s +=
         " "+conv_register+" = bitcast i16** %argv to i8*\n"
@@ -931,6 +960,8 @@ void Translator_LLVM::free_argv(string *s) {
 }
 
 void Translator_LLVM::free_variables(string *s) {
+    *s += // comment
+        "; freeing variables\n";
     for (auto p : this->variables) {
         if (p.second.second == &Bool || 
         p.second.second == &Int || p.second.second == &Char ||
@@ -943,7 +974,67 @@ void Translator_LLVM::free_variables(string *s) {
     }
 }
 
+void Translator_LLVM::translate_external_definition(string *s, ExternalDefinition *ed) {
+    if (auto dec = dynamic_cast<Declaration*>(ed->s.get()))
+        this->translate_declaration(s, dec);
+    else if (auto fd = dynamic_cast<FunctionDefinition*>(ed->s.get()))
+        this->translate_function_definition(s, fd);
+    else
+        this->report_error(ed->line, ed->col, "Must be a external definition");
+}
 
+
+void Translator_LLVM::translate_function_definition(string *s, FunctionDefinition *fd) {
+    *s += // comment
+        "; "+fd->to_string()+"\n";
+    *s +=
+        "define "+this->g_type_to_llvm_type(fd->ret_type)+" @"+fd->name+"(";
+    for (size_t i=0;i<fd->params.size();i++) {
+        *s +=
+            ""+this->g_type_to_llvm_type(fd->params[i].first);
+        *s +=
+            ((i==fd->params.size()-1) ? "" : ",");
+    }
+    *s +=
+        ") {\n";
+    for (size_t i=0;i<fd->params.size();i++) {
+        string reg = "%"+std::to_string(i);
+        string result_register = this->create_allocate_and_store(s, fd->params[i].first, reg);
+        this->variables.insert_or_assign(fd->params[i].second, std::make_pair(result_register, fd->params[i].first));
+    }
+    this->translate_block(s, fd->body.get(), "");
+    *s +=
+        "}\n";
+}
+
+void Translator_LLVM::translate_outer_block(string *s, Block *b) {
+    *s += // comment
+        "; starting to stranslate global space\n";
+    for (auto &statement : b->statements)
+        this->translate_external_definition(s, dynamic_cast<ExternalDefinition*>(statement.get()));
+    // for (auto var : b->variables) {
+    //     auto p = this->variables[var.first];
+    //     if (p.second == &Bool || 
+    //     p.second == &Int || p.second == &Char ||
+    //     p.second == &Empty || p.second == &Byte )
+    //         continue;
+    //     string ptr_register = this->assign_register();
+    //     *s +=
+    //         " "+ptr_register+" = load "+this->g_type_to_llvm_type(p.second)+", "+this->g_type_to_llvm_type(p.second)+"* "+p.first+"\n";
+    //     this->change_reference_count(s, p.second, ptr_register, -1);
+    // }
+}
+
+void Translator_LLVM::translate_return_statement(string *s, ReturnStatement *rs) {
+    *s += // comment
+        "; "+rs->to_string()+"\n";
+    if (!rs->expr)
+        *s +=
+            " ret void\n";
+    else
+        *s +=
+            " ret "+this->g_type_to_llvm_type(rs->expr->type)+" "+this->translate_expr(s, rs->expr.get())+"\n";
+}
 
 string Translator_LLVM::translate_program(Program* prog)
 {
@@ -973,18 +1064,18 @@ string Translator_LLVM::translate_program(Program* prog)
             "declare i16** @to_argv(i32, i8**)\n"
             "declare void @change_reference_count(i8*, i32, i32)\n"
             "declare void @free_memory(i8*, i32)\n"
-            "declare i16* @create_gstring(i32, ...)\n"
-            "define i32 @main(i32, i8**) {\n"
-            "%argc = add i32 %0, 0\n"
-            "%argv = call i16** @to_argv(i32 %0, i8** %1)\n";
+            "declare i16* @create_gstring(i32, ...)\n";
+            // "define i32 @main(i32, i8**) {\n"
+            // "%argc = add i32 %0, 0\n"
+            // "%argv = call i16** @to_argv(i32 %0, i8** %1)\n";
 
 
-    this->translate_block(&result, prog->block.get(), "");
-    this->free_argv(&result);
+    this->translate_outer_block(&result, prog->block.get());
+    //this->free_argv(&result);
     //this->free_variables(&result);
-    result += 
-        "ret i32 0\n"
-        "}\n";
+    // result += 
+    //     "ret i32 0\n"
+    //     "}\n";
     for (auto &p : this->strings) {
         string str = p.first->s;
         int length = str.length();

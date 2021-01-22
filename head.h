@@ -580,6 +580,7 @@ class Translator_LLVM {
     int register_id = 0;
     int label_id = 0;
     int string_id = 0;
+    FunctionDefinition *current;
     stack<pair<string,g_type>> references; // first: address, second: llvm_type
     map<Id, pair<string, g_type>> variables;  // first: address, second: llvm_type
     map<StringLiteral *, int> strings;
@@ -632,9 +633,11 @@ class Translator_LLVM {
     string create_getelementptr(string *s, string llvm_type, string expr_llvm_type, string expr_register, string index_register);
     string create_inc_dec(string *s, bool inc_dec, string expr_register);
     string translate_function_call(string *s, FunctionCall *fc);
+    bool is_reference(g_type type);
     void translate_return_statement(string *s, ReturnStatement *rs);
     void translate_external_definition(string *s, ExternalDefinition *ed);
     void translate_function_definition(string *s, FunctionDefinition *fd);
+    void free_variables(string *s, map<Id, Declaration*> variables);
     void translate_outer_block(string *s, Block *b);
     void change_reference_count(string *s, Type *g_type, string ptr_register, int i);
     void free_unused_memory(string *s);

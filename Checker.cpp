@@ -467,7 +467,7 @@ void Checker::check_function_definition(FunctionDefinition* fd, Block *b) {
     this->current = fd;
     for (auto &p : fd->params) {
         Declaration *dec = new Declaration(p.first, p.second, nullptr, 0, 0);
-        b->variables.insert({dec->id, dec});
+        fd->body->variables.insert({dec->id, dec});
     }
     fd->body->parent = b;
     this->check_block(fd->body.get(), false);

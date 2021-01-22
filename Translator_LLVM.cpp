@@ -911,7 +911,7 @@ void Translator_LLVM::translate_expression_statement(string *s, ExpressionStatem
 void Translator_LLVM::free_unused_memory(string *s) {
     while (!this->references.empty()) {
         auto p = this->references.top();
-        this->change_reference_count(s, p.second, p.first, 0);
+        this->change_reference_count(s, p.second, p.first, -1);
         this->references.pop();
     }
 }
@@ -965,17 +965,17 @@ void Translator_LLVM::translate_block(string *s, Block *b, string loop_end_label
 {
     for (auto &statement : b->statements)
         this->translate_statement(s, statement.get(), loop_end_label);
-    // for (auto var : b->variables) {
-    //     auto p = this->variables[var.first];
-    //     if (p.second == &Bool || 
-    //     p.second == &Int || p.second == &Char ||
-    //     p.second == &Empty || p.second == &Byte )
-    //         continue;
-    //     string ptr_register = this->assign_register();
-    //     *s +=
-    //         " "+ptr_register+" = load "+this->g_type_to_llvm_type(p.second)+", "+this->g_type_to_llvm_type(p.second)+"* "+p.first+"\n";
-    //     this->change_reference_count(s, p.second, ptr_register, -1);
-    // }
+    for (auto var : b->variables) {
+        auto p = this->variables[var.first];
+        if (p.second == &Bool || 
+        p.second == &Int || p.second == &Char ||
+        p.second == &Empty || p.second == &Byte )
+            continue;
+        string ptr_register = this->assign_register();
+        *s +=
+            " "+ptr_register+" = load "+this->g_type_to_llvm_type(p.second)+", "+this->g_type_to_llvm_type(p.second)+"* "+p.first+"\n";
+        this->change_reference_count(s, p.second, ptr_register, -1);
+    }
     
 }
 
@@ -1036,9 +1036,28 @@ void Translator_LLVM::translate_function_definition(string *s, FunctionDefinitio
         this->variables.insert_or_assign(fd->params[i].second, std::make_pair(result_register, fd->params[i].first));
     }
     this->translate_block(s, fd->body.get(), "");
+    this->create_return_default(s, fd->ret_type);
     *s +=
         "}\n";
     current = nullptr;
+}
+
+void Translator_LLVM::create_return_default(string *s, g_type type) {
+    if (this->is_reference(type))
+        *s +=
+            " ret "+this->g_type_to_llvm_type(type)+" null\n";
+    else if (type == &Int)
+        *s +=
+            " ret i32 0\n";
+    else if (type == &Char)
+        *s +=
+            " ret i16 0\n";
+    else if (type == &Bool)
+        *s +=
+            " ret i1 0\n";
+    else if (type == &Void)
+        *s +=
+            " ret void\n";
 }
 
 void Translator_LLVM::translate_outer_block(string *s, Block *b) {

@@ -644,6 +644,7 @@ class Translator_LLVM {
     void free_variables(string *s);
     void free_argv(string *s);
     int g_type_to_depth(g_type type);
+    void create_return_default(string *s, g_type type);
     void free_types(string *s);
   public:
     string translate_program(Program *p);

@@ -78,7 +78,7 @@ void change_reference_count(void *ptr, int i, int depth) {
     int *p = (int*)ptr; // convert to int pointer
     p -= 2;             // scroll back to ref count
     int ref_count = *p; // get the actual ref count integer
-    cout << ref_count << endl;
+    //cout << ref_count << endl;
     if (ref_count==-1)
         return;
     ref_count += i;     // change it
@@ -151,7 +151,7 @@ gstring* to_argv(int argc, char **args) {
 
 gstring concat_chars(const char16_t *s, int slen, const char16_t *t, int tlen) {
     gstring u = (gstring) malloc(2 * (slen + tlen) + 4 + 4) + 4;
-    *((int *)(u - 4)) = 0;
+    *((int *)(u - 4)) = 1;
     *((int *)(u - 2)) = slen + tlen;
     memcpy(u, s, 2*slen);
     memcpy(u+slen, t, 2*tlen);
@@ -261,7 +261,7 @@ gstring new_str_expr(char16_t c, int len)
 void *new_arr_expr(int size, int len)
 {
     byte *p = (byte*)malloc(len*size+4+4); // 4 for ref count, 4 for length
-    *((int *)p) = 0; // initialize ref count
+    *((int *)p) = 1; // initialize ref count
     p += 4;
     *((int *)p) = len; // initialize length
     p += 4;

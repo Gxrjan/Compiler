@@ -156,14 +156,14 @@ string Translator_LLVM::translate_bool_literal(string *s, BoolLiteral *l)
 
 string Translator_LLVM::translate_variable(string *s, Variable *v) 
 {
-    if (v->name == "argc") {
-        string result_register = this->assign_register();
-        *s +=
-            " "+result_register+" = add i32 0, %0\n";
-        return result_register;
-    } else if (v->name == "argv") {
-        return "%argv";
-    }
+    // if (v->name == "argc") {
+    //     string result_register = this->assign_register();
+    //     *s +=
+    //         " "+result_register+" = add i32 0, %0\n";
+    //     return result_register;
+    // } else if (v->name == "argv") {
+    //     return "%argv";
+    // }
     string result_register = this->assign_register();
     string var_storage = this->variables.at(v->name).first;
     string var_type = g_type_to_llvm_type(this->variables.at(v->name).second);
@@ -1020,8 +1020,12 @@ void Translator_LLVM::translate_function_definition(string *s, FunctionDefinitio
     *s +=
         "define "+this->g_type_to_llvm_type(fd->ret_type)+" @"+fd->name+"(";
     for (size_t i=0;i<fd->params.size();i++) {
-        *s +=
-            ""+this->g_type_to_llvm_type(fd->params[i].first);
+        if (i==1 && fd->params[i].first==ArrayType::make(&String) && fd->name=="main")
+            *s +=
+                "i8**";
+        else
+            *s +=
+                ""+this->g_type_to_llvm_type(fd->params[i].first);
         *s +=
             ((i==fd->params.size()-1) ? "" : ",");
     }
@@ -1029,10 +1033,17 @@ void Translator_LLVM::translate_function_definition(string *s, FunctionDefinitio
         ") {\n";
     for (size_t i=0;i<fd->params.size();i++) {
         string reg = "%"+std::to_string(i);
-        if (this->is_reference(fd->params[i].first))
-            this->change_reference_count(s, fd->params[i].first, reg, 1);
-        string result_register = this->create_allocate_and_store(s, fd->params[i].first, reg);
-        
+        string result_register;
+        if (i==1 && fd->params[i].first==ArrayType::make(&String) && fd->name=="main") {
+            string temp_register = this->assign_register();
+            *s +=
+                " "+temp_register+" = call i16** @to_argv(i32 %0, i8** %1)\n";
+            result_register = this->create_allocate_and_store(s, fd->params[i].first, temp_register);
+        } else {
+            if (this->is_reference(fd->params[i].first))
+                this->change_reference_count(s, fd->params[i].first, reg, 1);
+            result_register = this->create_allocate_and_store(s, fd->params[i].first, reg);
+        }
         this->variables.insert_or_assign(fd->params[i].second, std::make_pair(result_register, fd->params[i].first));
     }
     this->translate_block(s, fd->body.get(), "");

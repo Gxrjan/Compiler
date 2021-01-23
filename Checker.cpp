@@ -134,10 +134,10 @@ Declaration *Checker::look_up(Id id, Block *b)
 
 Type *Checker::check_variable(Variable *var, Block *b)
 {
-        if (var->name == "argc")
-            return &Int;
-        if (var->name == "argv")
-            return ArrayType::make(&String);
+        // if (var->name == "argc")
+        //     return &Int;
+        // if (var->name == "argv")
+            // return ArrayType::make(&String);
         Declaration *result = this->look_up(var->name, b);
         if (!result)
             this->report_error(var->line, var->col, "variable hasn't been declared");

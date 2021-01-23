@@ -1,3 +1,4 @@
+void main(int argc, string[] argv) {
     int prime_count = 0;
     int result = 0;
     int i = 2;
@@ -17,3 +18,4 @@
         i = i + 1;
     }
     print("Result: " + result);
+}

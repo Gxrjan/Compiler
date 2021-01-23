@@ -1,5 +1,38 @@
-// test operators
+int test(int[] arr) {  
+  print("Entered");
+  arr[0] = 99;
+  print("Assigned");
+  return arr[0]; 
+  
+}
 
+void test_ret(int[] a) {
+  return;
+  print("After return");
+}
+int fact(int n) {
+  if (n==0)
+    return 1;
+  return n * fact(n-1);
+}
+int another(int m) {
+  int n = 0;
+  return 0;
+}
+char ret_char() { return 'a';}
+bool ret_bool() { return true; }
+string ret_str() { return "hello world"; } 
+
+int str_len(string s) {
+  return s.Length;
+}
+
+
+int[] ret_arr() { return new int[10]; }
+
+
+// test operators
+void main() { 
 print(2 + 2);  // expect: 4
 
 print(10 - 5); // expect: 5
@@ -341,3 +374,21 @@ t = (s + "d").Substring(1);
 
 a = new int[5];
 x = (a)[3];  
+
+// Functions
+int[] func_arr = ret_arr();
+test(func_arr);
+// expect: Entered
+// expect: Assigned
+test_ret(func_arr);
+print(func_arr[0]); // expect: 99
+print(ret_arr()[0]); // expect: 0
+print(fact(5)); // expect: 120
+print(ret_char()); // expect: a
+  if (ret_bool())
+    print("yes"); // expect: yes
+  else
+    print("no");
+  print(ret_str()); // expect: hello world
+  print(str_len("Hello".Substring(0))); // expect: 5
+}

@@ -96,3 +96,18 @@ int x = int.Parse("123")++;
 void main() {
 int x = (2 + 2)++;
 }
+
+void test_void(void a) {}
+void main() {
+  test_void();
+}
+
+char test() { return 1; }
+void main() {
+  test();
+}
+
+int[] test() { return 0; }
+int main() { 
+  test();
+}

@@ -1076,17 +1076,18 @@ void Translator_LLVM::translate_outer_block(string *s, Block *b) {
         "; starting to stranslate global space\n";
     for (auto &statement : b->statements)
         this->translate_external_definition(s, dynamic_cast<ExternalDefinition*>(statement.get()));
-    // for (auto var : b->variables) {
-    //     auto p = this->variables[var.first];
-    //     if (p.second == &Bool || 
-    //     p.second == &Int || p.second == &Char ||
-    //     p.second == &Empty || p.second == &Byte )
-    //         continue;
-    //     string ptr_register = this->assign_register();
-    //     *s +=
-    //         " "+ptr_register+" = load "+this->g_type_to_llvm_type(p.second)+", "+this->g_type_to_llvm_type(p.second)+"* "+p.first+"\n";
-    //     this->change_reference_count(s, p.second, ptr_register, -1);
-    // }
+    // freeing global variables
+    for (auto var : b->variables) {
+        auto p = this->variables[var.first];
+        if (p.second == &Bool || 
+        p.second == &Int || p.second == &Char ||
+        p.second == &Empty || p.second == &Byte )
+            continue;
+        string ptr_register = this->assign_register();
+        *s +=
+            " "+ptr_register+" = load "+this->g_type_to_llvm_type(p.second)+", "+this->g_type_to_llvm_type(p.second)+"* "+p.first+"\n";
+        this->change_reference_count(s, p.second, ptr_register, -1);
+    }
 }
 
 void Translator_LLVM::translate_return_statement(string *s, ReturnStatement *rs) {
@@ -1111,6 +1112,7 @@ string Translator_LLVM::translate_program(Program* prog)
 {
     string result = "";
     result += 
+            "@gl = global i32 1\n"
             "@fmt_i = constant [4 x i8] c\"%d\\0A\\00\"\n"
             "@fmt_c = constant [4 x i8] c\"%c\\0A\\00\"\n"
             "@fmt_s = constant [4 x i8] c\"%s\\0A\\00\"\n"

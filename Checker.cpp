@@ -466,6 +466,8 @@ void Checker::populate_functions(Block *b) {
 void Checker::check_function_definition(FunctionDefinition* fd, Block *b) {
     this->current = fd;
     for (auto &p : fd->params) {
+        if (p.first==&Void)
+            this->report_error(fd->line, fd->col, "Parameter can't be void");
         Declaration *dec = new Declaration(p.first, p.second, nullptr, 0, 0);
         fd->body->variables.insert({dec->id, dec});
     }

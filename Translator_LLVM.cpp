@@ -396,7 +396,6 @@ string Translator_LLVM::g_type_to_llvm_type(Type *t)
         return "i8";
     else if (t == &Empty)
         return "i8*";
-        //throw runtime_error("Trying to convert null to llvm_type");
     else {
         auto st = dynamic_cast<ArrayType *>(t);
         return this->g_type_to_llvm_type(st->base)+"*";
@@ -423,7 +422,6 @@ string Translator_LLVM::translate_new_arr_expr(string *s, NewArrExpr *e)
 
     *s +=
         " "+temp_register+" = call i8* @new_arr_expr(i32 "+size_register+", i32 "+len_register+")\n";
-    //return this->create_conversion(s, temp_register, ArrayType::make(&Byte), e->type);
     string result_register = this->create_convert_ptr(s, temp_register, ArrayType::make(&Byte), e->type);
     references.push({result_register, e->type});
     return result_register;
@@ -730,16 +728,8 @@ void Translator_LLVM::change_reference_count(string *s, g_type type, string ptr_
     string temp_register = this->assign_register();
     string conv_register = this->assign_register();
     string llvm_type = this->g_type_to_llvm_type(type);
-    // *s +=
-    //     //" "+temp_register+" = load "+this->g_type_to_llvm_type(type)+", "+this->g_type_to_llvm_type(type)+"* "+ptr_register+"\n"
-    //     " "+conv_register+" = bitcast "+this->g_type_to_llvm_type(type)+" "+ptr_register+" to i32*\n";
-    //string ref_count_register = this->create_getelementptr_load(s, &Int,ArrayType::make(&Int), conv_register, "-2");
-    // *s +=
-    //     " %msg = getelementptr [4 x i8], [4 x i8]* @fmt_i, i32 0, i32 0\n"
-    //     " call i32 (i8*, ...) @printf(i8* %msg, i32 "+ref_count_register+")\n";
-    //cout << "depth is " << this->g_type_to_depth(type) << endl;
+
     *s +=
-        //" "+temp_register+" = load "+llvm_type+", "+llvm_type+"* "+ptr_register+"\n"
         " "+conv_register+" = bitcast "+llvm_type+" "+ptr_register+" to i8*\n"
         " call void (i8*, i32, i32) @change_reference_count(i8* "+conv_register+", i32 "+std::to_string(i)+", i32 "+std::to_string(this->g_type_to_depth(type))+")\n";
     
@@ -1094,8 +1084,7 @@ void Translator_LLVM::translate_return_statement(string *s, ReturnStatement *rs)
     *s += // comment
         "; "+rs->to_string()+"\n";
     if (!rs->expr)
-        *s +=
-            " ret void\n";
+        this->create_return_default(s, current->ret_type);
     else {
         string expr_register = this->translate_expr(s, rs->expr.get());
         if (this->is_reference(rs->expr->type))
@@ -1113,6 +1102,7 @@ string Translator_LLVM::translate_program(Program* prog)
     string result = "";
     result += 
             "@gl = global i32 1\n"
+            //"@gl_arr = global call i8* @new_arr_expr(i32 4, i32 4)\n"
             "@fmt_i = constant [4 x i8] c\"%d\\0A\\00\"\n"
             "@fmt_c = constant [4 x i8] c\"%c\\0A\\00\"\n"
             "@fmt_s = constant [4 x i8] c\"%s\\0A\\00\"\n"

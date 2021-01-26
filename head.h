@@ -569,6 +569,7 @@ class Checker {
     bool compare_arguments(vector<Type*> params, vector<Expr*> args, Block *b);
     void compare_types(Type *left_t, Type *right_t);
     bool function_inside(Expr *expr);
+    bool return_inside(Statement *s);
   public:
     void check_program(Program *p);
     map<Id, vector<pair<Type*, vector<Type*>>>> functions; // function map from names to all possible overloads
@@ -583,8 +584,10 @@ class Translator_LLVM {
     FunctionDefinition *current;
     stack<pair<string,g_type>> references; // first: address, second: llvm_type
     map<Id, pair<string, g_type>> variables;  // first: address, second: llvm_type
+    map<Id, Expr*> globals;
     map<StringLiteral *, int> strings;
     string assign_register();
+    string assign_global_register();
     string concat_cc(Type *left, Type *right);
     string translate_num_literal(string *s, NumLiteral *l);
     string translate_bool_literal(string *s, BoolLiteral *l);
@@ -606,6 +609,7 @@ class Translator_LLVM {
     string translate_op_expr(string *s, OpExpr *expr);
     string translate_expr(string *s, Expr *expr);
     void translate_declaration(string *s, Declaration *dec);
+    void translate_external_declaration(string *s, Declaration *dec);
     void translate_assignment(string *s, Assignment *asgn);
     void translate_if_statement(string *s, IfStatement *st, string loop_end_label);
     void translate_while_statement(string *s, WhileStatement *st);
@@ -633,6 +637,7 @@ class Translator_LLVM {
     string create_getelementptr(string *s, string llvm_type, string expr_llvm_type, string expr_register, string index_register);
     string create_inc_dec(string *s, bool inc_dec, string expr_register);
     string translate_function_call(string *s, FunctionCall *fc);
+    void init_globals(string *s);
     bool is_reference(g_type type);
     void translate_return_statement(string *s, ReturnStatement *rs);
     void translate_external_definition(string *s, ExternalDefinition *ed);

@@ -193,6 +193,7 @@ string Translator_LLVM::translate_string_literal(string *s, StringLiteral *l)
     //     *s +=
     //         ((i==l->s.length()-1) ? ")\n" : ", ");
     // }
+    // cout << l->s << " " << id << endl;
     *s +=
         ""+result_register+" = getelementptr <{ i32, i32, ["+len_str+" x i16]}>, "
         "<{ i32, i32, ["+len_str+" x i16]}>* @str_"+std::to_string(id)+", i32 0, i32 2, i32 0\n";
@@ -993,9 +994,41 @@ void Translator_LLVM::free_variables(string *s) {
     }
 }
 
+string Translator_LLVM::assign_global_register() {
+    return "@r"+std::to_string(this->register_id++);
+}
+
+void Translator_LLVM::translate_external_declaration(string *s, Declaration *dec) {
+    *s += // asm comment
+        "; " + dec->to_string() + "\n";
+    string var_type = this->g_type_to_llvm_type(dec->type);
+    string reg = this->assign_global_register();
+    if (this->is_reference(dec->type))
+        *s +=
+            " "+reg+" = global "+var_type+" null\n";
+    else
+        *s +=
+            " "+reg+" = global "+var_type+" 0\n";
+    this->variables.insert_or_assign(dec->id, std::make_pair(reg, dec->type));
+    this->globals.insert_or_assign(dec->id, dec->expr.get());
+}
+
+void Translator_LLVM::init_globals(string *s) {
+    *s +=
+        "; initilizing globals\n";
+    for (auto &p : this->globals) {
+        string expr_register = this->translate_expr(s, p.second);
+        string type_reg = this->g_type_to_llvm_type(p.second->type);
+        *s +=
+            " store "+type_reg+" "+expr_register+", "+type_reg+"* "+this->variables[p.first].first+"\n";
+    }
+    *s +=
+        "; beginning of main\n";
+}
+
 void Translator_LLVM::translate_external_definition(string *s, ExternalDefinition *ed) {
     if (auto dec = dynamic_cast<Declaration*>(ed->s.get()))
-        this->translate_declaration(s, dec);
+        this->translate_external_declaration(s, dec);
     else if (auto fd = dynamic_cast<FunctionDefinition*>(ed->s.get()))
         this->translate_function_definition(s, fd);
     else
@@ -1021,6 +1054,8 @@ void Translator_LLVM::translate_function_definition(string *s, FunctionDefinitio
     }
     *s +=
         ") {\n";
+    if (fd->name=="main")
+        this->init_globals(s);
     for (size_t i=0;i<fd->params.size();i++) {
         string reg = "%"+std::to_string(i);
         string result_register;
@@ -1067,17 +1102,17 @@ void Translator_LLVM::translate_outer_block(string *s, Block *b) {
     for (auto &statement : b->statements)
         this->translate_external_definition(s, dynamic_cast<ExternalDefinition*>(statement.get()));
     // freeing global variables
-    for (auto var : b->variables) {
-        auto p = this->variables[var.first];
-        if (p.second == &Bool || 
-        p.second == &Int || p.second == &Char ||
-        p.second == &Empty || p.second == &Byte )
-            continue;
-        string ptr_register = this->assign_register();
-        *s +=
-            " "+ptr_register+" = load "+this->g_type_to_llvm_type(p.second)+", "+this->g_type_to_llvm_type(p.second)+"* "+p.first+"\n";
-        this->change_reference_count(s, p.second, ptr_register, -1);
-    }
+    // for (auto var : b->variables) {
+    //     auto p = this->variables[var.first];
+    //     if (p.second == &Bool || 
+    //     p.second == &Int || p.second == &Char ||
+    //     p.second == &Empty || p.second == &Byte )
+    //         continue;
+    //     string ptr_register = this->assign_register();
+    //     *s +=
+    //         " "+ptr_register+" = load "+this->g_type_to_llvm_type(p.second)+", "+this->g_type_to_llvm_type(p.second)+"* "+p.first+"\n";
+    //     this->change_reference_count(s, p.second, ptr_register, -1);
+    // }
 }
 
 void Translator_LLVM::translate_return_statement(string *s, ReturnStatement *rs) {

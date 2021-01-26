@@ -500,6 +500,24 @@ void Checker::check_return_statement(ReturnStatement *rs, Block *b) {
     
 }
 
+bool Checker::return_inside(Statement *s) {
+    if (!s)
+        return true;
+    if (auto st = dynamic_cast<IfStatement *>(s)) {
+        return this->return_inside(st->if_s.get()) && this->return_inside(st->else_s.get());
+    } else if (auto st = dynamic_cast<WhileStatement *>(s)) { 
+        return this->return_inside(st->statement.get());
+    } else if (auto for_s = dynamic_cast<ForStatement *>(s)) {
+        return this->return_inside(for_s->body.get());
+    } else if (dynamic_cast<ReturnStatement *>(s)) {
+        return true;
+    } else if (auto b = dynamic_cast<Block *>(s)){
+        for (auto &st : b->statements)
+            if (this->return_inside(st.get()))
+                return true;
+    }
+    return false;
+}
 
 bool Checker::function_inside(Expr *expr) {
     if (auto e = dynamic_cast<OpExpr *>(expr))
@@ -518,7 +536,7 @@ bool Checker::function_inside(Expr *expr) {
         for (auto &ex : e->arguments)
             if (function_inside(ex.get()))
                 return true;
-        return e->expr.get();
+        return false;
     }
 
     if (auto e = dynamic_cast<IntParseExpr *>(expr)) {

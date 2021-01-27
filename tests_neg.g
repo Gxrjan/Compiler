@@ -111,3 +111,13 @@ int[] test() { return 0; }
 int main() { 
   test();
 }
+
+void do_stuff(int n) {
+  print(n);
+}
+int do_stuff(int n) {
+  return n+1;
+}
+
+int main(int argc, string[] argv) {}
+void main(int argc) {} 

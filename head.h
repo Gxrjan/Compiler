@@ -465,6 +465,7 @@ class ReturnStatement : public Statement {
 class Program {
   public:
     unique_ptr<Block> block;
+    map<tuple<g_type, string, vector<g_type>>, size_t> overloads;
     Program(unique_ptr<Block> block);
     string to_string();
 };
@@ -530,6 +531,8 @@ class Parser {
 
 // CHECKER
 class Checker {
+    size_t func_id = 0;
+    Program *p;
     Declaration *look_up(Id id, Block *b);
     Type *check_expr(Expr *expr, Block *b);
     Type *check_expr_type(Expr *expr, Block *b);
@@ -578,10 +581,13 @@ class Checker {
 
 // LLVM TRANSLATOR
 class Translator_LLVM {
+    map<tuple<Type*, string, vector<Type*>>, size_t> overloads;
+    int func_id = 0;
     int register_id = 0;
     int label_id = 0;
     int string_id = 0;
     FunctionDefinition *current;
+    Program *current_prog;
     stack<pair<string,g_type>> references; // first: address, second: llvm_type
     map<Id, pair<string, g_type>> variables;  // first: address, second: llvm_type
     map<Id, Expr*> globals;

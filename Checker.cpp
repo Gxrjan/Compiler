@@ -418,6 +418,7 @@ void Checker::check_block(Block *b, bool in_loop)
 
 void Checker::check_program(Program *p)
 {
+    this->p = p;
     this->check_outer_block(p->block.get());
 }
 
@@ -451,9 +452,13 @@ void Checker::populate_functions(Block *b) {
                 for (auto &p : fd->params)
                     types.push_back(p.first);
                 pair<Type*, vector<Type*>> overload = make_pair(fd->ret_type, types);
+                auto tup = make_tuple(fd->ret_type, fd->name, types);
+                this->p->overloads[tup] = this->func_id++;
+                if (fd->name=="main" && this->functions[fd->name].size()!=0)
+                    this->report_error(fd->line, fd->col, "Main has already been defined");
                 for (auto over : this->functions[fd->name]) {
-                    if (over == overload)
-                        this->report_error(fd->line, fd->col, "Function with the same signature has already been defined");
+                    if (over.second == overload.second)
+                        this->report_error(fd->line, fd->col, "Function with the same parameters has already been defined");
                 }
                 this->functions[fd->name].push_back(overload);
             }

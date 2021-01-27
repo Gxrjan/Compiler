@@ -78,7 +78,7 @@ void change_reference_count(void *ptr, int i, int depth) {
     int *p = (int*)ptr; // convert to int pointer
     p -= 2;             // scroll back to ref count
     int ref_count = *p; // get the actual ref count integer
-    cout << ref_count << endl;
+    // cout << ref_count << endl;
     if (ref_count==-1)
         return;
     ref_count += i;     // change it

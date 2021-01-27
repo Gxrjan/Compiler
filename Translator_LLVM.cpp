@@ -77,8 +77,13 @@ string Translator_LLVM::translate_function_call(string *s, FunctionCall *fc) {
         ";"+fc->to_string()+"\n";
     string ret_register = "";
     vector<string> args;
-    for (auto &a : fc->args)
+    vector<g_type> types;
+    for (auto &a : fc->args) {
+        types.push_back(a->type);
         args.push_back(this->translate_expr(s, a.get()));
+    }
+    auto over = make_tuple(fc->type, fc->name, types);
+    auto fd_id = this->current_prog->overloads[over];
     if (fc->type!=&Void) {
         ret_register = this->assign_register();
         *s +=
@@ -112,7 +117,7 @@ string Translator_LLVM::translate_function_call(string *s, FunctionCall *fc) {
             ")";
         
         *s +=
-            " @"+fc->name+"(";
+            " @"+fc->name+""+std::to_string(fd_id)+"(";
         for (size_t i=0;i<fc->args.size();i++) {
             *s +=
                 this->g_type_to_llvm_type(fc->args[i]->type)+" "+args[i];
@@ -123,7 +128,6 @@ string Translator_LLVM::translate_function_call(string *s, FunctionCall *fc) {
             ")\n";
     }
     if (this->is_reference(fc->type)) {
-        cout << "fc" << endl;
         this->references.push({ret_register, fc->type});
     }
 
@@ -200,7 +204,6 @@ string Translator_LLVM::translate_string_literal(string *s, StringLiteral *l)
         ""+result_register+" = getelementptr <{ i32, i32, ["+len_str+" x i16]}>, "
         "<{ i32, i32, ["+len_str+" x i16]}>* @str_"+std::to_string(id)+", i32 0, i32 2, i32 0\n";
     this->strings.insert({l, id});
-    cout <<"str lit" << endl;
     this->references.push({result_register, &String});
     return result_register;
 }
@@ -345,7 +348,6 @@ string Translator_LLVM::translate_substr_expr(string *s, SubstrExpr *e)
         *s +=
             " "+result_register+" = call i16* @substr_int_int(i16* "+str_register+",i32 "+from_register+", i32 "+len_register+")\n";    
     }
-    cout << "substr" << endl;
     references.push({result_register, e->type});
     return result_register;
 }
@@ -369,7 +371,6 @@ string Translator_LLVM::translate_new_str_expr(string *s, NewStrExpr *e)
     string result_register = this->assign_register();
     *s +=
         " "+result_register+" = call i16* @new_str_expr(i16 "+chr_register+", i32 "+len_register+")\n";
-    cout << "new str" << endl;
     references.push({result_register, e->type});
     return result_register;
 }
@@ -429,7 +430,6 @@ string Translator_LLVM::translate_new_arr_expr(string *s, NewArrExpr *e)
     *s +=
         " "+temp_register+" = call i8* @new_arr_expr(i32 "+size_register+", i32 "+len_register+")\n";
     string result_register = this->create_convert_ptr(s, temp_register, ArrayType::make(&Byte), e->type);
-    cout << "new arr" << endl;
     references.push({result_register, e->type});
     return result_register;
 }
@@ -582,7 +582,6 @@ string Translator_LLVM::translate_arithm_expr(string *s, OpExpr *expr)
                             " "+result_register+" = call i16* @concat_chr_str(i16 "+register_left+"," 
                             "i16* "+register_right+")";
                 }
-                cout << "Arithm" << endl;
                 this->references.push({result_register, &String});
                 return result_register;
             }
@@ -756,7 +755,6 @@ void Translator_LLVM::translate_assignment(string *s, Assignment *asgn)
         *s +=
             " "+temp_register+" = load "+this->g_type_to_llvm_type(t)+", "+this->g_type_to_llvm_type(t)+"* "+ptr_register+"\n";
         if (auto at = dynamic_cast<ArrayType*>(t)) {
-            cout <<"var" << endl;
             change_reference_count(s, at, temp_register, -1);
             change_reference_count(s, asgn->expr->type, expr_register, +1);
         } else if (t == &String) {
@@ -765,7 +763,6 @@ void Translator_LLVM::translate_assignment(string *s, Assignment *asgn)
         }
         this->create_store(s, expr_llvm_type, expr_register, ptr_register);
     } else {
-        cout <<"hehe" <<endl;
         string temp_register = this->assign_register();
         auto el = dynamic_cast<ElemAccessExpr *>(asgn->id.get());
         string expr_register = this->translate_expr(s, el->expr.get());
@@ -779,7 +776,6 @@ void Translator_LLVM::translate_assignment(string *s, Assignment *asgn)
         *s +=
             " "+temp_register+" = load "+this->g_type_to_llvm_type(arr_t->base)+", "+this->g_type_to_llvm_type(arr_t->base)+"* "+ptr_register+"\n";
         if (auto at = dynamic_cast<ArrayType*>(arr_t->base)) {
-            cout <<"here"<< endl;
             change_reference_count(s, at, temp_register, -1);
             change_reference_count(s, at, asgn_register, +1);
         } else if (arr_t->base == &String) {
@@ -1084,8 +1080,17 @@ void Translator_LLVM::translate_function_definition(string *s, FunctionDefinitio
     current = fd;
     *s += // comment
         "; "+fd->to_string()+"\n";
-    *s +=
-        "define "+this->g_type_to_llvm_type(fd->ret_type)+" @"+fd->name+"(";
+    vector<Type*> ts;
+    for (size_t i=0;i<fd->params.size();i++)
+        ts.push_back(fd->params[i].first);
+    auto over = make_tuple(fd->ret_type, fd->name, ts);
+    auto fd_id = this->current_prog->overloads[over];
+    if (fd->name=="main")
+        *s +=
+            "define "+this->g_type_to_llvm_type(fd->ret_type)+" @"+fd->name+"(";
+    else
+        *s +=
+            "define "+this->g_type_to_llvm_type(fd->ret_type)+" @"+fd->name+""+std::to_string(fd_id)+"(";
     for (size_t i=0;i<fd->params.size();i++) {
         if (i==1 && fd->params[i].first==ArrayType::make(&String) && fd->name=="main")
             *s +=
@@ -1182,6 +1187,7 @@ void Translator_LLVM::translate_return_statement(string *s, ReturnStatement *rs)
 
 string Translator_LLVM::translate_program(Program* prog)
 {
+    this->current_prog = prog;
     string result = "";
     result += 
             "@gl = global i32 1\n"

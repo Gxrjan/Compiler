@@ -1,4 +1,6 @@
 
+int[] gl_arr = new int[100];
+
 int main(int argc, string[] argv) {
     int dim = 10;
 

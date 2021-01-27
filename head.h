@@ -638,6 +638,7 @@ class Translator_LLVM {
     string create_inc_dec(string *s, bool inc_dec, string expr_register);
     string translate_function_call(string *s, FunctionCall *fc);
     void init_globals(string *s);
+    void free_globals(string *s);
     bool is_reference(g_type type);
     void translate_return_statement(string *s, ReturnStatement *rs);
     void translate_external_definition(string *s, ExternalDefinition *ed);

@@ -54,8 +54,11 @@ def do_test(name, bin_name, args):
 def main():
     print("Running benchmarks...")
 
-    # Insertion sort 40000 elements, 100 - random seed
-    do_test("Insertion sort", 'insertion_sort', [40000, 100])
+    # Merge sort 10000000 elements, 100 - random seed
+    do_test("Merge sort", 'merge_sort', [10000000, 100])
+
+    # Insertion sort 100000 elements, 100 - random seed
+    do_test("Insertion sort", 'insertion_sort', [100000, 100])
 
     # prime sum 20000 elements
     do_test("Prime sum", 'prime_sum', [20000])

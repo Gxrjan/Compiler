@@ -21,7 +21,7 @@ mem_leak: gc
 
 
 benchmark: benchmark/insertion_sort benchmark/prime_sum benchmark/tag benchmark/insertion_sort_cs benchmark/prime_sum_cs benchmark/tag_cs benchmark/insertion_sort_cpp benchmark/prime_sum_cpp benchmark/tag_cpp \
-			benchmark/perm benchmark/perm_cs benchmark/perm_cpp
+			benchmark/perm benchmark/perm_cs benchmark/perm_cpp benchmark/merge_sort benchmark/merge_sort_cs benchmark/merge_sort_cpp
 	python benchmark.py
 
 
@@ -63,3 +63,14 @@ benchmark/perm_cs: benchmark/perm.cs
 
 benchmark/perm_cpp: benchmark/perm.cpp
 	clang++ -O2 -o benchmark/perm_cpp benchmark/perm.cpp
+
+
+benchmark/merge_sort: gc benchmark/merge_sort.g
+	./gc benchmark/merge_sort.g
+
+benchmark/merge_sort_cs: benchmark/merge_sort.cs
+	mcs -out:benchmark/merge_sort_cs benchmark/merge_sort.cs
+
+
+benchmark/merge_sort_cpp: benchmark/merge_sort.cpp
+	clang++ -O2 -o benchmark/merge_sort_cpp benchmark/merge_sort.cpp

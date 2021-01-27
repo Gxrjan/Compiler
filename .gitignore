@@ -30,5 +30,8 @@ benchmark/tag_cs
 benchmark/perm
 benchmark/perm_cs
 benchmark/perm_cpp
+benchmark/merge_sort
+benchmark/merge_sort_cs
+benchmark/merge_sort_cpp
 Prog*
 test_mem

@@ -1,8 +1,11 @@
-
+#include <stdio.h>
+#include <iostream>
+#include <string>
+using  namespace std;
 // Merges two subarrays of []arr.
 // First subarray is arr[l..m]
 // Second subarray is arr[m+1..r]
-void merge(int[] arr, int l, int m, int r)
+void merge(int *arr, int l, int m, int r)
 {
     // Find sizes of two
     // subarrays to be merged
@@ -10,8 +13,8 @@ void merge(int[] arr, int l, int m, int r)
     int n2 = r - m;
 
     // Create temp arrays
-    int[] L = new int[n1];
-    int[] R = new int[n2];
+    int *L = new int[n1];
+    int *R = new int[n2];
 
     // Copy data to temp arrays
     for (int i = 0; i < n1; i++)
@@ -61,7 +64,7 @@ void merge(int[] arr, int l, int m, int r)
 // Main function that
 // sorts arr[l..r] using
 // merge()
-void sort(int[] arr, int l, int r)
+void sort(int *arr, int l, int r)
 {
     if (l < r) {
         // Find the middle
@@ -80,26 +83,28 @@ void sort(int[] arr, int l, int r)
 
 // A utility function to
 // print array of size n */
-void printArray(int[] arr)
+void printArray(int *arr, int len)
 {
-    int n = arr.Length;
-    for (int i = 0; i < n; i++)
-        print(arr[i]);
+    for (int i = 0; i < len; i++)
+        cout << arr[i] << endl;
 }
 
-void main(int argc)
+int main(int argc, char *args[])
 {
-    int[] arr = new int[7];
-    arr[0] = 12;
-    arr[1] = 11;
-    arr[2] = 13;
-    arr[3] = 5;
-    arr[4] = 6;
-    arr[5] = 7;
-    arr[6] = 2;
-    print("Given Array");
-    printArray(arr);
-    sort(arr, 0, arr.Length - 1);
-    print("Sorted array");
-    printArray(arr);
+    int count = stoi(args[1]);
+    int *arr = new int[count];
+
+    // fill array with pseudo-random numbers
+    int rand = stoi(args[2]);
+
+    for (int i = 0 ; i < count ; i = i + 1) {
+        rand = (rand * 1103515 + 12345) % 2147483;
+        arr[i] = rand % 1000;
+    }
+    // printf("Given Array\n");
+    // printArray(arr, count);
+    sort(arr, 0, count - 1);
+    // printf("Sorted array\n");
+    // printArray(arr, count);
+    free(arr);
 }

@@ -75,13 +75,33 @@ string Translator_LLVM::type_to_cc(Type *t)
 string Translator_LLVM::translate_function_call(string *s, FunctionCall *fc) {
     *s += // comment
         ";"+fc->to_string()+"\n";
+    bool func_in_args = false;
+    
     string ret_register = "";
     vector<string> args;
     vector<g_type> types;
+    for (auto &a : fc->args)
+        func_in_args = func_in_args || this->function_inside(a.get());
+
+    // if (func_in_args) {
+    //     for (size_t i=0;i<fc->args.size();i++) {
+    //         if (this->is_reference(types[i])) {
+    //             this->change_reference_count(s, types[i], args[i], +1);
+    //             this->references.push({args[i], types[i]});
+    //         }
+    //     }
+    // }
+
     for (auto &a : fc->args) {
         types.push_back(a->type);
-        args.push_back(this->translate_expr(s, a.get()));
+        string reg = this->translate_expr(s, a.get());
+        if (this->is_reference(a->type)) {
+            this->change_reference_count(s, a->type, reg, +1);
+            this->references.push({reg, a->type});
+        }   
+        args.push_back(reg);
     }
+    
     auto over = make_tuple(fc->type, fc->name, types);
     auto fd_id = this->current_prog->overloads[over];
     if (fc->type!=&Void) {
@@ -105,6 +125,9 @@ string Translator_LLVM::translate_function_call(string *s, FunctionCall *fc) {
         }
     } else {
         // handle other functions
+
+
+
         *s +=
             " call "+this->g_type_to_llvm_type(fc->type)+" (";
         for (size_t i=0;i<fc->args.size();i++) {
@@ -160,23 +183,37 @@ string Translator_LLVM::translate_bool_literal(string *s, BoolLiteral *l)
     return result_register;
 }
 
+void Translator_LLVM::create_nullptr_check(string *s, string reg, string lllv_type) {
+    string bool_register = this->assign_register();
+    string label_id = std::to_string(this->label_id++);
+    string msg_loc = this->assign_register();
+
+    *s +=
+        "; nullptr check\n"
+        " "+bool_register+" = icmp ne "+lllv_type+" "+reg+", null\n"
+        " br i1 "+bool_register+", label %end"+label_id+", label %trap"+label_id+"\n"
+        "trap"+label_id+":\n"
+        " "+msg_loc+" = getelementptr [24 x i8], [24 x i8]* @nullptr_msg, i32 0, i32 0\n"
+        " call void (i8*) @report_error(i8* "+msg_loc+")\n"
+        " br label %end"+label_id+"\n"
+        "end"+label_id+":"
+        "; nullptr check end\n";
+
+}
+
 string Translator_LLVM::translate_variable(string *s, Variable *v) 
 {
-    // if (v->name == "argc") {
-    //     string result_register = this->assign_register();
-    //     *s +=
-    //         " "+result_register+" = add i32 0, %0\n";
-    //     return result_register;
-    // } else if (v->name == "argv") {
-    //     return "%argv";
-    // }
     string result_register = this->assign_register();
     string var_storage = this->variables.at(v->name).first;
     string var_type = g_type_to_llvm_type(this->variables.at(v->name).second);
     *s += 
         " "+result_register+" = load "+var_type+", "+var_type+"* "+var_storage+"\n";
+    if (dynamic_cast<ArrayType*>(v->type))
+        this->create_nullptr_check(s, result_register, var_type);
     return result_register;
 }
+
+
 
 string Translator_LLVM::translate_char_literal(string *s, CharLiteral *l)
 {
@@ -242,11 +279,63 @@ string Translator_LLVM::create_getelementptr_load(string *s, Type *result_type, 
     return result_register;
 }
 
+
+bool Translator_LLVM::function_inside(Expr *expr) {
+    if (auto e = dynamic_cast<OpExpr *>(expr))
+        return function_inside(e->right.get()) || function_inside(e->left.get());
+    
+    if (auto e = dynamic_cast<ElemAccessExpr *>(expr))
+        return function_inside(e->expr.get()) || function_inside(e->index.get());
+
+    if (auto e = dynamic_cast<LengthExpr *>(expr))
+        return function_inside(e->expr.get());
+    
+    if (auto e = dynamic_cast<TypeCastExpr *>(expr))
+        return function_inside(e->expr.get());
+
+    if (auto e = dynamic_cast<SubstrExpr *>(expr)) {
+        for (auto &ex : e->arguments)
+            if (function_inside(ex.get()))
+                return true;
+        return false;
+    }
+
+    if (auto e = dynamic_cast<IntParseExpr *>(expr)) {
+        for (auto &ex : e->arguments)
+            if (function_inside(ex.get()))
+                return true;
+    }
+
+    if (auto e = dynamic_cast<NewStrExpr *>(expr)) {
+        for (auto &ex : e->arguments)
+            if (function_inside(ex.get()))
+                return true;
+    }
+
+    if (auto e = dynamic_cast<NewArrExpr *>(expr))
+        return function_inside(e->expr.get());
+
+    if (auto inc = dynamic_cast<IncExpr *>(expr))
+        return function_inside(inc->expr.get());
+    
+    if (dynamic_cast<FunctionCall *>(expr))
+        return true;
+    
+    return false;
+
+}
+
+
 string Translator_LLVM::translate_elem_access_expr(string *s, ElemAccessExpr *e)
 {
+    
     *s += // asm comment
         "; "+e->to_string()+"\n";
     string expr_register = this->translate_expr(s, e->expr.get());
+    if (this->function_inside(e->index.get())) {
+        this->change_reference_count(s, e->expr->type, expr_register, +1);
+        this->references.push({expr_register, e->expr->type});
+    }
     string index_register = this->translate_expr(s, e->index.get());
     if (e->expr->type == &String) {
         this->create_bounds_check(s, expr_register, index_register, &String);
@@ -624,6 +713,7 @@ string Translator_LLVM::translate_arithm_expr(string *s, OpExpr *expr)
     return result_register;
 
 }
+
 
 string Translator_LLVM::translate_op_expr(string *s, OpExpr *expr) 
 {
@@ -1196,6 +1286,7 @@ string Translator_LLVM::translate_program(Program* prog)
             "@fmt_c = constant [4 x i8] c\"%c\\0A\\00\"\n"
             "@fmt_s = constant [4 x i8] c\"%s\\0A\\00\"\n"
             "@index_out_of_bounds_msg = constant [21 x i8] c\"index out of bounds\\0A\\00\"\n"
+            "@nullptr_msg = constant [24 x i8] c\"Null pointer exception\\0A\\00\"\n"
             "declare void @report_error(i8*)"
             "declare i32 @printf(i8*, ...)\n"
             "declare void @printg(i16*)\n"

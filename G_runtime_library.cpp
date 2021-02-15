@@ -70,15 +70,15 @@ void free_memory(void *p, int depth) {
 }
 
 void change_reference_count(void *ptr, int i, int depth) {
-    //cout << "Changing ref count at " << ptr << endl;
+    // cout << "Changing ref count at " << ptr << endl;
     // cout << "Depth is " << depth << endl;
-    // cout << i << endl;
     if (!ptr)
         return;
     int *p = (int*)ptr; // convert to int pointer
     p -= 2;             // scroll back to ref count
     int ref_count = *p; // get the actual ref count integer
-    // cout << ref_count << endl;
+    // cout << "current refcout: " << ref_count << endl;
+    // cout << "change is: " << i << endl;
     if (ref_count==-1)
         return;
     ref_count += i;     // change it
@@ -266,7 +266,7 @@ void *new_arr_expr(int size, int len)
     *((int *)p) = len; // initialize length
     p += 4;
     memset(p, 0, len*size);
-    //cout << "address at creation: " << (int*)p << endl;
+    // cout << "address at creation: " << (int*)p << endl;
     return p;
 }
 

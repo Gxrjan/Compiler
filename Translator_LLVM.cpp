@@ -1170,6 +1170,7 @@ void Translator_LLVM::translate_function_definition(string *s, FunctionDefinitio
     current = fd;
     *s += // comment
         "; "+fd->to_string()+"\n";
+    map<Id, pair<string, g_type>> variables_reserve;
     vector<Type*> ts;
     for (size_t i=0;i<fd->params.size();i++)
         ts.push_back(fd->params[i].first);
@@ -1208,9 +1209,13 @@ void Translator_LLVM::translate_function_definition(string *s, FunctionDefinitio
                 this->change_reference_count(s, fd->params[i].first, reg, 1);
             result_register = this->create_allocate_and_store(s, fd->params[i].first, reg);
         }
+        variables_reserve[fd->params[i].second] = this->variables[fd->params[i].second];
         this->variables.insert_or_assign(fd->params[i].second, std::make_pair(result_register, fd->params[i].first));
     }
     this->translate_block(s, fd->body.get(), "");
+    for (auto const &var : variables_reserve) {
+        this->variables.insert_or_assign(var.first, var.second);
+    }
     if (fd->name=="main")
         this->free_globals(s);
     this->create_return_default(s, fd->ret_type);

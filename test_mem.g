@@ -3,6 +3,7 @@ int[] gl_arr = new int[100];
 int[][] global_arr_int_2d = new int[5][];
 string[] rules = new string[3];
 string[][] global_arr_str_2d = new string[10][];
+string null_str = null;
 
 void assign_rules() {
     rules[0] = "bc";
@@ -29,7 +30,7 @@ int foo() {
     return 0;
 }
 
-int foo2() {
+int fooo() {
     a2 = null;
     return 7;
 }
@@ -53,7 +54,54 @@ int second() {
     return 7;
 }
 
+// 1
+
+string s1 = "x";
+
+string foo1() {
+    s1 = null;
+    return "ef";
+}
+
+// 2
+string s2 = "x";
+
+int foo2() {
+    s2 = null;
+    return 0;
+}
+
+
+
+// 3
+
+string s3 = "x";
+
+string foo3() {
+    s3 = null;
+    return "abcd";
+}
+
+//
+
+
+
 int main(int argc, string[] argv) {
+
+    s1 = "ab" + "cd";
+    string t1 = s1 + foo1();
+    print(t1);
+
+    s2 = "ab" + "cd";
+    string t2 = s2.Substring(foo2(), 2);
+    print(t2);
+
+    s3 = "ab" + "cd";
+    if (s3 == foo3())
+        print("equal");
+    else
+        print("not equal");
+
     int dim = 10;
     a[0] = 100;
    
@@ -61,7 +109,7 @@ int main(int argc, string[] argv) {
 
     a2[0] = 100;
 
-    print(bar(a2, foo2()));
+    print(bar(a2, fooo()));
 
     arr[0] = new int[10];
     arr[0][7] = 99;

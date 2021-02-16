@@ -70,17 +70,17 @@ void free_memory(void *p, int depth) {
 }
 
 void change_reference_count(void *ptr, int i, int depth) {
-    // cout << "Changing ref count at " << ptr << endl;
     // cout << "Depth is " << depth << endl;
     if (!ptr)
         return;
     int *p = (int*)ptr; // convert to int pointer
     p -= 2;             // scroll back to ref count
     int ref_count = *p; // get the actual ref count integer
-    // cout << "current refcout: " << ref_count << endl;
-    // cout << "change is: " << i << endl;
     if (ref_count==-1)
         return;
+    // cout << "Changing ref count at " << ptr << endl;
+    // cout << "current refcout: " << ref_count << endl;
+    // cout << "change is: " << i << endl;
     ref_count += i;     // change it
     *p = ref_count;     // write down the changed ref count
     if (ref_count == 0) {
@@ -155,7 +155,7 @@ gstring concat_chars(const char16_t *s, int slen, const char16_t *t, int tlen) {
     *((int *)(u - 2)) = slen + tlen;
     memcpy(u, s, 2*slen);
     memcpy(u+slen, t, 2*tlen);
-    //printf("Address at creation: %p\n", (void*)u);
+    // printf("Address at creation: %p\n", (void*)u);
     return u;
 }
 

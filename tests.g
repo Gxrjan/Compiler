@@ -74,6 +74,68 @@ void assign_2d_arr(int[][] arr, int[] asgn) {
     arr[i] = asgn;
 }
 
+// 1
+
+string s1 = "x";
+
+string foo1() {
+    s1 = null;
+    return "ef";
+}
+
+// 2
+string s2 = "x";
+
+int foo2() {
+    s2 = null;
+    return 0;
+}
+
+
+
+// 3
+
+string s3 = "x";
+
+string foo3() {
+    s3 = null;
+    return "abcd";
+}
+
+// rest
+
+int[] global_a = new int[10];
+int[] global_a2 = new int[10];
+
+int foo() {
+    global_a = null;
+    return 0;
+}
+
+int fooo() {
+    global_a2 = null;
+    return 7;
+}
+
+int bar(int[] b, int c) {
+    return b[0] + c;
+}
+
+int[][] global_arr = new int[10][];
+
+
+int first(int[][] arr) {
+   return global_arr[0][second()];
+}
+
+int second() {
+    global_arr = null;
+    int x = 1 + 1;
+    return 7;
+}
+
+//
+
 
 
 void main() { 
@@ -468,5 +530,32 @@ void main() {
   else
     print("global bool doesn't work");
   assign_2d_arr(global_arr_int_2d, new int[10]);
+
+  s1 = "ab" + "cd";
+  string t1 = s1 + foo1();
+  print(t1); // expect: abcdef
+
+  s2 = "ab" + "cd";
+  string t2 = s2.Substring(foo2(), 2);
+  print(t2); // expect: ab
+
+  s3 = "ab" + "cd";
+  if (s3 == foo3())
+      print("equal"); // expect: equal
+  else
+      print("not equal");
+
+  int dim = 10;
+  global_a[0] = 100;
   
+  print(global_a[foo()]); // expect: 100
+
+  global_a2[0] = 100;
+
+  print(bar(global_a2, fooo())); // expect: 107
+
+  global_arr[0] = new int[10];
+  global_arr[0][7] = 99;
+  print(first(global_arr)); // expect: 99
+
 }

@@ -405,7 +405,18 @@ string Translator_LLVM::translate_type_cast_expr(string *s, TypeCastExpr *e)
 
 string Translator_LLVM::translate_substr_expr(string *s, SubstrExpr *e)
 {
+    bool func_present = false;
+    if (e->arguments.size() == 1) {
+        func_present = this->function_inside(e->arguments[0].get());
+    } else {
+        func_present = this->function_inside(e->arguments[0].get())
+                    ||  this->function_inside(e->arguments[1].get());
+    }
     string str_register = this->translate_expr(s, e->expr.get());
+    if (func_present) {
+        this->change_reference_count(s, &String, str_register, +1);
+        this->references.push({str_register, &String});
+    }
     string result_register = this->assign_register();
     if (e->arguments.size() == 1) {
         string from_register;
@@ -629,13 +640,21 @@ string Translator_LLVM::create_cmp(string *s, Operation o, Type *type, string re
 
 string Translator_LLVM::translate_arithm_expr(string *s, OpExpr *expr)
 {
+    bool b = this->function_inside(expr->left.get())
+            || this->function_inside(expr->right.get());
+
     Operation o = TypeConverter::string_to_operation(expr->op);
     *s += // asm comment 
         "; " + expr->left->to_string() + "\n";
     string register_left = this->translate_expr(s, expr->left.get());
+    if (b && expr->left->type == &String) {
+        this->change_reference_count(s, &String, register_left, +1);
+        this->references.push({register_left, &String});
+    }
     *s += // asm comment 
         "; " + expr->right->to_string() + "\n";
     string register_right = this->translate_expr(s, expr->right.get());
+    
     string result_register = this->assign_register();
     string temp_register_left;
     string temp_register_right;
@@ -648,11 +667,11 @@ string Translator_LLVM::translate_arithm_expr(string *s, OpExpr *expr)
             if (expr->type == &Int) {
                 return this->create_add(s, expr->type, temp_register_left, temp_register_right);
             } else {
-                if (expr->left->type == &String && expr->right->type == &String)
+                if (expr->left->type == &String && expr->right->type == &String) {
                     *s += 
                         " "+result_register+" = call i16* @concat(i16* "+register_left+"," 
                         "i16* "+register_right+")";
-                else if (expr->left->type == &String) {
+                } else if (expr->left->type == &String) {
                     if (expr->right->type == &Int)
                         *s += 
                             " "+result_register+" = call i16* @concat_str_int(i16* "+register_left+"," 
@@ -1126,7 +1145,7 @@ void Translator_LLVM::init_globals(string *s) {
         "; initilizing globals\n";
     for (auto &p : this->globals) {
         string expr_register = this->translate_expr(s, p.second);
-        string type_reg = this->g_type_to_llvm_type(p.second->type);
+        string type_reg = this->g_type_to_llvm_type(this->variables[p.first].second);
         *s +=
             " store "+type_reg+" "+expr_register+", "+type_reg+"* "+this->variables[p.first].first+"\n";
         if (this->is_reference(p.second->type)) {

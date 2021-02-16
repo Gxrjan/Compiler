@@ -571,9 +571,9 @@ class Checker {
     void check_return_statement(ReturnStatement *rs, Block *b);
     bool compare_arguments(vector<Type*> params, vector<Expr*> args, Block *b);
     void compare_types(Type *left_t, Type *right_t);
-    bool function_inside(Expr *expr);
     bool return_inside(Statement *s);
   public:
+    static bool function_inside(Expr *expr);
     void check_program(Program *p);
     map<Id, vector<pair<Type*, vector<Type*>>>> functions; // function map from names to all possible overloads
 };
@@ -610,6 +610,7 @@ class Translator_LLVM {
     string g_type_to_llvm_type(Type *t);
     string translate_new_arr_expr(string *s, NewArrExpr *expr);
     string translate_variable(string *s, Variable *var);
+    string translate_not_expr(string *s, OpExpr *expr);
     void create_nullptr_check(string *s, string reg, string llvm_type);
     string translate_bool_expr(string *s, OpExpr *expr);
     string translate_arithm_expr(string *s, OpExpr *expr);
@@ -659,7 +660,6 @@ class Translator_LLVM {
     int g_type_to_depth(g_type type);
     void create_return_default(string *s, g_type type);
     void free_types(string *s);
-    bool function_inside(Expr *expr);
   public:
     string translate_program(Program *p);
 };

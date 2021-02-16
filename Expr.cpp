@@ -69,9 +69,13 @@ OpExpr::OpExpr
     this->left = move(left);
     this->right = move(right);
 }
-string OpExpr::to_string() { return "(" + (this->left)->to_string() \
-                                    + " " + this->op + " "\
-                                    + (this->right)->to_string() + ")"; }
+string OpExpr::to_string() { 
+    if (this->op == "!")
+        return "( ! "+(this->left)->to_string()+" )";
+    return "(" + (this->left)->to_string() \
+                + " " + this->op + " "\
+                + (this->right)->to_string() + ")"; 
+}
 
 
  

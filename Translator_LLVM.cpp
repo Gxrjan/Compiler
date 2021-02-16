@@ -81,7 +81,7 @@ string Translator_LLVM::translate_function_call(string *s, FunctionCall *fc) {
     vector<string> args;
     vector<g_type> types;
     for (auto &a : fc->args)
-        func_in_args = func_in_args || this->function_inside(a.get());
+        func_in_args = func_in_args || Checker::function_inside(a.get());
 
     // if (func_in_args) {
     //     for (size_t i=0;i<fc->args.size();i++) {
@@ -280,51 +280,6 @@ string Translator_LLVM::create_getelementptr_load(string *s, Type *result_type, 
 }
 
 
-bool Translator_LLVM::function_inside(Expr *expr) {
-    if (auto e = dynamic_cast<OpExpr *>(expr))
-        return function_inside(e->right.get()) || function_inside(e->left.get());
-    
-    if (auto e = dynamic_cast<ElemAccessExpr *>(expr))
-        return function_inside(e->expr.get()) || function_inside(e->index.get());
-
-    if (auto e = dynamic_cast<LengthExpr *>(expr))
-        return function_inside(e->expr.get());
-    
-    if (auto e = dynamic_cast<TypeCastExpr *>(expr))
-        return function_inside(e->expr.get());
-
-    if (auto e = dynamic_cast<SubstrExpr *>(expr)) {
-        for (auto &ex : e->arguments)
-            if (function_inside(ex.get()))
-                return true;
-        return false;
-    }
-
-    if (auto e = dynamic_cast<IntParseExpr *>(expr)) {
-        for (auto &ex : e->arguments)
-            if (function_inside(ex.get()))
-                return true;
-    }
-
-    if (auto e = dynamic_cast<NewStrExpr *>(expr)) {
-        for (auto &ex : e->arguments)
-            if (function_inside(ex.get()))
-                return true;
-    }
-
-    if (auto e = dynamic_cast<NewArrExpr *>(expr))
-        return function_inside(e->expr.get());
-
-    if (auto inc = dynamic_cast<IncExpr *>(expr))
-        return function_inside(inc->expr.get());
-    
-    if (dynamic_cast<FunctionCall *>(expr))
-        return true;
-    
-    return false;
-
-}
-
 
 string Translator_LLVM::translate_elem_access_expr(string *s, ElemAccessExpr *e)
 {
@@ -332,7 +287,7 @@ string Translator_LLVM::translate_elem_access_expr(string *s, ElemAccessExpr *e)
     *s += // asm comment
         "; "+e->to_string()+"\n";
     string expr_register = this->translate_expr(s, e->expr.get());
-    if (this->function_inside(e->index.get())) {
+    if (Checker::function_inside(e->index.get())) {
         this->change_reference_count(s, e->expr->type, expr_register, +1);
         this->references.push({expr_register, e->expr->type});
     }
@@ -407,10 +362,10 @@ string Translator_LLVM::translate_substr_expr(string *s, SubstrExpr *e)
 {
     bool func_present = false;
     if (e->arguments.size() == 1) {
-        func_present = this->function_inside(e->arguments[0].get());
+        func_present = Checker::function_inside(e->arguments[0].get());
     } else {
-        func_present = this->function_inside(e->arguments[0].get())
-                    ||  this->function_inside(e->arguments[1].get());
+        func_present = Checker::function_inside(e->arguments[0].get())
+                    ||  Checker::function_inside(e->arguments[1].get());
     }
     string str_register = this->translate_expr(s, e->expr.get());
     if (func_present) {
@@ -640,8 +595,7 @@ string Translator_LLVM::create_cmp(string *s, Operation o, Type *type, string re
 
 string Translator_LLVM::translate_arithm_expr(string *s, OpExpr *expr)
 {
-    bool b = this->function_inside(expr->left.get())
-            || this->function_inside(expr->right.get());
+    bool b = Checker::function_inside(expr->right.get());
 
     Operation o = TypeConverter::string_to_operation(expr->op);
     *s += // asm comment 
@@ -734,9 +688,21 @@ string Translator_LLVM::translate_arithm_expr(string *s, OpExpr *expr)
 }
 
 
+string Translator_LLVM::translate_not_expr(string *s, OpExpr *expr) {
+    *s += // asm comment 
+        "; " + expr->left->to_string() + "\n";
+    string register_left = this->translate_expr(s, expr->left.get());
+    string result_register = this->assign_register();
+    *s +=
+        " "+result_register+" = xor i1 1, "+register_left+"\n";
+    return result_register;
+}
+
 string Translator_LLVM::translate_op_expr(string *s, OpExpr *expr) 
 {
-    if (expr->op == "&&" || expr->op == "||") {
+    if (expr->op == "!") {
+        return this->translate_not_expr(s, expr);
+    } else if (expr->op == "&&" || expr->op == "||") {
         return this->translate_bool_expr(s, expr);
     } else {
         return this->translate_arithm_expr(s, expr);

@@ -20,6 +20,12 @@ bool Checker::nullable(Type *type)
 
 Type *Checker::check_compatability(OpExpr *expr, Block *b)
 {
+    if (expr->op == "!") {
+        Type *left_t = this->check_expr(expr->left.get(), b);
+        if (left_t!=&Bool)
+            this->report_error(expr->left->line, expr->left->col, "bool expected");
+        return &Bool;
+    }
     Type *left_t = this->check_expr(expr->left.get(), b);
     Type *right_t = this->check_expr(expr->right.get(), b);
     
@@ -538,6 +544,8 @@ bool Checker::function_inside(Expr *expr) {
         return function_inside(e->expr.get());
 
     if (auto e = dynamic_cast<SubstrExpr *>(expr)) {
+        if (function_inside(e->expr.get()))
+            return true;
         for (auto &ex : e->arguments)
             if (function_inside(ex.get()))
                 return true;

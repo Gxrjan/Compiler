@@ -171,6 +171,12 @@ void main() {
     print(30); // expect: 30
   else
     print(1);
+  
+  int num = 5;
+    if (!(num < 2))
+        print("not less"); // expect: not less
+
+  
 
 
   // %

@@ -20,8 +20,53 @@ void assign_2d_arr(string[][] arr, string[] asgn) {
     arr[i] = asgn;
 }
 
+// function calls
+int[] a = new int[10];
+int[] a2 = new int[10];
+
+int foo() {
+    a = null;
+    return 0;
+}
+
+int foo2() {
+    a2 = null;
+    return 7;
+}
+
+int bar(int[] b, int c) {
+    return b[0] + c;
+}
+
+int[][] arr = new int[10][];
+
+
+int first(int[][] arr) {
+   return arr[0][second()];
+}
+
+int second() {
+    print("Assigning null");
+    arr = null;
+    print("Null assigned");
+    int x = 1 + 1;
+    return 7;
+}
+
 int main(int argc, string[] argv) {
     int dim = 10;
+    a[0] = 100;
+   
+    print(a[foo()]);
+
+    a2[0] = 100;
+
+    print(bar(a2, foo2()));
+
+    arr[0] = new int[10];
+    arr[0][7] = 99;
+    print(first(arr));
+
 
 
     // Int

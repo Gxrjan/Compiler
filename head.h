@@ -13,6 +13,8 @@
 #include <set>
 #include <cstring>
 #include <stack>
+#include <stdlib.h>    /* for exit */
+#include <getopt.h>
 using namespace std;
 using Id = string;
 
@@ -582,6 +584,7 @@ class Checker {
 // LLVM TRANSLATOR
 class Translator_LLVM {
     map<tuple<Type*, string, vector<Type*>>, size_t> overloads;
+    int bounds, ref, free;
     int func_id = 0;
     int register_id = 0;
     int label_id = 0;
@@ -661,6 +664,7 @@ class Translator_LLVM {
     void create_return_default(string *s, g_type type);
     void free_types(string *s);
   public:
+    Translator_LLVM(int bounds, int ref, int free): bounds{bounds},ref{ref},free{free}{};
     string translate_program(Program *p);
 };
 #endif

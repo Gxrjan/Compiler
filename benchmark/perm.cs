@@ -7,7 +7,6 @@ class Prog {
         // Print initial string, as only the alterations will be printed later
         string test = args[0];
         int count = 1;
-        // WriteLine(test);   
         char[] a = new char[test.Length];
         for (int iter=0;iter<a.Length;iter++)
             a[iter] = test[iter];

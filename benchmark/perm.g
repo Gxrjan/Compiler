@@ -3,7 +3,6 @@ int main(int argc, string[] argv) {
 
   // Print initial string, as only the alterations will be printed later
   string test = argv[1];
-  // print(test); 
   int count = 1;  
   char[] a = new char[test.Length];
   for (int i=0;i<a.Length;i++)

@@ -3,7 +3,8 @@ int main(int argc, string[] argv) {
 
   // Print initial string, as only the alterations will be printed later
   string test = argv[1];
-  print(test);   
+  // print(test); 
+  int count = 1;  
   char[] a = new char[test.Length];
   for (int i=0;i<a.Length;i++)
     a[i] = test[i];
@@ -26,6 +27,7 @@ int main(int argc, string[] argv) {
             combine = combine + a[k];
           // Print current
           string result = combine;
+          count++;
           p[i]++; //Adding 1 to the specific weight that relates to the char array.
           i = 1; //if i was 2 (for example), after the swap we now need to swap for i=1
 
@@ -35,4 +37,5 @@ int main(int argc, string[] argv) {
           i++;//i index will have the option to go forward in the char array for "longer swaps"
       }
   }
+  print("Number of permutations: "+count);
 }

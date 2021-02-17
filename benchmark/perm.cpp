@@ -7,7 +7,8 @@ using namespace std;
 int main(int argc, char *argv[]) {
     // Print initial string, as only the alterations will be printed later
     char *test = argv[1];
-    cout << test << endl;   
+    // cout << test << endl;   
+    int count = 1;
     char *a = new char[strlen(test)];
     for (int i=0;i<strlen(test);i++)
         a[i] = test[i];
@@ -30,6 +31,8 @@ int main(int argc, char *argv[]) {
                 combine = combine + a[k];
             // Print current
             string result = combine;
+            count++;
+            // cout << result << endl;
             p[i]++; //Adding 1 to the specific weight that relates to the char array.
             i = 1; //if i was 2 (for example), after the swap we now need to swap for i=1
 
@@ -39,4 +42,5 @@ int main(int argc, char *argv[]) {
             i++;//i index will have the option to go forward in the char array for "longer swaps"
         }
     }
+    cout << "Number of permutations: " << count << endl;
 }

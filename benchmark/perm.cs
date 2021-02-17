@@ -6,7 +6,8 @@ class Prog {
     static void Main(String[] args) {
         // Print initial string, as only the alterations will be printed later
         string test = args[0];
-        WriteLine(test);   
+        int count = 1;
+        // WriteLine(test);   
         char[] a = new char[test.Length];
         for (int iter=0;iter<a.Length;iter++)
             a[iter] = test[iter];
@@ -29,6 +30,7 @@ class Prog {
                     combine = combine + a[k];
                 // Print current
                 string result = combine;
+                count++;
                 p[i]++; //Adding 1 to the specific weight that relates to the char array.
                 i = 1; //if i was 2 (for example), after the swap we now need to swap for i=1
 
@@ -38,5 +40,6 @@ class Prog {
                 i++;//i index will have the option to go forward in the char array for "longer swaps"
             }
         }
+        WriteLine("Number of permutations: " + count);
     }
 }

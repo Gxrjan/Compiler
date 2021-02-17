@@ -311,6 +311,9 @@ void Checker::check_assignment(Assignment *asgn, Block *b)
     if (!this->try_get_id(asgn->id.get(), &id))
         this->report_error(asgn->line, asgn->col, "variable expected");
     this->verify_assignment(asgn->id.get(), asgn->expr.get(), b);
+    if (auto ea = dynamic_cast<ElemAccessExpr*>(asgn->id.get()))
+        if (ea->expr->type == &String)
+            this->report_error(ea->line, ea->col, "Strings are immutable");
 }
 
 void Checker::check_if_statement(IfStatement *st, Block *b, bool in_loop)

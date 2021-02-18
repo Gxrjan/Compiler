@@ -1,6 +1,8 @@
 SOURCES = head.h main.cpp Scanner.cpp Token.cpp Expr.cpp Parser.cpp Types.cpp Program.cpp Statement.cpp Variable.cpp Checker.cpp Translator_LLVM.cpp
 all: gc G_runtime_library.o Types.o
 
+
+.PHONY: options_test
 gc: $(SOURCES) 
 	g++ -o gc -Wall -std=c++17 -g $(SOURCES)
 
@@ -74,3 +76,11 @@ benchmark/merge_sort_cs: benchmark/merge_sort.cs
 
 benchmark/merge_sort_cpp: benchmark/merge_sort.cpp
 	clang++ -O2 -o benchmark/merge_sort_cpp benchmark/merge_sort.cpp
+
+
+
+options_test: 
+	python options_test.py
+
+clean:
+	rm benchmark/insertion_sort benchmark/prime_sum benchmark/tag benchmark/perm benchmark/merge_sort

@@ -22,7 +22,7 @@ u16string ascii_to_u16(string s) {
 
 extern "C" {
 
-void change_reference_count(void *ptr, int i, int depth);
+void change_reference_count(void *ptr, int i, int depth, int free);
 
 inline int gstring_len(gstring s) {
     if (!s)
@@ -61,7 +61,7 @@ void free_memory(void *p, int depth) {
         for (int i=0;i<len;i++) {
             if (*(ptr+i)) {
                 // cout << i << endl;
-                change_reference_count(*(ptr+i), -1, (depth-1));
+                change_reference_count(*(ptr+i), -1, (depth-1), 1);
                 //free_memory(*(ptr+i), (depth-1));
             }
         }
@@ -69,7 +69,7 @@ void free_memory(void *p, int depth) {
     }
 }
 
-void change_reference_count(void *ptr, int i, int depth) {
+void change_reference_count(void *ptr, int i, int depth, int free) {
     // cout << "Depth is " << depth << endl;
     if (!ptr)
         return;
@@ -83,7 +83,7 @@ void change_reference_count(void *ptr, int i, int depth) {
     // cout << "change is: " << i << endl;
     ref_count += i;     // change it
     *p = ref_count;     // write down the changed ref count
-    if (ref_count == 0) {
+    if (free && ref_count == 0) {
         // printf("ref count is zero. I will free memory.\n");
         free_memory(p+2, depth);
         return;

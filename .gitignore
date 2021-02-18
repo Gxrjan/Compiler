@@ -35,3 +35,4 @@ benchmark/merge_sort_cs
 benchmark/merge_sort_cpp
 Prog*
 test_mem
+__pycache__

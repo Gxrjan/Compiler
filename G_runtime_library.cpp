@@ -83,9 +83,10 @@ void change_reference_count(void *ptr, int i, int depth, int free) {
     // cout << "change is: " << i << endl;
     ref_count += i;     // change it
     *p = ref_count;     // write down the changed ref count
-    if (free && ref_count == 0) {
+    if (ref_count == 0) {
         // printf("ref count is zero. I will free memory.\n");
-        free_memory(p+2, depth);
+        if (free)
+            free_memory(p+2, depth);
         return;
     }
     //printf("ref count: %d\n", ref_count);

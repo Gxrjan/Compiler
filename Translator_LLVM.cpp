@@ -249,6 +249,8 @@ string Translator_LLVM::translate_string_literal(string *s, StringLiteral *l)
 
 
 void Translator_LLVM::create_bounds_check(string *s, string expr_register, string index_register, Type *type) {
+    if (!this->bounds)
+        return;
     string reg_type = this->g_type_to_llvm_type(type);
     string label_id = std::to_string(this->label_id++);
     string conv_register = this->create_convert_ptr(s, expr_register, type, ArrayType::make(&Int));
@@ -297,8 +299,7 @@ string Translator_LLVM::translate_elem_access_expr(string *s, ElemAccessExpr *e)
     }
     string index_register = this->translate_expr(s, e->index.get());
     if (e->expr->type == &String) {
-        if (this->bounds)
-            this->create_bounds_check(s, expr_register, index_register, &String);
+        this->create_bounds_check(s, expr_register, index_register, &String);
         return create_getelementptr_load(s, &Char, &String, expr_register, index_register);
     } else {
         auto arr_t = dynamic_cast<ArrayType *>(e->expr->type);
@@ -307,14 +308,12 @@ string Translator_LLVM::translate_elem_access_expr(string *s, ElemAccessExpr *e)
         if (arr_t->base == &Bool ||
             arr_t->base == &Char ||
             arr_t->base == &Int) {
-                if (this->bounds)
-                    this->create_bounds_check(s, expr_register, index_register, arr_t);
+                this->create_bounds_check(s, expr_register, index_register, arr_t);
                 string temp_register = this->assign_register();
                 return create_getelementptr_load(s, arr_t->base, arr_t, expr_register, index_register);
         } else {
             string result_type = this->g_type_to_llvm_type(arr_t->base);
-            if (this->bounds)
-                this->create_bounds_check(s, expr_register, index_register, e->expr->type);
+            this->create_bounds_check(s, expr_register, index_register, e->expr->type);
             return create_getelementptr_load(s, e->type, e->expr->type, expr_register, index_register);
         }
     }
@@ -1100,22 +1099,7 @@ void Translator_LLVM::free_argv(string *s) {
         " call void (i8*, i32) @free_memory(i8* "+conv_register+", i32 2)\n";
 }
 
-void Translator_LLVM::free_variables(string *s) {
-    if (this->ref) {
-        *s += // comment
-            "; freeing variables\n";
-        for (auto p : this->variables) {
-            if (p.second.second == &Bool || 
-            p.second.second == &Int || p.second.second == &Char ||
-            p.second.second == &Empty || p.second.second == &Byte )
-                continue;
-            string ptr_register = this->assign_register();
-            *s +=
-                " "+ptr_register+" = load "+this->g_type_to_llvm_type(p.second.second)+", "+this->g_type_to_llvm_type(p.second.second)+"* "+p.second.first+"\n";
-            this->change_reference_count(s, p.second.second, ptr_register, -1);
-        }
-    }
-}
+
 
 string Translator_LLVM::assign_global_register() {
     return "@r"+std::to_string(this->register_id++);

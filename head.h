@@ -658,7 +658,6 @@ class Translator_LLVM {
     void translate_outer_block(string *s, Block *b);
     void change_reference_count(string *s, Type *g_type, string ptr_register, int i);
     void free_unused_memory(string *s);
-    void free_variables(string *s);
     void free_argv(string *s);
     int g_type_to_depth(g_type type);
     void create_return_default(string *s, g_type type);

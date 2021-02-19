@@ -61,7 +61,7 @@ def do_test(name, bin_name, args):
 
 
 def build(options):
-    subprocess.call(['make', 'clean'], stdout=subprocess.DEVNULL)
+    subprocess.call(['make', 'clean'])
     subprocess.call(['./gc'] + options + ['benchmark/merge_sort.g'])
     subprocess.call(['./gc'] + options + ['benchmark/insertion_sort.g'])
     subprocess.call(['./gc'] + options + ['benchmark/prime_sum.g'])
@@ -79,18 +79,11 @@ def do_option_test(name, bin_name, args):
     average = total / count
     return average
 
-def do_option_tests(options):
+def do_option_tests(tests_specs, options):
     print(F'Options provided: {options}')
     build(options)
-    # Merge sort 10000000 elements, 100 - random seed
-    merge_average = do_option_test("Merge sort", 'merge_sort', [10000000, 100])
-    # Insertion sort 100000 elements, 100 - random seed
-    insertion_average = do_option_test("Insertion sort", 'insertion_sort', [100000, 100])
-    # prime sum 20000 elements
-    prime_average = do_option_test("Prime sum", 'prime_sum', [20000])
-    # Tag 300 elements
-    tag_average = do_option_test("Tag", 'tag', [300])
-    # String permutations on ABCDEFGHI
-    perm_average = do_option_test("String permutations", 'perm', ["ABCDEFGHIJ"])
-    result = [merge_average, insertion_average, prime_average, tag_average, perm_average]
+    result = list()
+    for s in tests_specs:
+        result.append(do_option_test(s[0], s[1], s[2]))
+    
     return result

@@ -510,12 +510,14 @@ string Translator_LLVM::translate_bool_expr(string *s, OpExpr *expr)
             register_left = this->translate_expr(s, expr->left.get());
             *s +=
                 " "+register_temp_left+" = icmp eq i1 "+register_left+", 1\n"
-                " br i1 "+register_temp_left+", label %continue"+label_id+", label %end"+label_id+"\n"
-                "continue"+label_id+":\n";
+                " br i1 "+register_temp_left+", label %temp"+label_id+", label %end"+label_id+"\n"
+                "temp"+label_id+":\n";
             *s += // asm comment 
                 "; " + expr->right->to_string() + "\n";
             register_right = this->translate_expr(s, expr->right.get());
             *s +=
+                " br label %continue"+label_id+"\n"
+                "continue"+label_id+":\n"
                 " "+register_temp_right+" = icmp eq i1 "+register_right+", 1\n"
                 " br label %end"+label_id+"\n";
             break;
@@ -525,12 +527,14 @@ string Translator_LLVM::translate_bool_expr(string *s, OpExpr *expr)
             register_left = this->translate_expr(s, expr->left.get());
             *s +=
                 " "+register_temp_left+" = icmp eq i1 "+register_left+", 1\n"
-                " br i1 "+register_temp_left+", label %end"+label_id+", label %continue"+label_id+"\n"
-                "continue"+label_id+":\n";
+                " br i1 "+register_temp_left+", label %end"+label_id+", label %temp"+label_id+"\n"
+                "temp"+label_id+":\n";
             *s += // asm comment 
                 "; " + expr->right->to_string() + "\n";
             register_right = this->translate_expr(s, expr->right.get());
             *s +=
+                " br label %continue"+label_id+"\n"
+                "continue"+label_id+":\n"
                 " "+register_temp_right+" = icmp eq i1 "+register_right+", 1\n"
                 " br label %end"+label_id+"\n";
             break;

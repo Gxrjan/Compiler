@@ -77,9 +77,7 @@ benchmark/merge_sort_cs: benchmark/merge_sort.cs
 benchmark/merge_sort_cpp: benchmark/merge_sort.cpp
 	clang++ -O2 -o benchmark/merge_sort_cpp benchmark/merge_sort.cpp
 
-
-
-options_test: 
+options_test: gc
 	python options_test.py
 
 clean:

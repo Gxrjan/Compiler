@@ -1,10 +1,9 @@
 import subprocess
 import time
 from pathlib import Path
-from psutil import *
-import psutil
 import functools
 import operator
+import os
 
 def run_tests(name, args):
     start_time = time.time()
@@ -41,18 +40,12 @@ def sum_up(l):
         result += v
     return result
 
-def run_test_g_psutil(name, args):
-    p = psutil.Popen(([str(name)] + args), stdout=subprocess.DEVNULL)
-    times = p.cpu_times()
-    while True:
-        time.sleep(1e-4)
-        times = p.cpu_times()
-        ret = p.poll()
-        if ret is not None:
-            break
-    # print(times)       # uncomment this lines to see the detailed version of the execution time
-    result = sum(times)
-    print(F"G Execution time: {(1000*result):.0f}ms")
+def run_test_g(name, args):
+    p = subprocess.Popen(([str(name)] + args), stdout=subprocess.DEVNULL)
+    pid, exit_status, res_usage = os.wait4(p.pid, 0)
+    result = res_usage.ru_utime + res_usage.ru_stime
+    print(f"G Execution time: {(1000 * result):.0f} ms (user = {1000 * res_usage.ru_utime:.0f} ms, " +
+          f"sys = {1000 * res_usage.ru_stime:.0f} ms)")
     return result
 
 def show_results(benchmark_name, g_time, cs_time, cpp_time):
@@ -102,7 +95,7 @@ def do_option_test(name, bin_name, args):
     total = 0
     count = 3
     for i in range(count):
-        g_time = run_test_g_psutil(benchmark_home / bin_name, process_args(args))
+        g_time = run_test_g(benchmark_home / bin_name, process_args(args))
         total = total + g_time
     average = total / count
     return average

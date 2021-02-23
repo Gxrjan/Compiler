@@ -1,5 +1,8 @@
 #include "head.h"
 
+void print_usage(ostream& os) {
+    os << "Usage: ./gc [--nobounds] [--noref] [--nofree] [-o outfile] infile" << endl;
+}
 
 int main(int argc, char *argv[])
 {
@@ -32,18 +35,18 @@ int main(int argc, char *argv[])
                 break;
 
             case 'h':
-                cout << "Usage: " << argv[0] << " [--nobounds] [--noref] [--nofree] [-o outfile] infile" << endl;
+                print_usage(cout);
                 exit(EXIT_SUCCESS);
                 break;
 
             default:
-                cerr << "Usage: " << argv[0] <<" [--nobounds] [--noref] [--nofree] [-o outfile] infile\n";
+                print_usage(cerr);
                 exit(EXIT_FAILURE);
         }
     }
 
     if (optind != argc-1) {
-        cerr << "Usage: " << argv[0] <<" [--nobounds] [--noref] [--nofree] [-o outfile] infile\n";
+        print_usage(cerr);
         exit(EXIT_FAILURE);
     } else {
         infile = string(argv[optind]);

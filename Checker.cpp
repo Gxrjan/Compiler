@@ -393,6 +393,7 @@ void Checker::check_statement(Statement *s, Block *b, bool in_loop)
         Block *b1 = dynamic_cast<Block *>(s);
         if (b1) {
             b1->parent = b;
+            b->children.push_back(b1);
             this->check_block(b1, in_loop);
         } else {
             cout << s->to_string() << endl;
@@ -486,6 +487,7 @@ void Checker::check_function_definition(FunctionDefinition* fd, Block *b) {
         fd->body->variables.insert({dec->id, dec});
     }
     fd->body->parent = b;
+    b->children.push_back(fd->body->parent);
     this->check_block(fd->body.get(), false);
     this->current = nullptr;
 }

@@ -49,20 +49,19 @@ int arr_len(void *p)
 }
 
 void free_memory(void *p, int depth) {
-    // cout << "Want to free: " << p << endl;
+    // cout << "About to free: " << p << endl;
     if (depth==1) {
         int *ptr = (int*)p;
         // cout << "arr len depth1: " << arr_len(p) << endl;
         free((ptr-2));
+        // cout << p << " is freed" << endl;
     } else {
         void **ptr = (void**)p;
         int len = arr_len(ptr);
-        // cout << "arr len: " << arr_len(p) << endl;
+        //cout << "arr len: " << arr_len(p) << endl;
         for (int i=0;i<len;i++) {
             if (*(ptr+i)) {
-                // cout << i << endl;
                 change_reference_count(*(ptr+i), -1, (depth-1), 1);
-                //free_memory(*(ptr+i), (depth-1));
             }
         }
         free((ptr-1));
@@ -76,8 +75,10 @@ void change_reference_count(void *ptr, int i, int depth, int free) {
     int *p = (int*)ptr; // convert to int pointer
     p -= 2;             // scroll back to ref count
     int ref_count = *p; // get the actual ref count integer
-    if (ref_count==-1)
+    if (ref_count==-1) {
+        //cout << "strlit" << endl;
         return;
+    }
     // cout << "Changing ref count at " << ptr << endl;
     // cout << "current refcout: " << ref_count << endl;
     // cout << "change is: " << i << endl;
@@ -85,7 +86,7 @@ void change_reference_count(void *ptr, int i, int depth, int free) {
     *p = ref_count;     // write down the changed ref count
     if (ref_count == 0) {
         if (free) {
-            // printf("ref count is zero. I will free memory.\n");
+            //printf("ref count is zero. I will free memory.\n");
             free_memory(p+2, depth);
         }
         return;
@@ -157,7 +158,7 @@ gstring concat_chars(const char16_t *s, int slen, const char16_t *t, int tlen) {
     *((int *)(u - 2)) = slen + tlen;
     memcpy(u, s, 2*slen);
     memcpy(u+slen, t, 2*tlen);
-    // printf("Address at creation: %p\n", (void*)u);
+    // cout << "Address at creation: " << u << endl;
     return u;
 }
 

@@ -461,8 +461,20 @@ string Translator_LLVM::g_type_to_llvm_type(Type *t)
     else if (t == &Empty)
         return "i8*";
     else {
-        auto st = dynamic_cast<ArrayType *>(t);
-        return this->g_type_to_llvm_type(st->base)+"*";
+        if (auto st = dynamic_cast<ArrayType *>(t))
+            return this->g_type_to_llvm_type(st->base)+"*";
+        else {
+            cout << "Bool: " << &Bool << endl;
+            cout << "Char: " << &Char << endl;
+            cout << "Int: " <<  &Int << endl;
+            cout << "String: " << &String << endl;
+            cout << "Empty: " << &Empty << endl;
+            cout << "Byte: " << &Byte << endl;
+            cout << "Void: " << &Void << endl;
+            cout << "Current: " << t << endl;
+            this->report_error(0, 0, "Unknown type");
+            return nullptr;
+        }
     }
 }
 
@@ -773,13 +785,29 @@ void Translator_LLVM::translate_declaration(string *s, Declaration *dec)
     string var_type = this->g_type_to_llvm_type(dec->type);
     string expr_register = this->translate_expr(s, dec->expr.get());
     string temp_register = this->create_conversion(s, expr_register, dec->expr->type, dec->type);
-    string result_register = this->create_allocate_and_store(s, dec->type, temp_register);
+    if (!this->loop_depth) {
+        string result_register = this->create_allocate_and_store(s, dec->type, temp_register);
+        this->variables.insert_or_assign(dec->id, std::make_pair(result_register, dec->type));
+    } else {
+        create_store(s, var_type, temp_register, this->variables[dec->id].first);
+    }
+    
+    // if (this->variables.find(dec->id) == this->variables.end()) {
+    //     string result_register = this->create_allocate_and_store(s, dec->type, temp_register);
+    //     this->variables.insert_or_assign(dec->id, std::make_pair(result_register, dec->type));
+    // } else {
+    //     this->create_store(s, var_type, temp_register, this->variables[dec->id].first);
+    //     this->variables.insert_or_assign(dec->id, std::make_pair(this->variables[dec->id].first, dec->type));
+    // }
+
+
+
     if (auto arr_type = dynamic_cast<ArrayType*>(dec->type)) {
         change_reference_count(s, arr_type, expr_register, +1);
     } else if (dec->type == &String) {
         change_reference_count(s, dec->type, expr_register, +1);
     }
-    this->variables.insert_or_assign(dec->id, std::make_pair(result_register, dec->type));
+
 }
 
 
@@ -895,8 +923,52 @@ void Translator_LLVM::translate_if_statement(string *s, IfStatement *st, string 
 }
 
 
+string Translator_LLVM::create_alloca(string *s, g_type t) {
+    string result_register = this->assign_register();
+    string llvm_type = this->g_type_to_llvm_type(t);
+    *s +=
+        " "+result_register+" = alloca "+llvm_type+"\n";
+    return result_register;
+}
+
+// void Translator_LLVM::create_storage_before_loop(string *s, Block *b) {
+//     for (auto v : b->variables) {
+//         string storage_register = this->create_alloca(s, v.second->type);
+//         this->variables.insert_or_assign(v.first, std::make_pair(storage_register, v.second->type));
+//     }
+//     for (auto &ch : b->children)
+//         this->create_storage_before_loop(s, ch);
+// }
+
+void Translator_LLVM::create_storage_before_loop(string *s, Statement *statement) {
+    if (auto dec = dynamic_cast<Declaration *>(statement)) {
+        string storage_register = this->create_alloca(s, dec->type);
+        this->variables.insert_or_assign(dec->id, std::make_pair(storage_register, dec->type));
+    } else if (auto b = dynamic_cast<Block *>(statement)) {
+        for (auto &st : b->statements)
+            this->create_storage_before_loop(s, st.get());
+    } else if (auto st = dynamic_cast<IfStatement *>(statement)) {
+        this->create_storage_before_loop(s, st->if_s.get());
+        if (st->else_s)
+            this->create_storage_before_loop(s, st->else_s.get());
+    } else if (auto st = dynamic_cast<WhileStatement *>(statement)) {
+        this->create_storage_before_loop(s, st->statement.get());
+    } else if (auto for_s = dynamic_cast<ForStatement *>(statement)) {
+        this->create_storage_before_loop(s, for_s->init.get());
+        this->create_storage_before_loop(s, for_s->body.get());
+    }
+
+}
+
+
 void Translator_LLVM::translate_while_statement(string *s, WhileStatement *st)
 {
+    this->create_storage_before_loop(s, st->statement.get());
+
+
+
+
+    this->loop_depth++;
     string label_id = std::to_string(this->label_id++);
     *s += 
         " br label %loop"+label_id+"\n"
@@ -911,14 +983,16 @@ void Translator_LLVM::translate_while_statement(string *s, WhileStatement *st)
     *s +=
         " br label %loop"+label_id+"\n"
         "loop_end"+label_id+":\n";
+    this->loop_depth--;
 }
 
 
 void Translator_LLVM::translate_for_statement(string *s, ForStatement *for_s)
 {
     string label_id = std::to_string(this->label_id++);
-
     this->translate_declaration(s, for_s->init.get());
+    this->create_storage_before_loop(s, for_s->body.get());
+    this->loop_depth++;
 
     *s +=
         " br label %loop"+label_id+"\n"
@@ -938,6 +1012,7 @@ void Translator_LLVM::translate_for_statement(string *s, ForStatement *for_s)
     *s +=
         " br label %loop"+label_id+"\n"
         "loop_end"+label_id+":\n";
+    this->loop_depth--;
     
 }
 
@@ -1064,12 +1139,14 @@ void Translator_LLVM::translate_block(string *s, Block *b, string loop_end_label
         *s +=
             "; freeing variables after block\n";
         for (auto var : b->variables) {
+
             auto p = this->variables[var.first];
             if (p.second == &Bool || 
             p.second == &Int || p.second == &Char ||
             p.second == &Empty || p.second == &Byte )
                 continue;
             string ptr_register = this->assign_register();
+
             *s +=
                 " "+ptr_register+" = load "+this->g_type_to_llvm_type(p.second)+", "+this->g_type_to_llvm_type(p.second)+"* "+p.first+"\n";
             this->change_reference_count(s, p.second, ptr_register, -1);

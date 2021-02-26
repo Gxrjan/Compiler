@@ -383,6 +383,7 @@ class Block : public Statement {
   public:
     map<Id, Declaration *> variables;
     Block *parent;
+    vector<Block*> children;
     vector<unique_ptr<Statement>> statements;
     Block(vector<unique_ptr<Statement>> statements);
     string to_string() override;
@@ -584,6 +585,7 @@ class Checker {
 // LLVM TRANSLATOR
 class Translator_LLVM {
     map<tuple<Type*, string, vector<Type*>>, size_t> overloads;
+    size_t loop_depth = 0;
     int bounds, ref, free;
     int func_id = 0;
     int register_id = 0;
@@ -648,6 +650,7 @@ class Translator_LLVM {
     string create_getelementptr(string *s, string llvm_type, string expr_llvm_type, string expr_register, string index_register);
     string create_inc_dec(string *s, bool inc_dec, string expr_register);
     string translate_function_call(string *s, FunctionCall *fc);
+    string create_alloca(string *s, g_type t);
     void init_globals(string *s);
     void free_globals(string *s);
     bool is_reference(g_type type);
@@ -662,6 +665,7 @@ class Translator_LLVM {
     int g_type_to_depth(g_type type);
     void create_return_default(string *s, g_type type);
     void free_types(string *s);
+    void create_storage_before_loop(string *s, Statement *st);
   public:
     Translator_LLVM(int bounds, int ref, int free): bounds{bounds},ref{ref},free{free}{};
     string translate_program(Program *p);

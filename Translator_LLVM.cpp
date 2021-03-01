@@ -642,25 +642,25 @@ string Translator_LLVM::translate_arithm_expr(string *s, OpExpr *expr)
                 if (expr->left->type == &String && expr->right->type == &String) {
                     *s += 
                         " "+result_register+" = call i16* @concat(i16* "+register_left+"," 
-                        "i16* "+register_right+")";
+                        "i16* "+register_right+")\n";
                 } else if (expr->left->type == &String) {
                     if (expr->right->type == &Int)
                         *s += 
                             " "+result_register+" = call i16* @concat_str_int(i16* "+register_left+"," 
-                            "i32 "+register_right+")";
+                            "i32 "+register_right+")\n";
                     else
                         *s += 
                             " "+result_register+" = call i16* @concat_str_chr(i16* "+register_left+"," 
-                            "i16 "+register_right+")";
+                            "i16 "+register_right+")\n";
                 } else {
                     if (expr->left->type == &Int)
                         *s += 
                             " "+result_register+" = call i16* @concat_int_str(i32 "+register_left+"," 
-                            "i16* "+register_right+")";
+                            "i16* "+register_right+")\n";
                     else
                         *s += 
                             " "+result_register+" = call i16* @concat_chr_str(i16 "+register_left+"," 
-                            "i16* "+register_right+")";
+                            "i16* "+register_right+")\n";
                 }
                 this->references.push({result_register, &String});
                 return result_register;

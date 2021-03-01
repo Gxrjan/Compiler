@@ -68,7 +68,7 @@ void free_memory(void *p, int depth) {
     }
 }
 
-void change_reference_count(void *ptr, int i, int depth, int free) {
+inline void change_reference_count(void *ptr, int i, int depth, int free) {
     // cout << "Depth is " << depth << endl;
     if (!ptr)
         return;

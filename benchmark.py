@@ -17,7 +17,7 @@ def main():
     # Tag 300 elements
     do_test("Tag", 'tag', [300])
 
-    # String permutations on ABCDEFGHI
+    # String permutations on ABCDEFGHIJ
     do_test("String permutations", 'perm', ["ABCDEFGHIJ"])
 
 

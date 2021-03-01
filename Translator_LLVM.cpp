@@ -83,14 +83,8 @@ string Translator_LLVM::translate_function_call(string *s, FunctionCall *fc) {
     for (auto &a : fc->args)
         func_in_args = func_in_args || Checker::function_inside(a.get());
 
-    // if (func_in_args) {
-    //     for (size_t i=0;i<fc->args.size();i++) {
-    //         if (this->is_reference(types[i])) {
-    //             this->change_reference_count(s, types[i], args[i], +1);
-    //             this->references.push({args[i], types[i]});
-    //         }
-    //     }
-    // }
+    if (fc->name == "print")
+        this->first = false;
 
     for (auto &a : fc->args) {
         types.push_back(a->type);
@@ -362,6 +356,8 @@ string Translator_LLVM::translate_type_cast_expr(string *s, TypeCastExpr *e)
 
 string Translator_LLVM::translate_substr_expr(string *s, SubstrExpr *e)
 {
+    bool flag = this->first;
+    this->first = false;
     bool func_present = false;
     if (e->arguments.size() == 1) {
         func_present = Checker::function_inside(e->arguments[0].get());
@@ -405,7 +401,8 @@ string Translator_LLVM::translate_substr_expr(string *s, SubstrExpr *e)
         *s +=
             " "+result_register+" = call i16* @substr_int_int(i16* "+str_register+",i32 "+from_register+", i32 "+len_register+")\n";    
     }
-    references.push({result_register, e->type});
+    if (!flag)
+        references.push({result_register, e->type});
     return result_register;
 }
 
@@ -422,13 +419,16 @@ string Translator_LLVM::translate_int_parse_expr(string *s, IntParseExpr *e)
 
 string Translator_LLVM::translate_new_str_expr(string *s, NewStrExpr *e)
 {
+    bool flag = this->first;
+    this->first = false;
     
     string chr_register = this->translate_expr(s, e->arguments[0].get());
     string len_register = this->translate_expr(s, e->arguments[1].get());
     string result_register = this->assign_register();
     *s +=
         " "+result_register+" = call i16* @new_str_expr(i16 "+chr_register+", i32 "+len_register+")\n";
-    references.push({result_register, e->type});
+    if (!flag)
+        references.push({result_register, e->type});
     return result_register;
 }
 
@@ -613,6 +613,8 @@ string Translator_LLVM::create_cmp(string *s, Operation o, Type *type, string re
 
 string Translator_LLVM::translate_arithm_expr(string *s, OpExpr *expr)
 {
+    bool flag = this->first;
+    this->first = false;
     bool b = Checker::function_inside(expr->right.get());
 
     Operation o = TypeConverter::string_to_operation(expr->op);
@@ -662,7 +664,9 @@ string Translator_LLVM::translate_arithm_expr(string *s, OpExpr *expr)
                             " "+result_register+" = call i16* @concat_chr_str(i16 "+register_left+"," 
                             "i16* "+register_right+")\n";
                 }
-                this->references.push({result_register, &String});
+                if (!flag) {
+                    this->references.push({result_register, &String});
+                }
                 return result_register;
             }
             break;
@@ -791,21 +795,12 @@ void Translator_LLVM::translate_declaration(string *s, Declaration *dec)
     } else {
         create_store(s, var_type, temp_register, this->variables[dec->id].first);
     }
-    
-    // if (this->variables.find(dec->id) == this->variables.end()) {
-    //     string result_register = this->create_allocate_and_store(s, dec->type, temp_register);
-    //     this->variables.insert_or_assign(dec->id, std::make_pair(result_register, dec->type));
-    // } else {
-    //     this->create_store(s, var_type, temp_register, this->variables[dec->id].first);
-    //     this->variables.insert_or_assign(dec->id, std::make_pair(this->variables[dec->id].first, dec->type));
-    // }
-
-
 
     if (auto arr_type = dynamic_cast<ArrayType*>(dec->type)) {
         change_reference_count(s, arr_type, expr_register, +1);
     } else if (dec->type == &String) {
-        change_reference_count(s, dec->type, expr_register, +1);
+        if (dynamic_cast<Variable*>(dec->expr.get()) || dynamic_cast<ElemAccessExpr*>(dec->expr.get()))
+            change_reference_count(s, dec->type, expr_register, +1);
     }
 
 }
@@ -870,7 +865,8 @@ void Translator_LLVM::translate_assignment(string *s, Assignment *asgn)
             change_reference_count(s, asgn->expr->type, expr_register, +1);
         } else if (t == &String) {
             change_reference_count(s, t, temp_register, -1);
-            change_reference_count(s, asgn->expr->type, expr_register, +1);
+            if (dynamic_cast<Variable*>(asgn->expr.get()) || dynamic_cast<ElemAccessExpr*>(asgn->expr.get()))
+                change_reference_count(s, asgn->expr->type, expr_register, +1);
         }
         this->create_store(s, expr_llvm_type, expr_register, ptr_register);
     } else {
@@ -1082,6 +1078,7 @@ void Translator_LLVM::free_unused_memory(string *s) {
 
 void Translator_LLVM::translate_statement(string *s, Statement *statement, string loop_end_label)
 {
+    this->first = true;
     if (auto dec = dynamic_cast<Declaration *>(statement)) {
         this->translate_declaration(s, dec);
     } else if (auto asgn = dynamic_cast<Assignment *>(statement)) {
@@ -1133,8 +1130,10 @@ void Translator_LLVM::free_variables(string *s, map<Id, Declaration*> variables)
 }
 void Translator_LLVM::translate_block(string *s, Block *b, string loop_end_label)
 {
-    for (auto &statement : b->statements)
+    for (auto &statement : b->statements) {
+        this->first = true;
         this->translate_statement(s, statement.get(), loop_end_label);
+    }
     if (this->ref) {
         *s +=
             "; freeing variables after block\n";
@@ -1313,18 +1312,6 @@ void Translator_LLVM::translate_outer_block(string *s, Block *b) {
         "; starting to stranslate global space\n";
     for (auto &statement : b->statements)
         this->translate_external_definition(s, dynamic_cast<ExternalDefinition*>(statement.get()));
-    // freeing global variables
-    // for (auto var : b->variables) {
-    //     auto p = this->variables[var.first];
-    //     if (p.second == &Bool || 
-    //     p.second == &Int || p.second == &Char ||
-    //     p.second == &Empty || p.second == &Byte )
-    //         continue;
-    //     string ptr_register = this->assign_register();
-    //     *s +=
-    //         " "+ptr_register+" = load "+this->g_type_to_llvm_type(p.second)+", "+this->g_type_to_llvm_type(p.second)+"* "+p.first+"\n";
-    //     this->change_reference_count(s, p.second, ptr_register, -1);
-    // }
 }
 
 void Translator_LLVM::translate_return_statement(string *s, ReturnStatement *rs) {
@@ -1349,16 +1336,9 @@ void Translator_LLVM::translate_return_statement(string *s, ReturnStatement *rs)
 string Translator_LLVM::translate_program(Program* prog)
 {
     this->current_prog = prog;
-    // if (this->bounds)
-    //     cout << "Bound checks will be performed" << endl;
-    // if (this->free)
-    //     cout << "Memory free will be performed" << endl;
-    // if (this->ref)
-    //     cout << "Ref counting will be performed" << endl;
     string result = "";
     result += 
             "@gl = global i32 1\n"
-            //"@gl_arr = global call i8* @new_arr_expr(i32 4, i32 4)\n"
             "@fmt_i = constant [4 x i8] c\"%d\\0A\\00\"\n"
             "@fmt_c = constant [4 x i8] c\"%c\\0A\\00\"\n"
             "@fmt_s = constant [4 x i8] c\"%s\\0A\\00\"\n"
@@ -1385,17 +1365,9 @@ string Translator_LLVM::translate_program(Program* prog)
             "declare void @change_reference_count(i8*, i32, i32, i32)\n"
             "declare void @free_memory(i8*, i32)\n"
             "declare i16* @create_gstring(i32, ...)\n";
-            // "define i32 @main(i32, i8**) {\n"
-            // "%argc = add i32 %0, 0\n"
-            // "%argv = call i16** @to_argv(i32 %0, i8** %1)\n";
-
 
     this->translate_outer_block(&result, prog->block.get());
-    //this->free_argv(&result);
-    //this->free_variables(&result);
-    // result += 
-    //     "ret i32 0\n"
-    //     "}\n";
+
     for (auto &p : this->strings) {
         string str = p.first->s;
         int length = str.length();

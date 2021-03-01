@@ -212,4 +212,12 @@ int main(int argc, string[] argv) {
     assign_2d_arr(global_arr_int_2d, new int[10]);
     assign_rules();
     assign_2d_arr(global_arr_str_2d, string_arr_3d[0][0]);
+
+    string str_1  = "";
+    for (int i=0;i<10;i++)
+        str_1 = str_1 + i;
+    for (int i=0;i<10;i++) {
+        str_1 = str_1 + i;
+    }
+    
 }

@@ -591,6 +591,7 @@ class Translator_LLVM {
     int register_id = 0;
     int label_id = 0;
     int string_id = 0;
+    bool ret = false;
     bool first = true;
     FunctionDefinition *current;
     Program *current_prog;

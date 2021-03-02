@@ -76,6 +76,8 @@ string Translator_LLVM::translate_function_call(string *s, FunctionCall *fc) {
     *s += // comment
         ";"+fc->to_string()+"\n";
     bool func_in_args = false;
+    bool flag = this->first;
+    this->first = false;
     
     string ret_register = "";
     vector<string> args;
@@ -145,9 +147,12 @@ string Translator_LLVM::translate_function_call(string *s, FunctionCall *fc) {
             ")\n";
     }
     if (this->is_reference(fc->type)) {
-        this->references.push({ret_register, fc->type});
+        if (fc->type == &String){
+            if (!flag)
+                this->references.push({ret_register, fc->type});
+        } else
+            this->references.push({ret_register, fc->type});
     }
-
     return ret_register;
 }
 
@@ -204,6 +209,10 @@ string Translator_LLVM::translate_variable(string *s, Variable *v)
         " "+result_register+" = load "+var_type+", "+var_type+"* "+var_storage+"\n";
     if (dynamic_cast<ArrayType*>(v->type))
         this->create_nullptr_check(s, result_register, var_type);
+    // if (this->ret && v->type == &String) {
+    //     this->change_reference_count(s, &String, result_register, 1);
+    //     this->references.push({result_register, &String});
+    // }
     return result_register;
 }
 
@@ -299,7 +308,6 @@ string Translator_LLVM::translate_elem_access_expr(string *s, ElemAccessExpr *e)
             arr_t->base == &Char ||
             arr_t->base == &Int) {
                 this->create_bounds_check(s, expr_register, index_register, arr_t);
-                string temp_register = this->assign_register();
                 return create_getelementptr_load(s, arr_t->base, arr_t, expr_register, index_register);
         } else {
             string result_type = this->g_type_to_llvm_type(arr_t->base);
@@ -1098,11 +1106,12 @@ void Translator_LLVM::translate_statement(string *s, Statement *statement, strin
         *s +=
             " br label %loop_end"+loop_end_label+"\n";
     } else if (auto es = dynamic_cast<ExpressionStatement *>(statement)) {
+        this->first = false;
         this->translate_expression_statement(s, es);
     } else if (auto rs = dynamic_cast<ReturnStatement *>(statement)) {
         *s +=
             "; free before return statement\n";
-        this->free_variables(s, current->body->variables);
+        //this->free_variables(s, current->body->variables);
         this->translate_return_statement(s, rs);
         return;
     } else{
@@ -1130,10 +1139,8 @@ void Translator_LLVM::free_variables(string *s, map<Id, Declaration*> variables)
 }
 void Translator_LLVM::translate_block(string *s, Block *b, string loop_end_label)
 {
-    for (auto &statement : b->statements) {
-        this->first = true;
+    for (auto &statement : b->statements)
         this->translate_statement(s, statement.get(), loop_end_label);
-    }
     if (this->ref) {
         *s +=
             "; freeing variables after block\n";
@@ -1315,18 +1322,27 @@ void Translator_LLVM::translate_outer_block(string *s, Block *b) {
 }
 
 void Translator_LLVM::translate_return_statement(string *s, ReturnStatement *rs) {
+    this->first = false;
     *s += // comment
         "; "+rs->to_string()+"\n";
     if (!rs->expr)
         this->create_return_default(s, current->ret_type);
     else {
+        this->ret = true;
         string expr_register = this->translate_expr(s, rs->expr.get());
+        if (rs->expr->type == &String) {
+            this->change_reference_count(s, &String, expr_register, +1);
+            //this->references.push({expr_register, &String});
+        } else 
         if (this->is_reference(rs->expr->type))
             this->references.pop();
+        this->ret = false;
+        
         *s +=
             "; freeing variables before return\n";
         if (current->name == "main")
             this->free_globals(s);
+        this->free_variables(s, current->body->variables);
         this->free_unused_memory(s);
         *s +=
             " ret "+this->g_type_to_llvm_type(rs->expr->type)+" "+expr_register+"\n";

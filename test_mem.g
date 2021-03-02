@@ -82,8 +82,24 @@ string foo3() {
     return "abcd";
 }
 
+
+string ret_substr() { return "Hello".Substring(0); }
+string ret_var() { string var = "Hello"; return var; }
 //
 
+
+string retstrlit() { return "Hello"; }
+string retstrvar() { 
+    string var = "Hello".Substring(0); 
+    print("here");
+    return var; }
+string retstrelemacess() {
+    string[] arr1 = new string[10];
+    arr1[0] = "test";
+    return arr1[0];
+}
+string retstrop() { return "Hello" + "wolrd"; }
+string retstrsub() { return "Hello".Substring(0);}
 
 
 int main(int argc, string[] argv) {
@@ -219,5 +235,18 @@ int main(int argc, string[] argv) {
     for (int i=0;i<10;i++) {
         str_1 = str_1 + i;
     }
+
+    string str_2 = ret_substr();
+
+    string ss1 = retstrlit();
+    string ss2 = retstrvar();
+    string ss3 = retstrelemacess();
+    string ss4 = retstrop();
+    string ss5 = retstrsub();
+    retstrlit();
+    retstrvar();
+    retstrelemacess();
+    retstrop();
+    retstrsub();
     
 }

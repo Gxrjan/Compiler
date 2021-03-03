@@ -7,10 +7,10 @@ gc: $(SOURCES)
 	g++ -o gc -Wall -std=c++17 -g $(SOURCES)
 
 G_runtime_library.o: G_runtime_library.cpp
-	clang++ -Wall -c  G_runtime_library.cpp 
+	clang++ -Wall -c -g -O2 G_runtime_library.cpp 
 
-Tests.o: Types.cpp
-	clang++ -Wall -c Types.cpp
+Types.o: Types.cpp
+	clang++ -Wall -c -g -O2 Types.cpp
 
 
 test: gc tests.g tests_neg.g test_mem.g

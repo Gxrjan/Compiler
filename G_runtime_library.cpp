@@ -24,7 +24,7 @@ extern "C" {
 
 void change_reference_count(void *ptr, int i, int depth, int free);
 
-inline int gstring_len(gstring s) {
+int gstring_len(gstring s) {
     if (!s)
         throw runtime_error("null pointer exception");
     return *((int *)(s-2));
@@ -68,7 +68,7 @@ void free_memory(void *p, int depth) {
     }
 }
 
-inline void change_reference_count(void *ptr, int i, int depth, int free) {
+void change_reference_count(void *ptr, int i, int depth, int free) {
     // cout << "Depth is " << depth << endl;
     if (!ptr)
         return;

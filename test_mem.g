@@ -101,6 +101,29 @@ string retstrelemacess() {
 string retstrop() { return "Hello" + "wolrd"; }
 string retstrsub() { return "Hello".Substring(0);}
 
+int[] retnewarr() { return new int[10]; }
+int[] retarrvar() { 
+    int[] arrret = new int[10]; 
+    return arrret;
+}
+int[] retarrelem(){ 
+    int[][] arr_two_dim = new int[10][];
+    arr_two_dim[0] = new int[10];
+    return arr_two_dim[0];
+}
+
+string[] retstrarr() { return new string[10];}
+
+string[] retstrarrvar() { 
+    string[] arrret = new string[10]; 
+    return arrret;
+}
+string[] retstrarrelem(){ 
+    string[][] arr_two_dim = new string[10][];
+    arr_two_dim[0] = new string[10];
+    return arr_two_dim[0];
+}
+
 
 int main(int argc, string[] argv) {
 
@@ -248,5 +271,19 @@ int main(int argc, string[] argv) {
     retstrelemacess();
     retstrop();
     retstrsub();
+
+    int[] arr1 = retnewarr();
+    int[] arr2 = retarrvar();
+    int[] arr3 = retarrelem();
+    retnewarr();
+    retarrvar();
+    retarrelem();
+
+    string[] strarr1 = retstrarr();
+    string[] strarr2 = retstrarrvar();
+    string[] strarr3 = retstrarrelem();
+    retstrarr();
+    retstrarrvar();
+    retstrarrelem();
     
 }

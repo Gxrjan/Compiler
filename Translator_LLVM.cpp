@@ -1330,12 +1330,8 @@ void Translator_LLVM::translate_return_statement(string *s, ReturnStatement *rs)
     else {
         this->ret = true;
         string expr_register = this->translate_expr(s, rs->expr.get());
-        if (rs->expr->type == &String) {
-            this->change_reference_count(s, &String, expr_register, +1);
-            //this->references.push({expr_register, &String});
-        } else 
         if (this->is_reference(rs->expr->type))
-            this->references.pop();
+            this->change_reference_count(s, rs->expr->type, expr_register, +1);
         this->ret = false;
         
         *s +=

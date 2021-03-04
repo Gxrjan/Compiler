@@ -36,3 +36,5 @@ benchmark/merge_sort_cpp
 Prog*
 test_mem
 __pycache__
+test
+test.g

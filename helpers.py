@@ -6,29 +6,23 @@ import operator
 import os
 
 def run_tests(name, args):
-    start_time = time.time()
-    subprocess.call(([str(name)] + args))
-    g_time = (time.time() - start_time)
-    print(F"G Execution time: {(1000*g_time):.0f}ms")
+    n = 3
 
-    start_time = time.time()
-    subprocess.call([str(name) + '_cs'] + args)
-    cs_time = (time.time() - start_time)
-    print(F"CS Execution time: {(1000*cs_time):.0f}ms")
+    total = 0
+    for i in range(n):
+        total = total + run_test_g(name, args)
+    g_time = total / n
 
+    total = 0
+    for i in range(n):
+        total = total + run_test_cs(name, args)
+    cs_time = total / n
 
-    start_time = time.time()
-    subprocess.call([str(name) + '_cpp'] + args)
-    cpp_time = (time.time() - start_time)
-    print(F"C++ Execution time: {(1000*cpp_time):.0f}ms")
+    total = 0
+    for i in range(n):
+        total = total + run_test_cpp(name, args)
+    cpp_time = total / n
     return (g_time, cs_time, cpp_time)
-
-def run_test_g(name, args):
-    start_time = time.time()
-    subprocess.call(([str(name)] + args), stdout=subprocess.DEVNULL)
-    g_time = (time.time() - start_time)
-    print(F"G Execution time: {(1000*g_time):.0f}ms")
-    return g_time
 
 
 def sub(t):
@@ -41,10 +35,28 @@ def sum_up(l):
     return result
 
 def run_test_g(name, args):
-    p = subprocess.Popen(([str(name)] + args), stdout=subprocess.DEVNULL)
+    p = subprocess.Popen(([str(name)] + args))
     pid, exit_status, res_usage = os.wait4(p.pid, 0)
     result = res_usage.ru_utime + res_usage.ru_stime
     print(f"G Execution time: {(1000 * result):.0f} ms (user = {1000 * res_usage.ru_utime:.0f} ms, " +
+          f"sys = {1000 * res_usage.ru_stime:.0f} ms)")
+    return result
+
+
+def run_test_cs(name, args):
+    p = subprocess.Popen(([str(name) + '_cs'] + args))
+    pid, exit_status, res_usage = os.wait4(p.pid, 0)
+    result = res_usage.ru_utime + res_usage.ru_stime
+    print(f"CS Execution time: {(1000 * result):.0f} ms (user = {1000 * res_usage.ru_utime:.0f} ms, " +
+          f"sys = {1000 * res_usage.ru_stime:.0f} ms)")
+    return result
+
+
+def run_test_cpp(name, args):
+    p = subprocess.Popen(([str(name) + '_cpp'] + args))
+    pid, exit_status, res_usage = os.wait4(p.pid, 0)
+    result = res_usage.ru_utime + res_usage.ru_stime
+    print(f"Cpp Execution time: {(1000 * result):.0f} ms (user = {1000 * res_usage.ru_utime:.0f} ms, " +
           f"sys = {1000 * res_usage.ru_stime:.0f} ms)")
     return result
 

@@ -2,7 +2,7 @@ SOURCES = head.h main.cpp Scanner.cpp Token.cpp Expr.cpp Parser.cpp Types.cpp Pr
 all: gc G_runtime_library.o Types.o
 
 
-.PHONY: options_test
+.PHONY: options_test test
 gc: $(SOURCES) 
 	g++ -o gc -Wall -std=c++17 -g $(SOURCES)
 

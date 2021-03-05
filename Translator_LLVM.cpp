@@ -91,7 +91,7 @@ string Translator_LLVM::translate_function_call(string *s, FunctionCall *fc) {
     for (auto &a : fc->args) {
         types.push_back(a->type);
         string reg = this->translate_expr(s, a.get());
-        if (func_in_args && this->is_reference(a->type)) {
+        if (func_in_args && this->is_reference(a->type) && !dynamic_cast<StringLiteral*>(a.get())) {
             this->change_reference_count(s, a->type, reg, +1);
             this->references.push({reg, a->type});
         }   
@@ -229,6 +229,7 @@ string Translator_LLVM::translate_char_literal(string *s, CharLiteral *l)
 
 string Translator_LLVM::translate_string_literal(string *s, StringLiteral *l)
 {
+    //this->first = false;
     int id = this->string_id++;
     string result_register = this->assign_register();
     string len_str = std::to_string(l->s.length());
@@ -245,7 +246,7 @@ string Translator_LLVM::translate_string_literal(string *s, StringLiteral *l)
         ""+result_register+" = getelementptr <{ i32, i32, ["+len_str+" x i16]}>, "
         "<{ i32, i32, ["+len_str+" x i16]}>* @str_"+std::to_string(id)+", i32 0, i32 2, i32 0\n";
     this->strings.insert({l, id});
-    this->references.push({result_register, &String});
+    //this->references.push({result_register, &String});
     return result_register;
 }
 
@@ -1211,7 +1212,7 @@ void Translator_LLVM::init_globals(string *s) {
         string type_reg = this->g_type_to_llvm_type(this->variables[p.first].second);
         *s +=
             " store "+type_reg+" "+expr_register+", "+type_reg+"* "+this->variables[p.first].first+"\n";
-        if (this->is_reference(p.second->type)) {
+        if (this->is_reference(p.second->type) && !dynamic_cast<StringLiteral*>(p.second)) {
             string ptr_register = this->assign_register();
             this->change_reference_count(s, p.second->type, expr_register, 1);
         }
@@ -1226,7 +1227,7 @@ void Translator_LLVM::free_globals(string *s) {
         *s +=
             "; freeing globals\n";
         for (auto &p : this->globals) {
-            if (this->is_reference(p.second->type)) {
+            if (this->is_reference(p.second->type) && !dynamic_cast<StringLiteral*>(p.second)) {
                 string type_reg = this->g_type_to_llvm_type(p.second->type);
                 string temp_register = this->assign_register();
                 *s +=
@@ -1343,7 +1344,7 @@ void Translator_LLVM::translate_return_statement(string *s, ReturnStatement *rs)
     } else {
         this->ret = true;
         string expr_register = this->translate_expr(s, rs->expr.get());
-        if (this->is_reference(rs->expr->type))
+        if (this->is_reference(rs->expr->type) && !dynamic_cast<StringLiteral*>(rs->expr.get()))
             this->change_reference_count(s, rs->expr->type, expr_register, +1);
         this->ret = false;
         

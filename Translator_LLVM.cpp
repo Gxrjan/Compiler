@@ -91,7 +91,7 @@ string Translator_LLVM::translate_function_call(string *s, FunctionCall *fc) {
     for (auto &a : fc->args) {
         types.push_back(a->type);
         string reg = this->translate_expr(s, a.get());
-        if (this->is_reference(a->type)) {
+        if (func_in_args && this->is_reference(a->type)) {
             this->change_reference_count(s, a->type, reg, +1);
             this->references.push({reg, a->type});
         }   
@@ -146,12 +146,13 @@ string Translator_LLVM::translate_function_call(string *s, FunctionCall *fc) {
         *s +=
             ")\n";
     }
-    if (this->is_reference(fc->type)) {
-        if (fc->type == &String){
-            if (!flag)
-                this->references.push({ret_register, fc->type});
-        } else
-            this->references.push({ret_register, fc->type});
+    if (this->is_reference(fc->type) && !flag) {
+        this->references.push({ret_register, fc->type});
+        // if (fc->type == &String){
+        //     if (!flag)
+        //         this->references.push({ret_register, fc->type});
+        // } else
+        //     this->references.push({ret_register, fc->type});
     }
     return ret_register;
 }
@@ -497,6 +498,8 @@ string Translator_LLVM::create_convert_ptr(string *s, string expr_register, Type
 
 string Translator_LLVM::translate_new_arr_expr(string *s, NewArrExpr *e)
 {
+    bool flag = this->first;
+    this->first = false;
     string len_register = this->translate_expr(s, e->expr.get());
     string size_register = this->assign_register();
     string temp_register = this->assign_register();
@@ -507,7 +510,10 @@ string Translator_LLVM::translate_new_arr_expr(string *s, NewArrExpr *e)
     *s +=
         " "+temp_register+" = call i8* @new_arr_expr(i32 "+size_register+", i32 "+len_register+")\n";
     string result_register = this->create_convert_ptr(s, temp_register, ArrayType::make(&Byte), e->type);
-    references.push({result_register, e->type});
+    if (!flag) {
+        // cout << "here" << endl;
+        references.push({result_register, e->type});
+    }
     return result_register;
 }
 
@@ -805,7 +811,10 @@ void Translator_LLVM::translate_declaration(string *s, Declaration *dec)
     }
 
     if (auto arr_type = dynamic_cast<ArrayType*>(dec->type)) {
-        change_reference_count(s, arr_type, expr_register, +1);
+        if (dynamic_cast<Variable*>(dec->expr.get()) || dynamic_cast<ElemAccessExpr*>(dec->expr.get())) {
+            // cout << "dec" << endl;
+            change_reference_count(s, arr_type, expr_register, +1);
+        }
     } else if (dec->type == &String) {
         if (dynamic_cast<Variable*>(dec->expr.get()) || dynamic_cast<ElemAccessExpr*>(dec->expr.get()))
             change_reference_count(s, dec->type, expr_register, +1);
@@ -870,7 +879,8 @@ void Translator_LLVM::translate_assignment(string *s, Assignment *asgn)
             " "+temp_register+" = load "+this->g_type_to_llvm_type(t)+", "+this->g_type_to_llvm_type(t)+"* "+ptr_register+"\n";
         if (auto at = dynamic_cast<ArrayType*>(t)) {
             change_reference_count(s, at, temp_register, -1);
-            change_reference_count(s, asgn->expr->type, expr_register, +1);
+            if (dynamic_cast<Variable*>(asgn->expr.get()) || dynamic_cast<ElemAccessExpr*>(asgn->expr.get()))
+                change_reference_count(s, asgn->expr->type, expr_register, +1);
         } else if (t == &String) {
             change_reference_count(s, t, temp_register, -1);
             if (dynamic_cast<Variable*>(asgn->expr.get()) || dynamic_cast<ElemAccessExpr*>(asgn->expr.get()))
@@ -892,10 +902,12 @@ void Translator_LLVM::translate_assignment(string *s, Assignment *asgn)
             " "+temp_register+" = load "+this->g_type_to_llvm_type(arr_t->base)+", "+this->g_type_to_llvm_type(arr_t->base)+"* "+ptr_register+"\n";
         if (auto at = dynamic_cast<ArrayType*>(arr_t->base)) {
             change_reference_count(s, at, temp_register, -1);
-            change_reference_count(s, at, asgn_register, +1);
+            if (dynamic_cast<Variable*>(asgn->expr.get()) || dynamic_cast<ElemAccessExpr*>(asgn->expr.get()))
+                change_reference_count(s, at, asgn_register, +1);
         } else if (arr_t->base == &String) {
             change_reference_count(s, arr_t->base, temp_register, -1);
-            change_reference_count(s, arr_t->base, asgn_register, +1);
+            if (dynamic_cast<Variable*>(asgn->expr.get()) || dynamic_cast<ElemAccessExpr*>(asgn->expr.get()))
+                change_reference_count(s, arr_t->base, asgn_register, +1);
         }
         this->create_store(s, asgn_llvm_type, asgn_register, ptr_register);
         *s +=
@@ -1325,9 +1337,10 @@ void Translator_LLVM::translate_return_statement(string *s, ReturnStatement *rs)
     this->first = false;
     *s += // comment
         "; "+rs->to_string()+"\n";
-    if (!rs->expr)
+    if (!rs->expr) {
+        this->free_variables(s, current->body->variables);
         this->create_return_default(s, current->ret_type);
-    else {
+    } else {
         this->ret = true;
         string expr_register = this->translate_expr(s, rs->expr.get());
         if (this->is_reference(rs->expr->type))

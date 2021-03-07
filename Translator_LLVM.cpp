@@ -146,14 +146,8 @@ string Translator_LLVM::translate_function_call(string *s, FunctionCall *fc) {
         *s +=
             ")\n";
     }
-    if (this->is_reference(fc->type) && !flag) {
+    if (this->is_reference(fc->type) && !flag)
         this->references.push({ret_register, fc->type});
-        // if (fc->type == &String){
-        //     if (!flag)
-        //         this->references.push({ret_register, fc->type});
-        // } else
-        //     this->references.push({ret_register, fc->type});
-    }
     return ret_register;
 }
 
@@ -290,7 +284,6 @@ string Translator_LLVM::create_getelementptr_load(string *s, Type *result_type, 
 
 string Translator_LLVM::translate_elem_access_expr(string *s, ElemAccessExpr *e)
 {
-    
     *s += // asm comment
         "; "+e->to_string()+"\n";
     string expr_register = this->translate_expr(s, e->expr.get());
@@ -303,10 +296,25 @@ string Translator_LLVM::translate_elem_access_expr(string *s, ElemAccessExpr *e)
         this->create_bounds_check(s, expr_register, index_register, &String);
         return create_getelementptr_load(s, &Char, &String, expr_register, index_register);
     } else {
+        Variable *var = dynamic_cast<Variable*>(e->expr.get());
         auto arr_t = dynamic_cast<ArrayType *>(e->expr->type);
-        string expr_llvm_type = this->g_type_to_llvm_type(arr_t);
-        string result_llvm_type = this->g_type_to_llvm_type(arr_t->base);
-        if (arr_t->base == &Bool ||
+        if (var && this->is_one_dimensional_array(arr_t)) {
+            string label_id = std::to_string(this->label_id++);
+            string len_register = this->arrays[var->name];
+            string upper_bound_check = this->assign_register();
+            string msg_loc = this->assign_register();
+            *s += 
+                "; bounds check start\n"
+                " "+upper_bound_check+" = icmp ult i32 "+index_register+", "+len_register+"\n"
+                " br i1 "+upper_bound_check+", label %end"+label_id+", label %trap"+label_id+"\n"
+                "trap"+label_id+":\n"
+                " "+msg_loc+" = getelementptr [21 x i8], [21 x i8]* @index_out_of_bounds_msg, i32 0, i32 0\n"
+                " call void (i8*) @report_error(i8* "+msg_loc+")\n"
+                " br label %end"+label_id+"\n"
+                "end"+label_id+":"
+                "; bounds check end\n";
+            return create_getelementptr_load(s, arr_t->base, arr_t, expr_register, index_register);
+        } else if (arr_t->base == &Bool ||
             arr_t->base == &Char ||
             arr_t->base == &Int) {
                 this->create_bounds_check(s, expr_register, index_register, arr_t);
@@ -502,6 +510,7 @@ string Translator_LLVM::translate_new_arr_expr(string *s, NewArrExpr *e)
     bool flag = this->first;
     this->first = false;
     string len_register = this->translate_expr(s, e->expr.get());
+    this->arr_len = len_register;
     string size_register = this->assign_register();
     string temp_register = this->assign_register();
     auto t = dynamic_cast<ArrayType *>(e->type);
@@ -512,7 +521,6 @@ string Translator_LLVM::translate_new_arr_expr(string *s, NewArrExpr *e)
         " "+temp_register+" = call i8* @new_arr_expr(i32 "+size_register+", i32 "+len_register+")\n";
     string result_register = this->create_convert_ptr(s, temp_register, ArrayType::make(&Byte), e->type);
     if (!flag) {
-        // cout << "here" << endl;
         references.push({result_register, e->type});
     }
     return result_register;
@@ -796,17 +804,38 @@ string Translator_LLVM::create_allocate_and_store(string *s, Type *t, string exp
 }
 
 
+bool Translator_LLVM::is_basic_type(g_type t) {
+    return !dynamic_cast<ArrayType*>(t);
+}
+
+bool Translator_LLVM::is_one_dimensional_array(g_type t) {
+    if (auto arr_type = dynamic_cast<ArrayType*>(t)) 
+        if (this->is_basic_type(arr_type->base))
+            return true;
+    return false;
+}
 
 void Translator_LLVM::translate_declaration(string *s, Declaration *dec)
 {
     *s += // asm comment
         "; " + dec->to_string() + "\n";
+    bool one_dim_array = false;
+    if (this->is_one_dimensional_array(dec->type))
+        one_dim_array = true;
+    // if (auto new_arr = dynamic_cast<NewArrExpr*>(dec->expr.get())) {
+    //     if (this->is_basic_type(new_arr->type)) {
+    //         one_dim_array = true;
+    //     }
+    // }
+    
     string var_type = this->g_type_to_llvm_type(dec->type);
     string expr_register = this->translate_expr(s, dec->expr.get());
     string temp_register = this->create_conversion(s, expr_register, dec->expr->type, dec->type);
     if (!this->loop_depth) {
         string result_register = this->create_allocate_and_store(s, dec->type, temp_register);
         this->variables.insert_or_assign(dec->id, std::make_pair(result_register, dec->type));
+        if (one_dim_array)
+            this->arrays[dec->id] = this->arr_len;
     } else {
         create_store(s, var_type, temp_register, this->variables[dec->id].first);
     }
@@ -876,6 +905,13 @@ void Translator_LLVM::translate_assignment(string *s, Assignment *asgn)
         string expr_llvm_type = g_type_to_llvm_type(this->variables.at(var->name).second);
         string temp_register = this->assign_register();
         g_type t = this->variables.at(var->name).second;
+        if (this->is_one_dimensional_array(t)) {
+            this->arrays[var->name] = this->arr_len;
+            if (dynamic_cast<FunctionCall*>(asgn->expr.get()))
+                this->arrays[var->name] = this->get_array_len(s, expr_register, t);
+            else if (auto v = dynamic_cast<Variable*>(asgn->expr.get()))
+                this->arrays[var->name] = this->arrays[v->name];
+        }
         *s +=
             " "+temp_register+" = load "+this->g_type_to_llvm_type(t)+", "+this->g_type_to_llvm_type(t)+"* "+ptr_register+"\n";
         if (auto at = dynamic_cast<ArrayType*>(t)) {
@@ -1216,6 +1252,9 @@ void Translator_LLVM::init_globals(string *s) {
             string ptr_register = this->assign_register();
             this->change_reference_count(s, p.second->type, expr_register, 1);
         }
+        if (this->is_one_dimensional_array(this->variables[p.first].second))
+            this->arrays[p.first] = this->arr_len;
+            // this->arrays[p.first] = this->get_array_len(s, expr_register, this->variables[p.first].second);
                 
     }
     *s +=
@@ -1250,6 +1289,16 @@ void Translator_LLVM::translate_external_definition(string *s, ExternalDefinitio
         this->report_error(ed->line, ed->col, "Must be a external definition");
 }
 
+string Translator_LLVM::get_array_len(string *s, string reg, g_type type) {
+    string reg_type = this->g_type_to_llvm_type(type);
+    string result_register = this->assign_register();
+    string minus_one = this->assign_register();
+    *s +=
+        " "+minus_one+" = add i32 0, -1\n";
+    string conv_register = this->create_convert_ptr(s, reg, type, ArrayType::make(&Int));
+    string len_register = this->create_getelementptr_load(s, &Int, ArrayType::make(&Int), conv_register, minus_one);
+    return len_register;
+}
 
 void Translator_LLVM::translate_function_definition(string *s, FunctionDefinition *fd) {
     current = fd;
@@ -1292,6 +1341,8 @@ void Translator_LLVM::translate_function_definition(string *s, FunctionDefinitio
         } else {
             if (this->is_reference(fd->params[i].first))
                 this->change_reference_count(s, fd->params[i].first, reg, 1);
+            if (this->is_one_dimensional_array(fd->params[i].first))
+                this->arrays[fd->params[i].second] = this->get_array_len(s, reg, fd->params[i].first);
             result_register = this->create_allocate_and_store(s, fd->params[i].first, reg);
         }
         variables_reserve[fd->params[i].second] = this->variables[fd->params[i].second];

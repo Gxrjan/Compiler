@@ -597,6 +597,8 @@ class Translator_LLVM {
     Program *current_prog;
     stack<pair<string,g_type>> references; // first: address, second: llvm_type
     map<Id, pair<string, g_type>> variables;  // first: address, second: llvm_type
+    string arr_len;
+    map<Id, string> arrays; // first: address of variable, second: length of the array
     map<Id, Expr*> globals;
     map<StringLiteral *, int> strings;
     string assign_register();
@@ -656,6 +658,8 @@ class Translator_LLVM {
     void init_globals(string *s);
     void free_globals(string *s);
     bool is_reference(g_type type);
+    bool is_basic_type(g_type type);
+    bool is_one_dimensional_array(g_type t);
     void translate_return_statement(string *s, ReturnStatement *rs);
     void translate_external_definition(string *s, ExternalDefinition *ed);
     void translate_function_definition(string *s, FunctionDefinition *fd);
@@ -664,6 +668,7 @@ class Translator_LLVM {
     void change_reference_count(string *s, Type *g_type, string ptr_register, int i);
     void free_unused_memory(string *s);
     void free_argv(string *s);
+    string get_array_len(string *s, string reg, g_type t);
     int g_type_to_depth(g_type type);
     void create_return_default(string *s, g_type type);
     void free_types(string *s);

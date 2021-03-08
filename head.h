@@ -586,7 +586,7 @@ class Checker {
 class Translator_LLVM {
     map<tuple<Type*, string, vector<Type*>>, size_t> overloads;
     size_t loop_depth = 0;
-    int bounds, ref, free;
+    int bounds, ref, free, null;
     int func_id = 0;
     int register_id = 0;
     int label_id = 0;
@@ -673,8 +673,9 @@ class Translator_LLVM {
     void create_return_default(string *s, g_type type);
     void free_types(string *s);
     void create_storage_before_loop(string *s, Statement *st);
+    bool is_global_variable(Id name);
   public:
-    Translator_LLVM(int bounds, int ref, int free): bounds{bounds},ref{ref},free{free}{};
+    Translator_LLVM(int bounds, int ref, int free, int null): bounds{bounds},ref{ref},free{free},null{null}{};
     string translate_program(Program *p);
 };
 #endif

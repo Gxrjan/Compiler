@@ -27,15 +27,19 @@ def main():
     no_ref = do_option_tests(tests_specs, ['--noref'])
     print_separator()
 
+    # --nonull
+    no_null = do_option_tests(tests_specs, ['--nonull'])
+    print_separator()
+
     # for testing purposes
     # no_options = [1, 1, 1, 1, 1]
     # no_bounds = [1, 1, 1, 1, 1]
     # no_free = [1, 1, 1, 1, 1]
     # no_ref = [1, 1, 1, 1, 1]
 
-    print(F'{"no options":>29}, {"--nobounds":>11}, {"--nofree":>10}, {"--noref":>10}')
+    print(F'{"no options":>29}, {"--nobounds":>11}, {"--nofree":>10}, {"--noref":>10}, {"--nonull":>10}')
     for i in range(len(tests_specs)):
-        print(F'{tests_specs[i][0]:>14}: {(1000*no_options[i]):11.0f}ms {(1000*no_bounds[i]):10.0f}ms {(1000*no_free[i]):9.0f}ms {(1000*no_ref[i]):9.0f}ms')
+        print(F'{tests_specs[i][0]:>14}: {(1000*no_options[i]):11.0f}ms {(1000*no_bounds[i]):10.0f}ms {(1000*no_free[i]):9.0f}ms {(1000*no_ref[i]):9.0f}ms {(1000*no_null[i]):9.0f}ms')
     
 
     print_separator()

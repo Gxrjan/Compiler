@@ -178,6 +178,8 @@ string Translator_LLVM::translate_bool_literal(string *s, BoolLiteral *l)
 }
 
 void Translator_LLVM::create_nullptr_check(string *s, string reg, string lllv_type) {
+    if (!null)
+        return;
     string bool_register = this->assign_register();
     string label_id = std::to_string(this->label_id++);
     string msg_loc = this->assign_register();
@@ -298,7 +300,7 @@ string Translator_LLVM::translate_elem_access_expr(string *s, ElemAccessExpr *e)
     } else {
         Variable *var = dynamic_cast<Variable*>(e->expr.get());
         auto arr_t = dynamic_cast<ArrayType *>(e->expr->type);
-        if (var && this->is_one_dimensional_array(arr_t)) {
+        if (var && this->is_one_dimensional_array(arr_t) && !this->is_global_variable(var->name)) {
             string label_id = std::to_string(this->label_id++);
             string len_register = this->arrays[var->name];
             string upper_bound_check = this->assign_register();
@@ -841,10 +843,8 @@ void Translator_LLVM::translate_declaration(string *s, Declaration *dec)
     }
 
     if (auto arr_type = dynamic_cast<ArrayType*>(dec->type)) {
-        if (dynamic_cast<Variable*>(dec->expr.get()) || dynamic_cast<ElemAccessExpr*>(dec->expr.get())) {
-            // cout << "dec" << endl;
+        if (dynamic_cast<Variable*>(dec->expr.get()) || dynamic_cast<ElemAccessExpr*>(dec->expr.get()))
             change_reference_count(s, arr_type, expr_register, +1);
-        }
     } else if (dec->type == &String) {
         if (dynamic_cast<Variable*>(dec->expr.get()) || dynamic_cast<ElemAccessExpr*>(dec->expr.get()))
             change_reference_count(s, dec->type, expr_register, +1);
@@ -878,6 +878,10 @@ string Translator_LLVM::create_getelementptr(string *s, string llvm_type, string
     return result_register;
 }
 
+bool Translator_LLVM::is_global_variable(Id name) {
+    return this->current_prog->block->variables.find(name) != this->current_prog->block->variables.end();
+}
+
 void Translator_LLVM::change_reference_count(string *s, g_type type, string ptr_register, int i) {
     if (!this->ref)
         return;
@@ -905,12 +909,23 @@ void Translator_LLVM::translate_assignment(string *s, Assignment *asgn)
         string expr_llvm_type = g_type_to_llvm_type(this->variables.at(var->name).second);
         string temp_register = this->assign_register();
         g_type t = this->variables.at(var->name).second;
-        if (this->is_one_dimensional_array(t)) {
-            this->arrays[var->name] = this->arr_len;
+        if (this->is_one_dimensional_array(t) && !this->is_global_variable(var->name)) {
             if (dynamic_cast<FunctionCall*>(asgn->expr.get()))
                 this->arrays[var->name] = this->get_array_len(s, expr_register, t);
+            else if (dynamic_cast<ElemAccessExpr*>(asgn->expr.get()))
+                this->arrays[var->name] = this->get_array_len(s, expr_register, t);
             else if (auto v = dynamic_cast<Variable*>(asgn->expr.get()))
-                this->arrays[var->name] = this->arrays[v->name];
+                if (this->is_global_variable(v->name)) {
+                    string storate_reg = this->variables[v->name].first;
+                    g_type global_type = this->variables[v->name].second;
+                    string ptr_register = this->assign_register();
+                    *s +=
+                        " "+ptr_register+" = load "+this->g_type_to_llvm_type(global_type)+", "+this->g_type_to_llvm_type(global_type)+"* "+storate_reg+"\n";
+                    this->arrays[var->name] = this->get_array_len(s, ptr_register, global_type);
+                } else
+                    this->arrays[var->name] = this->arrays[v->name];
+            else
+                this->arrays[var->name] = this->arr_len;
         }
         *s +=
             " "+temp_register+" = load "+this->g_type_to_llvm_type(t)+", "+this->g_type_to_llvm_type(t)+"* "+ptr_register+"\n";
@@ -1252,8 +1267,8 @@ void Translator_LLVM::init_globals(string *s) {
             string ptr_register = this->assign_register();
             this->change_reference_count(s, p.second->type, expr_register, 1);
         }
-        if (this->is_one_dimensional_array(this->variables[p.first].second))
-            this->arrays[p.first] = this->arr_len;
+        // if (this->is_one_dimensional_array(this->variables[p.first].second))
+        //     this->arrays[p.first] = this->arr_len;
             // this->arrays[p.first] = this->get_array_len(s, expr_register, this->variables[p.first].second);
                 
     }
@@ -1337,6 +1352,7 @@ void Translator_LLVM::translate_function_definition(string *s, FunctionDefinitio
             string temp_register = this->assign_register();
             *s +=
                 " "+temp_register+" = call i16** @to_argv(i32 %0, i8** %1)\n";
+            this->arrays[fd->params[i].second] = this->get_array_len(s, temp_register, fd->params[i].first);
             result_register = this->create_allocate_and_store(s, fd->params[i].first, temp_register);
         } else {
             if (this->is_reference(fd->params[i].first))

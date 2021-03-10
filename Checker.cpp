@@ -145,7 +145,6 @@ Type *Checker::check_variable(Variable *var, Block *b)
             this->report_error(var->line, var->col, "variable hasn't been declared");
         auto it = find(this->p->globals.begin(), this->p->globals.end(), var->name);
         if (this->current && (it != this->p->globals.end())) {
-            // cout << this->current->name << " calls "  << var->name << endl;
             this->current->globals_called.insert(var->name);
         }
         return result->type;

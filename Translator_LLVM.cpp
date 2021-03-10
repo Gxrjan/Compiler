@@ -298,10 +298,8 @@ void Translator_LLVM::create_bounds_check_opt(string *s, Id name, Block *b, stri
         return;
     string label_id = std::to_string(this->label_id++);
     string len_register;
-    if (this->is_global_variable(name))
-        len_register = this->current_prog->block->optimized_arrays[name];
-    else
-        len_register = b->optimized_arrays[name];
+    
+    len_register = b->optimized_arrays[name];
     string upper_bound_check = this->assign_register();
     string msg_loc = this->assign_register();
     *s += 
@@ -1441,19 +1439,21 @@ void Translator_LLVM::translate_function_definition(string *s, FunctionDefinitio
         ") {\n";
     if (fd->name=="main")
         this->init_globals(s);
-    // else {
-    //     for (auto g : fd->globals_called) {
-    //         g_type global_type = this->globals[g]->type;
-    //         if (this->is_one_dimensional_array(global_type) && this->not_reassigned_global(g)) {
-    //             string result_register = this->assign_register();
-    //             string var_storage = this->variables.at(g).first;
-    //             string var_type = g_type_to_llvm_type(this->variables.at(g).second);
-    //             *s += 
-    //                 " "+result_register+" = load "+var_type+", "+var_type+"* "+var_storage+"\n";
-    //             fd->body->optimized_arrays[g] = this->get_array_len(s, result_register, global_type);
-    //         }
-    //     }
-    // }
+    else {
+        *s +=
+            "; assigning length of globals\n";
+        for (auto g : fd->globals_called) {
+            g_type global_type = this->globals[g]->type;
+            if (this->is_one_dimensional_array(global_type) && this->not_reassigned_global(g)) {
+                string result_register = this->assign_register();
+                string var_storage = this->variables.at(g).first;
+                string var_type = g_type_to_llvm_type(this->variables.at(g).second);
+                *s += 
+                    " "+result_register+" = load "+var_type+", "+var_type+"* "+var_storage+"\n";
+                fd->body->optimized_arrays[g] = this->get_array_len(s, result_register, global_type);
+            }
+        }
+    }
     for (size_t i=0;i<fd->params.size();i++) {
         string reg = "%"+std::to_string(i);
         string result_register;

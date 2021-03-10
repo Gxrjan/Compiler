@@ -16,7 +16,8 @@
 #include <stdlib.h>    /* for exit */
 #include <getopt.h>
 #include <stack>
-// #include <algorithm>
+#include <algorithm>
+
 using namespace std;
 using Id = string;
 
@@ -447,7 +448,7 @@ class FunctionDefinition : public Statement {
     Type *ret_type;
     vector<pair<Type *, string>> params;
     unique_ptr<Block> body;
-    // vector<string> globals_called;
+    set<string> globals_called;
     FunctionDefinition(Id name, Type *ret_type, vector<pair<Type *, string>> params, unique_ptr<Block> body, int line, int col);
     string to_string() override;
 };
@@ -473,7 +474,7 @@ class Program {
   public:
     unique_ptr<Block> block;
     map<tuple<g_type, string, vector<g_type>>, size_t> overloads;
-    // vector<string> globals;
+    vector<string> globals;
     Program(unique_ptr<Block> block);
     string to_string();
 };
@@ -544,7 +545,7 @@ class Checker {
     Declaration *look_up(Id id, Block *b);
     Type *check_expr(Expr *expr, Block *b);
     Type *check_expr_type(Expr *expr, Block *b);
-    FunctionDefinition *current;    // points to the current function that is being checked
+    FunctionDefinition *current = nullptr;    // points to the current function that is being checked
     void expect_type(Expr *e, Block *b, Type *t);
     bool convertible_to_int(Type *t);
     bool nullable(Type *t);

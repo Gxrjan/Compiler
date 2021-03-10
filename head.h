@@ -15,6 +15,8 @@
 #include <stack>
 #include <stdlib.h>    /* for exit */
 #include <getopt.h>
+#include <stack>
+// #include <algorithm>
 using namespace std;
 using Id = string;
 
@@ -382,6 +384,7 @@ class Declaration : public Statement {
 class Block : public Statement {
   public:
     map<Id, Declaration *> variables;
+    map<Id, string> optimized_arrays; // first: variable name, second: register containing the length
     Block *parent;
     vector<Block*> children;
     vector<unique_ptr<Statement>> statements;
@@ -444,6 +447,7 @@ class FunctionDefinition : public Statement {
     Type *ret_type;
     vector<pair<Type *, string>> params;
     unique_ptr<Block> body;
+    // vector<string> globals_called;
     FunctionDefinition(Id name, Type *ret_type, vector<pair<Type *, string>> params, unique_ptr<Block> body, int line, int col);
     string to_string() override;
 };
@@ -469,6 +473,7 @@ class Program {
   public:
     unique_ptr<Block> block;
     map<tuple<g_type, string, vector<g_type>>, size_t> overloads;
+    // vector<string> globals;
     Program(unique_ptr<Block> block);
     string to_string();
 };
@@ -593,7 +598,8 @@ class Translator_LLVM {
     int string_id = 0;
     bool ret = false;
     bool first = true;
-    FunctionDefinition *current;
+    stack<Block*> block_stack;
+    FunctionDefinition *current_fd;
     Program *current_prog;
     stack<pair<string,g_type>> references; // first: address, second: llvm_type
     map<Id, pair<string, g_type>> variables;  // first: address, second: llvm_type
@@ -674,6 +680,13 @@ class Translator_LLVM {
     void free_types(string *s);
     void create_storage_before_loop(string *s, Statement *st);
     bool is_global_variable(Id name);
+    bool not_reassigned(Id name);
+    bool is_assigned(Id name, Block *b); 
+    bool is_assigned(Id name, Statement *s);
+    Block *is_optimized(Id name);
+    Block *is_optimized(Id name, Block *b);
+    bool not_reassigned_global(Id name);
+    void create_bounds_check_opt(string *s, Id name, Block *b, string index_register);
   public:
     Translator_LLVM(int bounds, int ref, int free, int null): bounds{bounds},ref{ref},free{free},null{null}{};
     string translate_program(Program *p);

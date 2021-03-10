@@ -147,6 +147,9 @@ Type *Checker::check_variable(Variable *var, Block *b)
         Declaration *result = this->look_up(var->name, b);
         if (!result)
             this->report_error(var->line, var->col, "variable hasn't been declared");
+        // auto it = find(this->p->globals.begin(), this->p->globals.end(), var->name);
+        // if (this->current && it != this->p->globals.end())
+        //     this->current->globals_called.push_back(var->name);
         return result->type;
 }
 
@@ -590,6 +593,7 @@ void Checker::check_external_declaration(Declaration *dec, Block *b) {
     if (this->function_inside(dec->expr.get()))
         this->report_error(dec->line, dec->col, "Can't use functions to declare global variables");
     Variable v(dec->id, dec->line, dec->col);
+    // this->p->globals.push_back(dec->id);
     b->variables.insert({dec->id, dec});
     this->verify_assignment(&v, dec->expr.get(), b);
 }

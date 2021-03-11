@@ -684,6 +684,7 @@ class Translator_LLVM {
     bool not_reassigned(Id name);
     bool is_assigned(Id name, Block *b); 
     bool is_assigned(Id name, Statement *s);
+    string create_load(string *s, g_type t, string storage_register); 
     Block *is_optimized(Id name);
     Block *is_optimized(Id name, Block *b);
     bool not_reassigned_global(Id name);

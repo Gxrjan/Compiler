@@ -15,6 +15,9 @@
 #include <stack>
 #include <stdlib.h>    /* for exit */
 #include <getopt.h>
+#include <stack>
+#include <algorithm>
+
 using namespace std;
 using Id = string;
 
@@ -382,6 +385,7 @@ class Declaration : public Statement {
 class Block : public Statement {
   public:
     map<Id, Declaration *> variables;
+    map<Id, string> optimized_arrays; // first: variable name, second: register containing the length
     Block *parent;
     vector<Block*> children;
     vector<unique_ptr<Statement>> statements;
@@ -444,6 +448,7 @@ class FunctionDefinition : public Statement {
     Type *ret_type;
     vector<pair<Type *, string>> params;
     unique_ptr<Block> body;
+    set<string> globals_called;
     FunctionDefinition(Id name, Type *ret_type, vector<pair<Type *, string>> params, unique_ptr<Block> body, int line, int col);
     string to_string() override;
 };
@@ -469,6 +474,7 @@ class Program {
   public:
     unique_ptr<Block> block;
     map<tuple<g_type, string, vector<g_type>>, size_t> overloads;
+    vector<string> globals;
     Program(unique_ptr<Block> block);
     string to_string();
 };
@@ -539,7 +545,7 @@ class Checker {
     Declaration *look_up(Id id, Block *b);
     Type *check_expr(Expr *expr, Block *b);
     Type *check_expr_type(Expr *expr, Block *b);
-    FunctionDefinition *current;    // points to the current function that is being checked
+    FunctionDefinition *current = nullptr;    // points to the current function that is being checked
     void expect_type(Expr *e, Block *b, Type *t);
     bool convertible_to_int(Type *t);
     bool nullable(Type *t);
@@ -586,17 +592,20 @@ class Checker {
 class Translator_LLVM {
     map<tuple<Type*, string, vector<Type*>>, size_t> overloads;
     size_t loop_depth = 0;
-    int bounds, ref, free;
+    int bounds, ref, free, null;
     int func_id = 0;
     int register_id = 0;
     int label_id = 0;
     int string_id = 0;
     bool ret = false;
     bool first = true;
-    FunctionDefinition *current;
+    stack<Block*> block_stack;
+    FunctionDefinition *current_fd;
     Program *current_prog;
     stack<pair<string,g_type>> references; // first: address, second: llvm_type
     map<Id, pair<string, g_type>> variables;  // first: address, second: llvm_type
+    string arr_len;
+    map<Id, string> arrays; // first: address of variable, second: length of the array
     map<Id, Expr*> globals;
     map<StringLiteral *, int> strings;
     string assign_register();
@@ -656,6 +665,8 @@ class Translator_LLVM {
     void init_globals(string *s);
     void free_globals(string *s);
     bool is_reference(g_type type);
+    bool is_basic_type(g_type type);
+    bool is_one_dimensional_array(g_type t);
     void translate_return_statement(string *s, ReturnStatement *rs);
     void translate_external_definition(string *s, ExternalDefinition *ed);
     void translate_function_definition(string *s, FunctionDefinition *fd);
@@ -664,12 +675,22 @@ class Translator_LLVM {
     void change_reference_count(string *s, Type *g_type, string ptr_register, int i);
     void free_unused_memory(string *s);
     void free_argv(string *s);
+    string get_array_len(string *s, string reg, g_type t);
     int g_type_to_depth(g_type type);
     void create_return_default(string *s, g_type type);
     void free_types(string *s);
     void create_storage_before_loop(string *s, Statement *st);
+    bool is_global_variable(Id name);
+    bool not_reassigned(Id name);
+    bool is_assigned(Id name, Block *b); 
+    bool is_assigned(Id name, Statement *s);
+    string create_load(string *s, g_type t, string storage_register); 
+    Block *is_optimized(Id name);
+    Block *is_optimized(Id name, Block *b);
+    bool not_reassigned_global(Id name);
+    void create_bounds_check_opt(string *s, Id name, Block *b, string index_register);
   public:
-    Translator_LLVM(int bounds, int ref, int free): bounds{bounds},ref{ref},free{free}{};
+    Translator_LLVM(int bounds, int ref, int free, int null): bounds{bounds},ref{ref},free{free},null{null}{};
     string translate_program(Program *p);
 };
 #endif

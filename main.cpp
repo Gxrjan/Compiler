@@ -10,6 +10,7 @@ int main(int argc, char *argv[])
     int bounds = 1;
     int ref = 1;
     int free = 1;
+    int null = 1;
     string infile, outfile;
 
     while (1) {
@@ -18,6 +19,7 @@ int main(int argc, char *argv[])
             {"nobounds",     no_argument, &bounds,  0 },
             {"noref",  no_argument,       &ref,  0 },
             {"nofree",  no_argument, &free,  0 },
+            {"nonull",  no_argument, &null,  0 },
             {"help", no_argument,       0,  'h' },
             {0,         0,                 0,  0 }
         };
@@ -63,7 +65,7 @@ int main(int argc, char *argv[])
 
     ofstream file{ (infile+".ll").c_str() , ios::out };
     Scanner scan(argv[optind]);
-    Translator_LLVM tran{bounds, ref, free};
+    Translator_LLVM tran{bounds, ref, free, null};
     unique_ptr<Program> prog = Parser(&scan).parse_program();
     Checker checker;
     checker.check_program(prog.get());

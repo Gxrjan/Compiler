@@ -6,7 +6,8 @@ def main():
         ("Insertion sort", 'insertion_sort', [100000, 100]),
         ("Prime sum", 'prime_sum', [20000]),
         ("Tag", 'tag', [300]),
-        ("String perm", 'perm', ["ABCDEFGHIJ"])
+        ("String perm", 'perm', ["ABCDEFGHIJ"]),
+        ("Prime count", 'prime_count', [1000000000])
     ]
     print("Running options test...")
     print_separator()

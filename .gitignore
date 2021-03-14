@@ -33,6 +33,9 @@ benchmark/perm_cpp
 benchmark/merge_sort
 benchmark/merge_sort_cs
 benchmark/merge_sort_cpp
+benchmark/prime_count
+benchmark/prime_count_cs
+benchmark/prime_count_cpp
 Prog*
 test_mem
 __pycache__

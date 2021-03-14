@@ -20,6 +20,9 @@ def main():
     # String permutations on ABCDEFGHIJ
     do_test("String permutations", 'perm', ["ABCDEFGHIJ"])
 
+    # Prime count on 1000000000
+    do_test("Prime count", 'prime_count', [1000000000])
+
 
 
 

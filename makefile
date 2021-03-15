@@ -23,7 +23,7 @@ mem_leak: gc
 
 
 benchmark: benchmark/insertion_sort benchmark/prime_sum benchmark/tag benchmark/insertion_sort_cs benchmark/prime_sum_cs benchmark/tag_cs benchmark/insertion_sort_cpp benchmark/prime_sum_cpp benchmark/tag_cpp \
-			benchmark/perm benchmark/perm_cs benchmark/perm_cpp benchmark/merge_sort benchmark/merge_sort_cs benchmark/merge_sort_cpp
+			benchmark/perm benchmark/perm_cs benchmark/perm_cpp benchmark/merge_sort benchmark/merge_sort_cs benchmark/merge_sort_cpp benchmark/hash_table benchmark/hash_table_cs benchmark/hash_table_cpp
 	python benchmark.py
 
 
@@ -86,6 +86,16 @@ benchmark/prime_count_cs: benchmark/prime_count.cs
 
 benchmark/prime_count_cpp: benchmark/prime_count.cpp
 	clang++ -O2 -o benchmark/prime_count_cpp benchmark/prime_count.cpp
+
+
+benchmark/hash_table: gc benchmark/hash_table.g
+	./gc benchmark/hash_table.g
+
+benchmark/hash_table_cs: benchmark/hash_table.cs
+	mcs -out:benchmark/hash_table_cs benchmark/hash_table.cs
+
+benchmark/hash_table_cpp: benchmark/hash_table.cpp
+	clang++ -O2 -o benchmark/hash_table_cpp benchmark/hash_table.cpp
 
 options_test: gc
 	python options_test.py

@@ -7,7 +7,8 @@ def main():
         ("Prime sum", 'prime_sum', [20000]),
         ("Tag", 'tag', [300]),
         ("String perm", 'perm', ["ABCDEFGHIJ"]),
-        ("Prime count", 'prime_count', [1000000000])
+        ("Prime count", 'prime_count', [1000000000]),
+        ("Hash table", 'hash_table', [40000, 13])
     ]
     print("Running options test...")
     print_separator()

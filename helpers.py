@@ -101,6 +101,7 @@ def build(options):
     subprocess.call(['./gc'] + options + ['benchmark/tag.g'])
     subprocess.call(['./gc'] + options + ['benchmark/perm.g'])
     subprocess.call(['./gc'] + options + ['benchmark/prime_count.g'])
+    subprocess.call(['./gc'] + options + ['benchmark/hash_table.g'])
 
 def do_option_test(name, bin_name, args):
     benchmark_home = Path.cwd() / 'benchmark'

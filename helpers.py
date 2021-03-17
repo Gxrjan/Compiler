@@ -122,3 +122,30 @@ def do_option_tests(tests_specs, options):
         result.append(do_option_test(s[0], s[1], s[2]))
     
     return result
+
+
+def break_into_separate_progs(source, test_home):
+    file = open(source)
+    lines = file.readlines()
+    
+    file_index = 0
+    index = 0
+
+    current_code = ''
+    for l in lines:
+        if not l.strip():
+            if (current_code):
+                current_test = Path(f'test_prog{file_index}.g')
+                outfile = open(test_home/current_test, 'w')
+                outfile.write(current_code)
+                outfile.close()
+                file_index += 1
+            current_code = ''
+        else:
+            current_code += l
+    if (current_code):
+        current_test = Path(f'test_prog{file_index}.g')
+        outfile = open(test_home/current_test, 'w')
+        outfile.write(current_code)
+        outfile.close()
+    

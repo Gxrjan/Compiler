@@ -15,7 +15,7 @@ Types.o: Types.cpp
 	clang++ -Wall -c -g -O2 Types.cpp
 
 
-test: gc tests.g tests_neg.g test_mem.g
+test: gc tests.g tests_neg.g test_mem.g tests_bounds.g
 	./gc tests.g
 	python tester.py
 

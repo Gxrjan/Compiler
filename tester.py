@@ -2,6 +2,8 @@ from pathlib import Path
 import os
 import re
 import subprocess
+import shutil
+from helpers import *
 
 def positive_test():
     gc_output_file = Path('result')
@@ -91,12 +93,44 @@ def negative_test():
     return error_count
 
 
+def bounds_test():
+    try:
+        os.mkdir('tmp')
+    except:
+        pass
+    test_home = Path('tmp')
+    break_into_separate_progs('tests_bounds.g', test_home)
+
+    error_count = 0
+
+    for folderName, subfolder, filenames in os.walk(test_home):
+        for filename in filenames:
+            msg = subprocess.run(['./gc', (test_home / filename), '-o', (test_home / filename.strip('.g'))], capture_output=True)
+            if (msg.returncode != 0):
+                print(F'Error: compilation of {test_home}/{filename} failed unexpectedly:')
+                test_file = open(test_home / filename)
+                print(test_file.read())
+                error_count += 1
+            p = subprocess.Popen(['./'+str(test_home / filename.strip('.g'))], stderr=subprocess.DEVNULL)
+            pid, exit_status, res_usage = os.wait4(p.pid, 0)
+            if (exit_status == 0):
+                error_count += 1
+                print(F'Error: {test_home}/{filename} executed successfully:')
+                test_file = open(test_home / filename.strip())
+                print(test_file.read())
+
+    shutil.rmtree(test_home)
+
+    return error_count
+
 
 def main():
     pos_count = positive_test()
     neg_count = negative_test()
+    bounds_count = bounds_test()
     print(F'There were total {pos_count} errors in positive test')
     print(F'There were total {neg_count} errors in negative test')
+    print(F'There were total {bounds_count} errors in bounds test')
     
 
 

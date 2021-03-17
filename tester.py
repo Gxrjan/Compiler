@@ -20,7 +20,6 @@ def positive_test():
 
 
     outfile = open(gc_output_file, 'w')
-    # subprocess.run(['./gc', 'tests.g'])
     subprocess.run('./'+str(tests_bin_file), stdout=outfile)
     output = list()
     outfile = open(gc_output_file)
@@ -51,29 +50,7 @@ def negative_test():
     except:
         pass
     test_home = Path('tmp')
-    file = open('tests_neg.g')
-    lines = file.readlines()
-    
-    file_index = 0
-    index = 0
-
-    current_test = Path('test_prog0.g')
-    outfile = open(test_home / current_test, 'w')
-
-    while index < len(lines):
-        if not lines[index].strip():
-            outfile.close()
-            file_index = file_index + 1
-            current_test = Path('test_prog' + str(file_index)+'.g')
-            outfile = open(test_home / current_test, 'w')
-            while index < len(lines) and not lines[index].strip():
-                index = index + 1
-            index = index - 1
-        else:
-            outfile.write(lines[index])
-        index = index + 1
-    
-    outfile.close()
+    break_into_separate_progs('tests_neg.g', test_home)
 
     error_count = 0
 
@@ -82,14 +59,11 @@ def negative_test():
             msg = subprocess.run(['./gc', (test_home / filename)], capture_output=True)
             if (msg.returncode == 0):
                 error_count = error_count + 1
-                print(F'Error: compilation of tmp/{filename} succeeded unexpectedly:')
+                print(F'Error: compilation of {test_home}/{filename} succeeded unexpectedly:')
                 test_file = open(test_home / filename)
                 print(test_file.read())
 
-    for folderName, subfolder, filenames in os.walk('tmp'):
-        for filename in filenames:
-            os.unlink(test_home / filename)
-    os.rmdir('tmp')
+    shutil.rmtree(test_home)
     return error_count
 
 

@@ -127,11 +127,9 @@ def do_option_tests(tests_specs, options):
 def break_into_separate_progs(source, test_home):
     file = open(source)
     lines = file.readlines()
-    
     file_index = 0
-    index = 0
-
     current_code = ''
+    
     for l in lines:
         if not l.strip():
             if (current_code):

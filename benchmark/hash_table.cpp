@@ -51,6 +51,8 @@ bool contains(u16string table[], int len, u16string s) {
     int count = 0;
     while (count < len) {
         //print("Comparing " + table[hash] + " and "+s);
+        if (table[hash_].empty())
+            return false;
         if (table[hash_] == s)
             return true;
         hash_ = (hash_+1) % len;
@@ -64,24 +66,22 @@ bool contains(u16string table[], int len, u16string s) {
 int main(int argc, char *argv[]) {
     rand_seed = stoi(argv[2]);
     int N = stoi(argv[1]);
-    u16string table[N];
+    u16string *table = new u16string[2*N];
     for (int i=0;i<N;i++) {
         rand_seed = randomf(rand_seed);
         u16string s = random_string(7);
-        //print("Adding "+s);
-        insert(table, N, s);
+        insert(table, 2*N, s);
     }
 
 
     int count = 0;
-
     for (int i=0;i<N;i++) {
         rand_seed = randomf(rand_seed);
         u16string s = random_string(7);
-        //print("Checking "+s);
-        if (contains(table, N, s))
+        if (contains(table, 2*N, s))
             count++;
     }
+    delete[] table;
     cout << count << endl;
 
             

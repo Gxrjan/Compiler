@@ -1,6 +1,8 @@
 SOURCES = head.h main.cpp Scanner.cpp Token.cpp Expr.cpp Parser.cpp Types.cpp Program.cpp Statement.cpp Variable.cpp Checker.cpp Translator_LLVM.cpp
 all: gc G_runtime_library.o Types.o
 
+BENCHMARKS = insertion_sort prime_sum tag perm merge_sort hash_table prime_count
+BENCHMARK_PROGS = $(BENCHMARKS) $(addsuffix _cs, $(BENCHMARKS)) $(addsuffix _cpp, $(BENCHMARKS))
 
 .PHONY: options_test test benchmark
 gc: $(SOURCES) 
@@ -22,8 +24,7 @@ mem_leak: gc
 	valgrind ./test_mem
 
 
-benchmark: benchmark/insertion_sort benchmark/prime_sum benchmark/tag benchmark/insertion_sort_cs benchmark/prime_sum_cs benchmark/tag_cs benchmark/insertion_sort_cpp benchmark/prime_sum_cpp benchmark/tag_cpp \
-			benchmark/perm benchmark/perm_cs benchmark/perm_cpp benchmark/merge_sort benchmark/merge_sort_cs benchmark/merge_sort_cpp benchmark/hash_table benchmark/hash_table_cs benchmark/hash_table_cpp
+benchmark: $(addprefix benchmark/, $(BENCHMARK_PROGS))
 	python benchmark.py
 
 

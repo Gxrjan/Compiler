@@ -45,6 +45,8 @@ bool contains(string[] table, string s) {
     hash = hash % table.Length;
     int count = 0;
     while (count < table.Length) {
+        if (table[hash] == null)
+            return false;
         //print("Comparing " + table[hash] + " and "+s);
         if (table[hash] == s)
             return true;
@@ -58,8 +60,9 @@ bool contains(string[] table, string s) {
 
 void main(int argc, string[] argv) {
     rand = int.Parse(argv[2]);
-    string[] table = new string[int.Parse(argv[1])];
-    for (int i=0;i<table.Length;i++) {
+    int N = int.Parse(argv[1]);
+    string[] table = new string[2*N];
+    for (int i=0;i<N;i++) {
         rand = random(rand);
         string s = random_string(7);
         //print("Adding "+s);
@@ -69,7 +72,7 @@ void main(int argc, string[] argv) {
 
     int count = 0;
 
-    for (int i=0;i<table.Length;i++) {
+    for (int i=0;i<N;i++) {
         rand = random(rand);
         string s = random_string(7);
         //print("Checking "+s);

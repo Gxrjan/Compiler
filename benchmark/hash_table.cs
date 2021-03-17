@@ -49,6 +49,8 @@ class Prog {
         int count = 0;
         while (count < table.Length) {
             //print("Comparing " + table[hash] + " and "+s);
+            if (table[hash] == null)
+                return false;
             if (table[hash] == s)
                 return true;
             hash = (hash+1) % table.Length;
@@ -61,8 +63,9 @@ class Prog {
 
     public static void Main(string[] argv) {
         rand = int.Parse(argv[1]);
-        string[] table = new string[int.Parse(argv[0])];
-        for (int i=0;i<table.Length;i++) {
+        int N = int.Parse(argv[0]);
+        string[] table = new string[2*N];
+        for (int i=0;i<N;i++) {
             rand = random(rand);
             string s = random_string(7);
             //print("Adding "+s);
@@ -72,7 +75,7 @@ class Prog {
 
         int count = 0;
 
-        for (int i=0;i<table.Length;i++) {
+        for (int i=0;i<N;i++) {
             rand = random(rand);
             string s = random_string(7);
             //print("Checking "+s);

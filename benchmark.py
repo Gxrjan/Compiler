@@ -24,7 +24,7 @@ def main():
     do_test("Prime count", 'prime_count', [1000000000])
 
     # Hash table on 100000
-    do_test("Hash table", 'hash_table', [40000, 13])
+    do_test("Hash table", 'hash_table', [1000000, 13])
 
 
 

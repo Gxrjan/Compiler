@@ -288,9 +288,6 @@ Block *Translator_LLVM::is_optimized(Id name, Block *b) {
 Block *Translator_LLVM::is_optimized(Id name) {
     Block *current_block = this->block_stack.top();
     return this->is_optimized(name, current_block);
-    // Block *global_block = this->current_prog->block.get();
-    // return (current_block->optimized_arrays.find(name) != current_block->optimized_arrays.end()) ||
-    //         (global_block->optimized_arrays.find(name) != global_block->optimized_arrays.end());
 }
 
 void Translator_LLVM::create_bounds_check_opt(string *s, Id name, Block *b, string index_register) {
@@ -332,17 +329,9 @@ string Translator_LLVM::translate_elem_access_expr(string *s, ElemAccessExpr *e)
         if (var && this->is_one_dimensional_array(arr_t)) {
             Block *b = this->is_optimized(var->name);
             this->create_bounds_check_opt(s, var->name, b, index_register);
-            return create_getelementptr_load(s, arr_t->base, arr_t, expr_register, index_register);
-        } else if (arr_t->base == &Bool ||
-            arr_t->base == &Char ||
-            arr_t->base == &Int) {
-                this->create_bounds_check(s, expr_register, index_register, arr_t);
-                return create_getelementptr_load(s, arr_t->base, arr_t, expr_register, index_register);
-        } else {
-            string result_type = this->g_type_to_llvm_type(arr_t->base);
+        } else
             this->create_bounds_check(s, expr_register, index_register, e->expr->type);
-            return create_getelementptr_load(s, e->type, e->expr->type, expr_register, index_register);
-        }
+        return create_getelementptr_load(s, e->type, e->expr->type, expr_register, index_register);
     }
 }
 
@@ -834,10 +823,9 @@ string Translator_LLVM::create_alloca(string *s, g_type t) {
 
 
 string Translator_LLVM::create_allocate_and_store(string *s, Type *t, string expr_register) {
-    string result_register = this->assign_register();
+    string result_register = this->create_alloca(s, t);
     string llvm_type = this->g_type_to_llvm_type(t);
     *s +=
-        " "+result_register+" = alloca "+llvm_type+"\n"
         " store "+llvm_type+" "+expr_register+", "+llvm_type+"* "+result_register+"\n";
     return result_register;
 }

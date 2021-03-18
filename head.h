@@ -674,16 +674,12 @@ class Translator_LLVM {
     void translate_outer_block(string *s, Block *b);
     void change_reference_count(string *s, Type *g_type, string ptr_register, int i);
     void free_unused_memory(string *s);
-    void free_argv(string *s);
     string get_array_len(string *s, string reg, g_type t);
     int g_type_to_depth(g_type type);
     void create_return_default(string *s, g_type type);
     void free_types(string *s);
     void create_storage_before_loop(string *s, Statement *st);
     bool is_global_variable(Id name);
-    bool not_reassigned(Id name);
-    bool is_assigned(Id name, Block *b); 
-    bool is_assigned(Id name, Statement *s);
     string create_load(string *s, g_type t, string storage_register); 
     Block *is_optimized(Id name);
     Block *is_optimized(Id name, Block *b);

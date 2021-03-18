@@ -657,7 +657,7 @@ class Translator_LLVM {
     string create_mod(string *s, Type *type, string register_left, string register_right);
     string create_cmp(string *s, Operation o, Type *type, string register_left, string register_right);
     string create_allocate_and_store(string *s, Type *t, string expr_register);
-    string create_store(string *s, string llvm_type, string expr_register, string ptr);
+    string create_store(string *s, g_type t, string expr_register, string ptr);
     string create_getelementptr(string *s, string llvm_type, string expr_llvm_type, string expr_register, string index_register);
     string create_inc_dec(string *s, bool inc_dec, string expr_register);
     string translate_function_call(string *s, FunctionCall *fc);

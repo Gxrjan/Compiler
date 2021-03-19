@@ -20,9 +20,14 @@ def run_tests(name, args):
 
     total = 0
     for i in range(n):
+        total = total + run_test_cs_aot(name, args)
+    cs_aot_time = total / n
+
+    total = 0
+    for i in range(n):
         total = total + run_test_cpp(name, args)
     cpp_time = total / n
-    return (g_time, cs_time, cpp_time)
+    return (g_time, cs_time, cs_aot_time, cpp_time)
 
 
 def sub(t):
@@ -47,7 +52,16 @@ def run_test_cs(name, args):
     p = subprocess.Popen(([str(name) + '_cs'] + args))
     pid, exit_status, res_usage = os.wait4(p.pid, 0)
     result = res_usage.ru_utime + res_usage.ru_stime
-    print(f"CS Execution time: {(1000 * result):.0f} ms (user = {1000 * res_usage.ru_utime:.0f} ms, " +
+    print(f"CS(JIT) Execution time: {(1000 * result):.0f} ms (user = {1000 * res_usage.ru_utime:.0f} ms, " +
+          f"sys = {1000 * res_usage.ru_stime:.0f} ms)")
+    return result
+
+def run_test_cs_aot(name, args):
+    args = ['mono', '--aot-path=benchmark/aot', (str(name) + '_cs')] + args
+    p = subprocess.Popen(args)
+    pid, exit_status, res_usage = os.wait4(p.pid, 0)
+    result = res_usage.ru_utime + res_usage.ru_stime
+    print(f"CS(AOT) Execution time: {(1000 * result):.0f} ms (user = {1000 * res_usage.ru_utime:.0f} ms, " +
           f"sys = {1000 * res_usage.ru_stime:.0f} ms)")
     return result
 
@@ -60,13 +74,18 @@ def run_test_cpp(name, args):
           f"sys = {1000 * res_usage.ru_stime:.0f} ms)")
     return result
 
-def show_results(benchmark_name, g_time, cs_time, cpp_time):
+def show_results(benchmark_name, g_time, cs_time, cs_aot_time, cpp_time):
     print("")
     print("Results of "+benchmark_name)
     if g_time < cs_time:
-        print(F"G is ~{(cs_time / g_time):.2f} times faster than C#")
+        print(F"G is ~{(cs_time / g_time):.2f} times faster than C#(JIT)")
     else:
-        print(F"G is ~{(g_time / cs_time):.2f} times slower than C#")
+        print(F"G is ~{(g_time / cs_time):.2f} times slower than C#(JIT)")
+
+    if g_time < cs_aot_time:
+        print(F"G is ~{(cs_aot_time / g_time):.2f} times faster than C#(AOT)")
+    else:
+        print(F"G is ~{(g_time / cs_aot_time):.2f} times slower than C#(AOT)")
 
     if g_time < cpp_time:
         print(F"G is ~{(cpp_time / g_time):.2f} times faster than C++")
@@ -88,8 +107,8 @@ def do_test(name, bin_name, args):
     benchmark_home = Path.cwd() / 'benchmark'
     print_separator()
     print(F"{name}. {args[0]} elements")
-    (g_time, cs_time, cpp_time) = run_tests(benchmark_home / bin_name, process_args(args))
-    show_results(name, g_time, cs_time, cpp_time)
+    (g_time, cs_time, cs_aot_time, cpp_time) = run_tests(benchmark_home / bin_name, process_args(args))
+    show_results(name, g_time, cs_time, cs_aot_time, cpp_time)
 
 
 

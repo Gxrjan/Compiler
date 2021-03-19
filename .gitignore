@@ -39,6 +39,8 @@ benchmark/prime_count_cpp
 benchmark/hash_table
 benchmark/hash_table_cs
 benchmark/hash_table_cpp
+benchmark/aot/*
+!benchmark/aot/.gitkeep
 Prog*
 test_mem
 __pycache__

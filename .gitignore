@@ -40,7 +40,6 @@ benchmark/hash_table
 benchmark/hash_table_cs
 benchmark/hash_table_cpp
 benchmark/aot/*
-!benchmark/aot/.gitkeep
 benchmark/dotnet/*
 Prog*
 test_mem

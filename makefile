@@ -9,9 +9,9 @@ DOTNET_DIRS = $(addsuffix /, $(addprefix ${DOTNET_HOME}, ${BENCHMARKS}))
 DOTNET_BINS = $(join ${DOTNET_DIRS}/, $(addprefix bin/Release/net5.0/, ${BENCHMARKS}))
 AOT_HOME = ${BENCHMARK_HOME}aot/
 
-dotnet_build: $(addprefix dotnet/, ${BENCHMARKS})
+dotnet_build: $(addprefix dotnet_, ${BENCHMARKS})
 
-dotnet/%: benchmark/%.cs | ${DOTNET_DIRS}           
+dotnet_%: benchmark/%.cs | ${DOTNET_DIRS}           
 	dotnet new console -o benchmark/dotnet/${*}
 	rm benchmark/dotnet/${*}/Program.cs
 	cp ${<} benchmark/dotnet/${*}
@@ -25,7 +25,7 @@ ${DOTNET_HOME}: # Creates home for dotnet
 
 
 dotnet_clean:
-	rm -r benchmark/dotnet
+	rm -fr benchmark/dotnet
 
 
 

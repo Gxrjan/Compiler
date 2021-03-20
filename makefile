@@ -7,20 +7,20 @@ BENCHMARK_HOME = benchmark/
 DOTNET_HOME = ${BENCHMARK_HOME}dotnet/
 DOTNET_DIRS = $(addsuffix /, $(addprefix ${DOTNET_HOME}, ${BENCHMARKS}))
 DOTNET_BINS = $(join ${DOTNET_DIRS}/, $(addprefix bin/Release/net5.0/, ${BENCHMARKS}))
-
+AOT_HOME = ${BENCHMARK_HOME}aot/
 
 dotnet_build: $(addprefix dotnet/, ${BENCHMARKS})
 
-dotnet/%: benchmark/%.cs | ${DOTNET_DIRS}
+dotnet/%: benchmark/%.cs | ${DOTNET_DIRS}           
 	dotnet new console -o benchmark/dotnet/${*}
 	rm benchmark/dotnet/${*}/Program.cs
 	cp ${<} benchmark/dotnet/${*}
 	cd benchmark/dotnet/${*}; dotnet build --configuration Release
 
-${DOTNET_DIRS}: | ${DOTNET_HOME}
+${DOTNET_DIRS}: | ${DOTNET_HOME} # Creates separate directories for each benchmark
 	mkdir $@
 
-${DOTNET_HOME}:
+${DOTNET_HOME}: # Creates home for dotnet
 	mkdir $@
 
 
@@ -53,104 +53,28 @@ benchmark: $(addprefix benchmark/, $(BENCHMARK_PROGS)) $(addprefix benchmark/aot
 	python benchmark.py
 
 
-benchmark/insertion_sort: gc benchmark/insertion_sort.g
-	./gc benchmark/insertion_sort.g
+${BENCHMARK_HOME}%: ${BENCHMARK_HOME}%.g gc
+	./gc ${<}
 
-benchmark/aot/insertion_sort_cs.so: benchmark/insertion_sort_cs
-	mono --aot=outfile=$@ -O=all $<
+${BENCHMARK_HOME}%_cs: ${BENCHMARK_HOME}%.cs
+	mcs -out:$@ ${<}
 
+${AOT_HOME}%_cs.so: ${BENCHMARK_HOME}%_cs | ${AOT_HOME}
+	mono --aot=outfile=${@} -O=all ${<}
 
-benchmark/insertion_sort_cs: benchmark/insertion_sort.cs
-	mcs -out:benchmark/insertion_sort_cs benchmark/insertion_sort.cs
+${BENCHMARK_HOME}%_cpp: ${BENCHMARK_HOME}%.cpp
+	clang++ -O2 -o $@ ${<}
 
-benchmark/prime_sum: gc benchmark/prime_sum.g
-	./gc benchmark/prime_sum.g
-
-benchmark/aot/prime_sum_cs.so: benchmark/prime_sum_cs
-	mono --aot=outfile=$@ -O=all $<
-
-benchmark/prime_sum_cs: benchmark/prime_sum.cs
-	mcs -out:benchmark/prime_sum_cs benchmark/prime_sum.cs
-
-benchmark/tag: gc benchmark/tag.g
-	./gc benchmark/tag.g
-
-
-benchmark/aot/tag_cs.so: benchmark/tag_cs
-	mono --aot=outfile=$@ -O=all $<
-
-benchmark/tag_cs: benchmark/tag.cs
-	mcs -out:benchmark/tag_cs benchmark/tag.cs
-
-
-benchmark/insertion_sort_cpp: benchmark/insertion_sort.cpp
-	clang++ -O2 -o benchmark/insertion_sort_cpp benchmark/insertion_sort.cpp
-
-benchmark/prime_sum_cpp: benchmark/prime_sum.cpp
-	clang++ -O2 -o benchmark/prime_sum_cpp benchmark/prime_sum.cpp
-
-benchmark/tag_cpp: benchmark/tag.cpp
-	clang++ -O2 -o benchmark/tag_cpp benchmark/tag.cpp
-
-
-benchmark/perm: gc benchmark/perm.g
-	./gc benchmark/perm.g
-
-benchmark/aot/perm_cs.so: benchmark/perm_cs
-	mono --aot=outfile=$@ -O=all $<
-
-benchmark/perm_cs: benchmark/perm.cs
-	mcs -out:benchmark/perm_cs benchmark/perm.cs
-
-
-benchmark/perm_cpp: benchmark/perm.cpp
-	clang++ -O2 -o benchmark/perm_cpp benchmark/perm.cpp
-
-
-benchmark/merge_sort: gc benchmark/merge_sort.g
-	./gc benchmark/merge_sort.g
-
-benchmark/aot/merge_sort_cs.so: benchmark/merge_sort_cs
-	mono --aot=outfile=$@ -O=all $<
-
-benchmark/merge_sort_cs: benchmark/merge_sort.cs
-	mcs -out:benchmark/merge_sort_cs benchmark/merge_sort.cs
-
-
-benchmark/merge_sort_cpp: benchmark/merge_sort.cpp
-	clang++ -O2 -o benchmark/merge_sort_cpp benchmark/merge_sort.cpp
-
-
-benchmark/prime_count: gc benchmark/prime_count.g
-	./gc benchmark/prime_count.g
-
-benchmark/aot/prime_count_cs.so: benchmark/prime_count_cs
-	mono --aot=outfile=$@ -O=all $<
-
-benchmark/prime_count_cs: benchmark/prime_count.cs
-	mcs -out:benchmark/prime_count_cs benchmark/prime_count.cs
-
-benchmark/prime_count_cpp: benchmark/prime_count.cpp
-	clang++ -O2 -o benchmark/prime_count_cpp benchmark/prime_count.cpp
-
-
-benchmark/hash_table: gc benchmark/hash_table.g
-	./gc benchmark/hash_table.g
-
-benchmark/aot/hash_table_cs.so: benchmark/hash_table_cs
-	mono --aot=outfile=$@ -O=all $<
-
-benchmark/hash_table_cs: benchmark/hash_table.cs
-	mcs -out:benchmark/hash_table_cs benchmark/hash_table.cs
-
-benchmark/hash_table_cpp: benchmark/hash_table.cpp
-	clang++ -O2 -o benchmark/hash_table_cpp benchmark/hash_table.cpp
+${AOT_HOME}:
+	mkdir $@
 
 options_test: gc
 	python options_test.py
 
 clean:
-	rm benchmark/insertion_sort benchmark/prime_sum benchmark/tag benchmark/perm benchmark/merge_sort
+	rm -f $(addprefix benchmark/, $(BENCHMARK_PROGS))
+	rm -fr ${AOT_HOME}
+	rm -rf ${DOTNET_HOME}
 
 clean_benchmarks:
 	rm $(addprefix benchmark/, $(BENCHMARK_PROGS))

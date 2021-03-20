@@ -3,6 +3,31 @@ all: gc G_runtime_library.o Types.o
 
 BENCHMARKS = insertion_sort prime_sum tag perm merge_sort hash_table prime_count
 BENCHMARK_PROGS = $(BENCHMARKS) $(addsuffix _cs, $(BENCHMARKS)) $(addsuffix _cpp, $(BENCHMARKS))
+BENCHMARK_HOME = benchmark/
+DOTNET_HOME = ${BENCHMARK_HOME}dotnet/
+DOTNET_DIRS = $(addsuffix /, $(addprefix ${DOTNET_HOME}, ${BENCHMARKS}))
+DOTNET_BINS = $(join ${DOTNET_DIRS}/, $(addprefix bin/Release/net5.0/, ${BENCHMARKS}))
+
+
+dotnet_build: $(addprefix dotnet/, ${BENCHMARKS})
+
+dotnet/%: benchmark/%.cs | ${DOTNET_DIRS}
+	dotnet new console -o benchmark/dotnet/${*}
+	rm benchmark/dotnet/${*}/Program.cs
+	cp ${<} benchmark/dotnet/${*}
+	cd benchmark/dotnet/${*}; dotnet build --configuration Release
+
+${DOTNET_DIRS}: | ${DOTNET_HOME}
+	mkdir $@
+
+${DOTNET_HOME}:
+	mkdir $@
+
+
+dotnet_clean:
+	rm -r benchmark/dotnet
+
+
 
 .PHONY: options_test test benchmark
 gc: $(SOURCES) 
@@ -33,6 +58,7 @@ benchmark/insertion_sort: gc benchmark/insertion_sort.g
 
 benchmark/aot/insertion_sort_cs.so: benchmark/insertion_sort_cs
 	mono --aot=outfile=$@ -O=all $<
+
 
 benchmark/insertion_sort_cs: benchmark/insertion_sort.cs
 	mcs -out:benchmark/insertion_sort_cs benchmark/insertion_sort.cs

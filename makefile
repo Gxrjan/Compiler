@@ -11,7 +11,7 @@ AOT_HOME = ${BENCHMARK_HOME}aot/
 
 dotnet_build: $(addprefix dotnet_, ${BENCHMARKS})
 
-dotnet_%: benchmark/%.cs | ${DOTNET_DIRS}           
+dotnet_%: benchmark/%.cs | ${DOTNET_DIRS}          # This target actually does the building 
 	dotnet new console -o benchmark/dotnet/${*}
 	rm benchmark/dotnet/${*}/Program.cs
 	cp ${<} benchmark/dotnet/${*}
@@ -23,10 +23,8 @@ ${DOTNET_DIRS}: | ${DOTNET_HOME} # Creates separate directories for each benchma
 ${DOTNET_HOME}: # Creates home for dotnet
 	mkdir $@
 
-
 dotnet_clean:
 	rm -fr benchmark/dotnet
-
 
 
 .PHONY: options_test test benchmark

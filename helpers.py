@@ -90,26 +90,12 @@ def run_test_cpp(name, args):
 
 def show_results(benchmark_name, g_time, cs_mono_time, cs_mono_aot_time, cs_dotnet_time, cpp_time):
     print("")
-    print("Results of "+benchmark_name)
-    if g_time < cs_mono_time:
-        print(F"G is ~{(cs_mono_time / g_time):.2f} times faster than C#(MONO JIT)")
-    else:
-        print(F"G is ~{(g_time / cs_mono_time):.2f} times slower than C#(MONO JIT)")
-
-    if g_time < cs_mono_aot_time:
-        print(F"G is ~{(cs_mono_aot_time / g_time):.2f} times faster than C#(MONO AOT)")
-    else:
-        print(F"G is ~{(g_time / cs_mono_aot_time):.2f} times slower than C#(MONO AOT)")
-    
-    if g_time < cs_dotnet_time:
-        print(F"G is ~{(cs_dotnet_time / g_time):.2f} times faster than C#(.Net JIT)")
-    else:
-        print(F"G is ~{(g_time / cs_dotnet_time):.2f} times slower than C#(.Net JIT)")
-
-    if g_time < cpp_time:
-        print(F"G is ~{(cpp_time / g_time):.2f} times faster than C++")
-    else:
-        print(F"G is ~{g_time / cpp_time:.2f} times slower than C++")
+    print(f"Results of {benchmark_name} (relative to C++ = 1.0)")
+    print(F"G: {(g_time / cpp_time):.2f}")
+    print(F"C#(MONO JIT): {(cs_mono_time / cpp_time):.2f}")
+    print(F"C#(MONO AOT): {(cs_mono_aot_time / cpp_time):.2f}")
+    print(F"C#(.Net JIT): {(cs_dotnet_time / cpp_time):.2f}")
+    print(F"C++: {(1.00):.2f}")
 
 def print_separator():
     print("")

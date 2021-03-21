@@ -2,25 +2,29 @@ SOURCES = head.h main.cpp Scanner.cpp Token.cpp Expr.cpp Parser.cpp Types.cpp Pr
 all: gc G_runtime_library.o Types.o
 
 BENCHMARKS = insertion_sort prime_sum tag perm merge_sort hash_table prime_count
-BENCHMARK_PROGS = $(BENCHMARKS) $(addsuffix _cs, $(BENCHMARKS)) $(addsuffix _cpp, $(BENCHMARKS))
+BENCHMARK_PROGS = $(BENCHMARKS) $(addsuffix _cs, $(BENCHMARKS)) $(addsuffix _cpp, $(BENCHMARKS)) \
+					$(addsuffix _dotnet, $(BENCHMARKS))
 BENCHMARK_HOME = benchmark/
 DOTNET_HOME = ${BENCHMARK_HOME}dotnet/
 DOTNET_DIRS = $(addsuffix /, $(addprefix ${DOTNET_HOME}, ${BENCHMARKS}))
 DOTNET_BINS = $(join ${DOTNET_DIRS}/, $(addprefix bin/Release/net5.0/, ${BENCHMARKS}))
 AOT_HOME = ${BENCHMARK_HOME}aot/
 
-dotnet_build: $(addprefix dotnet_, ${BENCHMARKS})
+dotnet_build: $(addprefix ${BENCHMARK_HOME}, $(addsuffix _dotnet, ${BENCHMARKS}))
 
-dotnet_%: benchmark/%.cs | ${DOTNET_DIRS}          # This target actually does the building 
+${BENCHMARK_HOME}%_dotnet: benchmark/%.cs | ${DOTNET_DIRS}
 	dotnet new console -o benchmark/dotnet/${*}
 	rm benchmark/dotnet/${*}/Program.cs
 	cp ${<} benchmark/dotnet/${*}
 	cd benchmark/dotnet/${*}; dotnet build --configuration Release
+	cp ${DOTNET_HOME}${*}/bin/Release/net5.0/${*} ${BENCHMARK_HOME}${*}_dotnet
+	cp ${DOTNET_HOME}${*}/bin/Release/net5.0/${*}.dll ${BENCHMARK_HOME}
+	cp ${DOTNET_HOME}${*}/bin/Release/net5.0/${*}.runtimeconfig.json ${BENCHMARK_HOME}
 
-${DOTNET_DIRS}: | ${DOTNET_HOME} # Creates separate directories for each benchmark
+${DOTNET_DIRS}: | ${DOTNET_HOME}
 	mkdir $@
 
-${DOTNET_HOME}: # Creates home for dotnet
+${DOTNET_HOME}:
 	mkdir $@
 
 dotnet_clean:
@@ -47,7 +51,8 @@ mem_leak: gc
 	valgrind ./test_mem
 
 
-benchmark: $(addprefix benchmark/, $(BENCHMARK_PROGS)) $(addprefix benchmark/aot/, $(addsuffix _cs.so, $(BENCHMARKS)))
+benchmark: $(addprefix benchmark/, $(BENCHMARK_PROGS)) \
+$(addprefix benchmark/aot/, $(addsuffix _cs.so, $(BENCHMARKS))) \
 	python benchmark.py
 
 
@@ -73,9 +78,6 @@ clean:
 	rm -f $(addprefix benchmark/, $(BENCHMARK_PROGS))
 	rm -fr ${AOT_HOME}
 	rm -rf ${DOTNET_HOME}
-
-clean_benchmarks:
-	rm $(addprefix benchmark/, $(BENCHMARK_PROGS))
-
-clean_aot:
-	rm benchmark/aot/*
+	rm -f $(addsuffix .dll, $(addprefix ${BENCHMARK_HOME}, $(BENCHMARK_PROGS)))
+	rm -f $(addsuffix .runtimeconfig.json, $(addprefix ${BENCHMARK_HOME}, $(BENCHMARK_PROGS)))
+	rm -f $(addsuffix .ll, $(addprefix ${BENCHMARK_HOME}, $(BENCHMARK_PROGS)))

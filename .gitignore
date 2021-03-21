@@ -41,6 +41,9 @@ benchmark/hash_table_cs
 benchmark/hash_table_cpp
 benchmark/aot/*
 benchmark/dotnet/*
+benchmark/*.dll
+benchmark/*_dotnet
+benchmark/*.runtimeconfig.json
 Prog*
 test_mem
 __pycache__

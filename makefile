@@ -12,11 +12,11 @@ AOT_HOME = ${BENCHMARK_HOME}aot/
 
 dotnet_build: $(addprefix ${BENCHMARK_HOME}, $(addsuffix _dotnet, ${BENCHMARKS}))
 
-${BENCHMARK_HOME}%_dotnet: benchmark/%.cs | ${DOTNET_DIRS}
-	dotnet new console -o benchmark/dotnet/${*}
-	rm benchmark/dotnet/${*}/Program.cs
-	cp ${<} benchmark/dotnet/${*}
-	cd benchmark/dotnet/${*}; dotnet build --configuration Release
+${BENCHMARK_HOME}%_dotnet: ${BENCHMARK_HOME}%.cs | ${DOTNET_DIRS}
+	dotnet new console -o ${DOTNET_HOME}${*}
+	rm ${DOTNET_HOME}${*}/Program.cs
+	cp ${<} ${DOTNET_HOME}${*}
+	cd ${DOTNET_HOME}${*}; dotnet build --configuration Release
 	cp ${DOTNET_HOME}${*}/bin/Release/net5.0/${*} ${BENCHMARK_HOME}${*}_dotnet
 	cp ${DOTNET_HOME}${*}/bin/Release/net5.0/${*}.dll ${BENCHMARK_HOME}
 	cp ${DOTNET_HOME}${*}/bin/Release/net5.0/${*}.runtimeconfig.json ${BENCHMARK_HOME}
@@ -28,7 +28,7 @@ ${DOTNET_HOME}:
 	mkdir $@
 
 dotnet_clean:
-	rm -fr benchmark/dotnet
+	rm -fr ${DOTNET_HOME}
 
 
 .PHONY: options_test test benchmark
@@ -52,7 +52,7 @@ mem_leak: gc
 
 
 benchmark: $(addprefix benchmark/, $(BENCHMARK_PROGS)) \
-$(addprefix benchmark/aot/, $(addsuffix _cs.so, $(BENCHMARKS))) \
+$(addprefix benchmark/aot/, $(addsuffix _cs.so, $(BENCHMARKS)))
 	python benchmark.py
 
 

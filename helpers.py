@@ -118,7 +118,6 @@ def do_test(name, bin_name, args):
 
 
 def build(options):
-    subprocess.call(['make', 'clean'])
     subprocess.call(['./gc'] + options + ['benchmark/merge_sort.g'])
     subprocess.call(['./gc'] + options + ['benchmark/insertion_sort.g'])
     subprocess.call(['./gc'] + options + ['benchmark/prime_sum.g'])

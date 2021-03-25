@@ -413,8 +413,7 @@ Type *Checker::check_function_call(FunctionCall *fc, Block *b) {
         if (o.second == types)
             return o.first;
     }
-
-    this->report_error(fc->line, fc->col, "No function mathces these arguments");
+    this->report_error(fc->line, fc->col, "No function matches these arguments");
     return nullptr;
 }
 

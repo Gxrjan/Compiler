@@ -9,6 +9,7 @@ DOTNET_HOME = ${BENCHMARK_HOME}dotnet/
 DOTNET_DIRS = $(addsuffix /, $(addprefix ${DOTNET_HOME}, ${BENCHMARKS}))
 DOTNET_BINS = $(join ${DOTNET_DIRS}/, $(addprefix bin/Release/net5.0/, ${BENCHMARKS}))
 AOT_HOME = ${BENCHMARK_HOME}aot/
+DOCUMENTATION_HOME = documentation/
 
 dotnet_build: $(addprefix ${BENCHMARK_HOME}, $(addsuffix _dotnet, ${BENCHMARKS}))
 
@@ -27,11 +28,17 @@ ${DOTNET_DIRS}: | ${DOTNET_HOME}
 ${DOTNET_HOME}:
 	mkdir $@
 
+${DOCUMENTATION_HOME}:
+	mkdir $@
+
+documentation:
+	doxygen Doxyfile
+
 dotnet_clean:
 	rm -fr ${DOTNET_HOME}
 
 
-.PHONY: options_test test benchmark
+.PHONY: options_test test benchmark documentation
 gc: $(SOURCES) 
 	g++ -o gc -Wall -std=c++17 -g $(SOURCES)
 

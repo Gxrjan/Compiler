@@ -22,13 +22,25 @@ using namespace std;
 using Id = string;
 
 
+/**
+ * @brief Base class for BasicType and ArrayType
+ * 
+ * Base class for BasicType and ArrayType
+ */
 class Type { 
   public:
+    /**
+     * @brief Standard to_string method for assembly commenting and debugging
+     */
     virtual string to_string()=0;
 };
 
 using g_type = Type*;
 
+/**
+ * @brief Representation of a basic type
+ * 
+ */
 class BasicType : public Type {
     string name;
   public:
@@ -42,14 +54,28 @@ static inline bool is_ref_type(g_type t) {
     return !(t==&Bool || t==&Int || t==&Char || t==&Byte);
 }
 
+/**
+ * @brief Representation of an array type
+ * 
+ */
 class ArrayType : public Type {
     ArrayType(Type *base);
 
     
   public:
+    /**
+     *  @brief This map stores all of the different types created by the user
+     */
     static map<Type *, ArrayType*> array_types;  // int -> int[],  int[] -> int[][]
     Type *base;
+    /**
+     *  @brief Standard to_string() method needed for asm commenting and debugging
+     */
     string to_string() override;
+    /**
+     *  @param base Base type for the array type. For example if you want to create an array of int's
+     *              Then You would pass &Int to this contructor
+     */
     static ArrayType *make(Type *base) {
         auto it = array_types.find(base);
         if (it != array_types.end())
@@ -59,6 +85,9 @@ class ArrayType : public Type {
     }
 };
 
+/**
+ *  @brief Enumeration needed for OpExpr
+ */
 enum class Operation {
     Add,
     Sub,
@@ -75,9 +104,16 @@ enum class Operation {
     Or
 };
 
+
+/**
+ *  @brief Class that provides small functionality for Translator_LLVM
+ */
 class TypeConverter {
   public:
-
+    /**
+     *  @brief Extracts a base type from an ArrayType
+     *  @param a ArrayType that contains a base type
+     */
     static Type *get_base_type(Type *a) {
         if (a==&Bool || a==&Char || a==&Int || a==&String ||  a==&Void)
           return a;
@@ -88,6 +124,10 @@ class TypeConverter {
         
     }
 
+    /**
+     *  @brief Converts a string to an Enum
+     *  @param op Operation to be converted
+     */
     static Operation string_to_operation(string op)
     {
         if (op == "+") return Operation::Add;
@@ -110,204 +150,398 @@ class TypeConverter {
 };
 
 
-// TOKEN
+/**
+ *  @brief Parent class for different types of tokens
+ */
 class Token {
   public:
+    /**
+     *  @brief Standard to_string() method needed for asm commenting and debugging
+     */
     virtual string to_string() = 0;
+    /**
+     * @brief Checks if the token is NumToken
+     * @param num points to the memory where the value of NumToken will be written
+     * @return True if the token is NumToken
+     */
     virtual bool isNum(long long *num) { return false; }
+    /**
+     * @brief Checks if the token is BoolToken
+     * @param b points to the memory where the value of BoolToken will be written
+     * @return True if the token is BoolToken
+     */
     virtual bool isBool(bool *b) { return false; }
+    /**
+     * @brief Checks if the token is OperToken
+     * @param op points to the memory where the value of OperToken will be written
+     * @return True if the token is OperToken
+     */
     virtual bool isOper(string *op) { return false; }
+    /**
+     * @brief Checks if the token is IdToken
+     * @param name points to the memory where the name of IdToken will be written
+     * @return True if the token is IdToken
+     */
     virtual bool isId(string *name) { return false; }
+    /**
+     * @brief Checks if the token is IdToken and has the given name
+     * @param name name that is given
+     * @return True if the token is IdToken and has the given name
+     */
     virtual bool isId(string name) { return false; }
+    /**
+     * @brief Checks if the token is SymbolToken and has the given value
+     * @param s given value
+     * @return True if the token is SymbolToken and has the given value
+     */
     virtual bool isSymbol(string s) { return false; }
+    /**
+     * @brief Checks if the token is KeywordToken and has the given value
+     * @param name given value
+     * @return True if the token is KeywordToken and has the given value
+     */
     virtual bool isKeyword(string name) { return false; }
+    /**
+     * @brief Checks if the token is TypeToken
+     * @param t points to the memory where the value of TypeToken will be written
+     * @return True if the token is TypeToken and has the given value
+     */
     virtual bool isType(Type **t) { return false; }
+    /**
+     * @brief Checks if the token is OperToken and has a given value
+     * @param op given value
+     * @return True if the token is OperToken and has the given value
+     */
     virtual bool isOper(string op) { return false; }
+    /**
+     * @brief Checks if the token is CharToken
+     * @param c points to the memory where value of CharToken will be written to
+     * @return True if the token is CharToken
+     */
     virtual bool isChar(char *c) { return false; }
+    /**
+     * @brief Checks if the token is StringToken
+     * @param s points to the memory where value of StringToken will be written to
+     * @return True if the token is StringToken
+     */
     virtual bool isString(string *s) { return false; }
 };
 
+
+/**
+ *  @brief Represents a number token like 1, 2, 99, 1000
+ */
 class NumToken : public Token {
   public:
-    long long num;
+    long long num; ///< actual content of the NumToken
     NumToken(long long num);
     string to_string() override;
     bool isNum(long long *num) override;
 };
 
+
+/**
+ *  @brief Represents a boolean token like 'true' or 'false'
+ */
 class BoolToken : public Token {
   public:
-    bool b;
+    bool b; ///< actual content of the BoolToken
     BoolToken(bool b);
     string to_string() override;
     bool isBool(bool *b) override;
 };
 
+/**
+ *  @brief Represents a string token like "Hello" or "world"
+ */
 class StringToken : public Token {
   public:
-    string s;
+    string s; ///< actual content of the StringToken
     StringToken(string s);
     string to_string() override;
     bool isString(string *s) override;
 };
 
+/**
+ *  @brief Represents a operation token like '+' or '-' or '&&'
+ */
 class OperToken : public Token {
   public:
-    string op;
+    string op; ///< actual content of the OperToken
     OperToken(string op);
     string to_string() override;
     bool isOper(string *op) override;
     bool isOper(string op) override;
 };
 
-
+/**
+ *  @brief Represents an Id token.
+ * 
+ *  Id token can be a variable/function name.
+ */
 class IdToken : public Token {
   public:
-    string name;
+    string name; ///< actual content of the IdToken
     IdToken(string name);
     string to_string() override;
     bool isId(string *name) override;
     bool isId(string name) override;
 };
 
-
+/**
+ *  @brief Represents a Symbol token.
+ * 
+ *  Symbol token include '!', '<', '=' and so on. 
+ */
 class SymbolToken : public Token {
   public:
-    string s;
+    string s; ///< actual content of the SymbolToken
     SymbolToken(string s);
     string to_string() override;
     bool isSymbol(string s) override;
 };
 
-
+/**
+ *  @brief Represents a Keyword token.
+ * 
+ *  Keyword token include keywords that are reserved in G. For example "print", "break", "while" 
+ */
 class KeywordToken : public Token {
   public:
-    string name;
+    string name;  ///< actual content of KeywordToken
     KeywordToken(string name);
     string to_string() override;
     bool isKeyword(string name) override;
 };
 
 
-
+/**
+ *  @brief Represents a Type token.
+ * 
+ *  Type token includes "int", "string", "char", "bool"
+ */
 class TypeToken : public Token {
   public:
-    Type *type;
+    Type *type; ///< The actual content of TypeToken
     TypeToken(Type *t);
     bool isType(Type **t) override;
     string to_string() override;
 };
 
+
+/**
+ *  @brief Represents a Character literal token.
+ * 
+ *  Char token include 'a', 'b', 'c' ...
+ */
 class CharToken : public Token {
   public:
-    char c;
+    char c; ///< The actual content of CharToken
     CharToken(char c);
     string to_string() override;
     bool isChar(char *c) override;
 };
 
 
-// EXPRESSION
+/**
+ *  @brief Parent class of all expressions
+ * 
+ *  Expression include number literal, bool literal, binary operation expression ...
+ */
 class Expr {  // abstract base class
   public:
-    Type *type;
-    int line, col;
+    Type *type; ///< type of the expression
+    int line; ///< line number for error reporting
+    int col;  ///< column number for error reporting
     Expr();
     Expr(int line, int col);
+    /// Standard to_string method for commenting in assembly and debugging
     virtual string to_string() = 0;
+    /**
+     * @brief Checks if the expression is NumLiteral
+     * @param num points to the memory where the value of NumLiteral will be written, if the function returns true
+     * @return True if the expression is NumLiteral
+     */
     virtual bool isNumLiteral(long long *num) { return false; }
+    /**
+     * @brief Checks if the expression is BoolLiteral
+     * @param b points to the memory where the value of BoolLiteral will be written, if the function returns true
+     * @return True if the expression is BoolLiteral
+     */
     virtual bool isBoolLiteral(bool *b) { return false; }
+    /**
+     * @brief Checks if the expression is OpExpr
+     * @param op points to memory where op of OpExpr will be written
+     * @param left points to memory where left of OpExpr will be written
+     * @param right points to memory where right of OpExpr will be written
+     * @return True if the expression is OpExpr
+     */
     virtual bool isOpExpr(string *op, Expr **left, Expr **right) { return false; }
+    /**
+     * @brief Checks if the expression is Variable
+     * @param name points to a memory where name of Variable will be written
+     * @return True if the expression is Variable
+     */
     virtual bool isVariable(string *name) { return false; }
+    /**
+     * @brief Checks if the expression is ElemAccessExpr
+     * @param expr points to a memory where expr of ElemAccessExpr will be written
+     * @param index points to a memory where index of ElemAccessExpr will be written
+     * @return True if the expression is ElemAccessExpr
+     */
     virtual bool isElemAccessExpr(Expr **expr, Expr **index) { return false; }
+    /**
+     * @brief Checks if the expression is LengthExpr
+     * @param expr points to a memory where expr of LengthExpr will be written
+     * @return True if the expression is LengthExpr
+     */
     virtual bool isLengthExpr(Expr **expr) { return false; }
+    /**
+     * @brief Checks if the expression is TypeCastExpr
+     * @param t points to a memory where type of TypeCastExpr will be written
+     * @param expr points to a memory where expr of TypeCastExpr will be written
+     * @return True if the expression is TypeCastExpr
+     */
     virtual bool isTypeCastExpr(Type **t, Expr **expr) { return false; }
 };
 
+
+/**
+ *  @brief Represents a number literal
+ * 
+ *  Number literal includes 1, 2, 99, 121
+ */
 class NumLiteral : public Expr {
   public:
-    long long num;
+    long long num;  ///< actual content of the NumLiteral
     NumLiteral(long long num, int line, int col);
     string to_string() override;
     bool isNumLiteral(long long *num) override;
 };
 
+
+/**
+ *  @brief Represents a boolean literal
+ * 
+ *  Bool literal includes true, false
+ */
 class BoolLiteral : public Expr {
   public:
-    bool b;
+    bool b;  ///< actual content of the BoolLiteral
     BoolLiteral(bool b, int line, int col);
     string to_string() override;
     bool isBoolLiteral(bool *b) override;
 };
 
+
+/**
+ *  @brief Represent a character literal
+ * 
+ *  Character literal includes 'a', 'b', 'c'
+ */
 class CharLiteral : public Expr {
   public:
-    char c;
+    char c;  ///< actual content of the CharLiteral
     CharLiteral(char, int line, int col);
     string to_string() override;
 };
 
-
+/**
+ *  @brief Represent a binary operation
+ * 
+ */
 class OpExpr : public Expr {
   public:
-    string op;
-    unique_ptr<Expr> left, right;
+    string op;  ///< actual content of OpExpr
+    unique_ptr<Expr> left; ///< Left part of the binary expression
+    unique_ptr<Expr> right; ///< Right part of the binary expression
     OpExpr(string op, unique_ptr<Expr> left, unique_ptr<Expr> right, int line, int col);
     string to_string() override;
     bool isOpExpr(string *c, Expr **left, Expr **right) override;
 };
 
+
+/**
+ *  @brief Represent a variable
+ * 
+ */
 class Variable : public Expr {
   public:
-    string name;
+    string name;  ///< actual name of the Variable
     Variable(string name, int line, int col);
     string to_string() override;
     bool isVariable(string *name) override;
 };
 
+
+/**
+ *  @brief Represent a string literal
+ * 
+ */
 class StringLiteral : public Expr {
   public:
-    string s;
+    string s;  ///< actual content the StringLiteral
     StringLiteral(string s, int line, int col);
     string to_string() override;
 };
 
 
+
+/**
+ *  @brief Represent an expression of accessing an index of some array or string
+ * 
+ */
 class ElemAccessExpr : public Expr {
   public:
-    unique_ptr<Expr> expr;
-    unique_ptr<Expr> index;
+    unique_ptr<Expr> expr;  ///< expression that is being indexed
+    unique_ptr<Expr> index; ///< expression that evaluates to some index
     ElemAccessExpr(unique_ptr<Expr> expr, unique_ptr<Expr> index, int line, int col);
     string to_string() override;
     bool isElemAccessExpr(Expr **expr, Expr **index) override;
 };
 
+
+/**
+ *  @brief Represents an expression of accessing array/string length
+ * 
+ */
 class LengthExpr : public Expr {
   public:
-    unique_ptr<Expr> expr;
+    unique_ptr<Expr> expr;  ///< expression that evaluates to an array or a string
     LengthExpr(unique_ptr<Expr> expr, int line, int col);
     string to_string() override;
     bool isLengthExpr(Expr **expr) override;
 };
 
+
+/**
+ *  @brief Represents an expression of type casting
+ * 
+ */
 class TypeCastExpr : public Expr {
   public:
-    Type *type;
-    unique_ptr<Expr> expr;
+    Type *type; ///< Contains a type that expr is being casted to
+    unique_ptr<Expr> expr;  ///< The expression that is being casted
     TypeCastExpr(Type *t, unique_ptr<Expr> expr, int line, int col);
     string to_string() override;
     bool isTypeCastExpr(Type **t, Expr **expr) override;
 };
 
-
+/**
+ *  @brief Represents an expression of creating a substring
+ */
 class SubstrExpr : public Expr {
   public:
-    unique_ptr<Expr> expr;
-    vector<unique_ptr<Expr>> arguments;
+    unique_ptr<Expr> expr;  ///< expression that evaluates to some string
+    vector<unique_ptr<Expr>> arguments; ///< arguments that evaluate to some numbers
     SubstrExpr(unique_ptr<Expr> expr, vector<unique_ptr<Expr>> arguments, int line, int col);
     string to_string() override;
 };
 
+
+/**
+ *  @brief Represents an expression of parsing a number out of a string
+ */
 class IntParseExpr : public Expr {
   public:
     vector<unique_ptr<Expr>> arguments;
@@ -316,6 +550,10 @@ class IntParseExpr : public Expr {
     
 };
 
+
+/**
+ *  @brief Represents an expression of creating a new string
+ */
 class NewStrExpr : public Expr {
   public:
     vector<unique_ptr<Expr>> arguments;
@@ -323,14 +561,18 @@ class NewStrExpr : public Expr {
     string to_string() override;
 };
 
-
+/**
+ *  @brief Represents a null expression
+ */
 class NullExpr : public Expr {
   public:
     NullExpr(int line, int col);
     string to_string() override;
 };
 
-
+/**
+ *  @brief Represents an expression of creating a new array
+ */
 class NewArrExpr : public Expr {
   public:
     Type *type;
@@ -339,6 +581,10 @@ class NewArrExpr : public Expr {
     string to_string() override;
 };
 
+
+/**
+ *  @brief Represents a post increment expression
+ */
 class IncExpr : public Expr {
   public:
     bool inc;
@@ -347,15 +593,26 @@ class IncExpr : public Expr {
     string to_string() override;
 
 };
-// Statement
+
+
+/**
+ *  @brief Parent class of all statements
+ */
 class Statement {
   public:
     int line, col;
     Statement();
     Statement(int line, int col);
+    /**
+     *  @brief Standard to_string method for assembly commenting and debugging
+     */
     virtual string to_string() = 0;
 };
 
+
+/**
+ *  @brief Represents an assignment
+ */
 class Assignment : public Statement {
   public:
     unique_ptr<Expr> id;
@@ -364,6 +621,11 @@ class Assignment : public Statement {
     string to_string() override;
 };
 
+/**
+ *  @brief Represents a call to print function
+ * 
+ *  Internally this function calls to printf in C
+ */
 class Print : public Statement {
   public:
     unique_ptr<Expr> expr;
@@ -371,6 +633,11 @@ class Print : public Statement {
     string to_string() override;
 };
 
+
+/**
+ *  @brief Represents a declaration statement
+ * 
+ */
 class Declaration : public Statement {
   public:
     Type *type;
@@ -381,7 +648,10 @@ class Declaration : public Statement {
 };
 
 
-
+/**
+ *  @brief Represents a block of statements inclosed in curly braces
+ * 
+ */
 class Block : public Statement {
   public:
     map<Id, Declaration *> variables;
@@ -393,6 +663,11 @@ class Block : public Statement {
     string to_string() override;
 };
 
+
+/**
+ *  @brief Represents an 'if' statement
+ * 
+ */
 class IfStatement : public Statement {
   public:
     unique_ptr<Expr> cond;
@@ -402,6 +677,11 @@ class IfStatement : public Statement {
     string to_string() override;
 };
 
+
+/**
+ *  @brief Represents an 'while' statement
+ * 
+ */
 class WhileStatement : public Statement {
   public:
     unique_ptr<Expr> cond;
@@ -410,6 +690,13 @@ class WhileStatement : public Statement {
     string to_string() override;
 };
 
+
+/**
+ *  @brief Represents an expression statement
+ * 
+ *  Expression statement can be used inside of another expression or it can be 
+ *  used as a statement
+ */
 class ExpressionStatement : public Statement {
   public:
     unique_ptr<Expr> expr;
@@ -418,6 +705,10 @@ class ExpressionStatement : public Statement {
 
 };
 
+/**
+ *  @brief Represents a 'for' statement
+ * 
+ */
 class ForStatement : public Statement {
   public:
     unique_ptr<Declaration> init;
@@ -428,12 +719,21 @@ class ForStatement : public Statement {
     string to_string() override;
 };
 
+/**
+ *  @brief Represents an 'break' statement
+ * 
+ */
 class BreakStatement : public Statement {
   public:
     BreakStatement(int line, int col);
     string to_string() override;
 };
 
+
+/**
+ *  @brief Represents a function call
+ * 
+ */
 class FunctionCall : public Expr {
   public:
     Id name;
@@ -442,6 +742,11 @@ class FunctionCall : public Expr {
     string to_string() override;
 };
 
+
+/**
+ *  @brief Represents a function definition
+ * 
+ */
 class FunctionDefinition : public Statement {
   public:
     Id name;
@@ -453,6 +758,11 @@ class FunctionDefinition : public Statement {
     string to_string() override;
 };
 
+/**
+ *  @brief Represents an external definition
+ * 
+ *  External definition can be either function definition or external declaration
+ */
 class ExternalDefinition : public Statement {
   public:
     unique_ptr<Statement> s;
@@ -460,6 +770,11 @@ class ExternalDefinition : public Statement {
     string to_string() override;
 };
 
+
+/**
+ *  @brief Represents a return statement
+ * 
+ */
 class ReturnStatement : public Statement {
   public:
     unique_ptr<Expr> expr;
@@ -469,7 +784,10 @@ class ReturnStatement : public Statement {
 
 
 
-// Program
+/**
+ *  @brief The root of the abstract syntax tree
+ * 
+ */
 class Program {
   public:
     unique_ptr<Block> block;
@@ -480,7 +798,10 @@ class Program {
 };
 
 
-// SCANNER
+/**
+ *  @brief Class that is responsible for processing a source file into stream of tokens
+ * 
+ */
 class Scanner {
     char next_char = -1;
     bool has_next = false;
@@ -494,14 +815,16 @@ class Scanner {
     void consume_ws();
   public:
     Scanner(char *file_name);
-    int last_line = 1;     // Line number of the last token read or peeked 
-    int last_column = 1;   // Column number of the last token read or peeked
-    Token *peek_token();
+    int last_line = 1;     ///< Line number of the last token read or peeked 
+    int last_column = 1;   ///< Column number of the last token read or peeked
+    Token *peek_token();   
     unique_ptr<Token> next_token();
 };
 
-
-// PARSER
+/**
+ *  @brief Class that is responsible for processing a stream of tokens into an abstract syntax tree
+ * 
+ */
 class Parser {
     map<string, int> precedence;
     void report_error(string message);
@@ -538,7 +861,10 @@ class Parser {
     void check_program(Program *p);
 };
 
-// CHECKER
+/**
+ *  @brief Class that is responsible for checking an abstract syntax tree produced by the Parser
+ * 
+ */
 class Checker {
     size_t func_id = 0;
     Program *p;
@@ -582,13 +908,20 @@ class Checker {
     void compare_types(Type *left_t, Type *right_t);
     bool return_inside(Statement *s);
   public:
-    static bool function_inside(Expr *expr);
+    /**
+     * @brief Checks if an expression contains a function call
+     * @param expr Expression to be checked
+     */
+    static bool function_inside(Expr *expr);  
     void check_program(Program *p);
-    map<Id, vector<pair<Type*, vector<Type*>>>> functions; // function map from names to all possible overloads
+    map<Id, vector<pair<Type*, vector<Type*>>>> functions; ///< Function map from names to all possible overloads
 };
 
 
-// LLVM TRANSLATOR
+/**
+ *  @brief Class that is responsible for translating an abstract syntax tree to LLVM
+ * 
+ */
 class Translator_LLVM {
     map<tuple<Type*, string, vector<Type*>>, size_t> overloads;
     size_t loop_depth = 0;

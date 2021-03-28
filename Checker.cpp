@@ -586,8 +586,8 @@ void Checker::check_external_declaration(Declaration *dec, Block *b) {
         this->report_error(dec->line, dec->col, "Can't declare void type variable");
     if (this->look_up(dec->id, b))
         this->report_error(dec->line, dec->col, "variable has already been declared");
-    if (this->function_inside(dec->expr.get()))
-        this->report_error(dec->line, dec->col, "Can't use functions to declare global variables");
+    // if (this->function_inside(dec->expr.get()))
+    //     this->report_error(dec->line, dec->col, "Can't use functions to declare global variables");
     Variable v(dec->id, dec->line, dec->col);
     this->p->globals.push_back(dec->id);
     b->variables.insert({dec->id, dec});

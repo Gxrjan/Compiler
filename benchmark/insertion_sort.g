@@ -1,4 +1,4 @@
-void main(int argc, string[] argv) {
+void main(string[] argv) {
   int count = int.Parse(argv[1]);
   int[] a = new int[count];
   // fill array with pseudo-random numbers

@@ -1326,38 +1326,40 @@ void Translator_LLVM::translate_function_definition(string *s, FunctionDefinitio
         ts.push_back(fd->params[i].first);
     auto over = make_tuple(fd->ret_type, fd->name, ts);
     auto fd_id = this->current_prog->overloads[over];
-    if (fd->name=="main")
+    if (fd->name=="main") {
         *s +=
-            "define "+this->g_type_to_llvm_type(fd->ret_type)+" @"+fd->name+"(";
-    else
+            "define "+this->g_type_to_llvm_type(fd->ret_type)+" @"+fd->name+"(i32 %0, i8**";
+    } else {
         *s +=
             "define "+this->g_type_to_llvm_type(fd->ret_type)+" @"+fd->name+""+std::to_string(fd_id)+"(";
-    for (size_t i=0;i<fd->params.size();i++) {
-        if (i==1 && fd->params[i].first==ArrayType::make(&String) && fd->name=="main")
-            *s +=
-                "i8**";
-        else
+        for (size_t i=0;i<fd->params.size();i++) {
             *s +=
                 ""+this->g_type_to_llvm_type(fd->params[i].first);
-        *s +=
-            ((i==fd->params.size()-1) ? "" : ",");
+            *s +=
+                ((i==fd->params.size()-1) ? "" : ",");
+        }
     }
     *s +=
         ") {\n";
-    if (fd->name=="main")
+    if (fd->name=="main") {
         this->init_globals(s);
-    for (size_t i=0;i<fd->params.size();i++) {
-        string reg = "%"+std::to_string(i);
-        string result_register;
-        if (i==1 && fd->params[i].first==ArrayType::make(&String) && fd->name=="main") {
+        if (fd->params.size()==1) {
+            string argc_reg = "%0";
             string temp_register = this->assign_register();
             *s +=
                 " "+temp_register+" = call i16** @to_argv(i32 %0, i8** %1)\n";
             string argv_len_storage = this->create_alloca(s, &Int);
             this->create_store(s, &Int, "%0", argv_len_storage);
-            fd->body->optimized_arrays[fd->params[i].second] = argv_len_storage;
-            result_register = this->create_allocate_and_store(s, fd->params[i].first, temp_register);
-        } else {
+            fd->body->optimized_arrays[fd->params[0].second] = argv_len_storage;
+            string result_register = this->create_allocate_and_store(s, fd->params[0].first, temp_register);
+            variables_reserve[fd->params[0].second] = this->variables[fd->params[0].second];
+            this->variables.insert_or_assign(fd->params[0].second, std::make_pair(result_register, fd->params[0].first));
+        }
+
+    } else {
+        for (size_t i=0;i<fd->params.size();i++) {
+            string reg = "%"+std::to_string(i);
+            string result_register;
             if (this->is_reference(fd->params[i].first))
                 this->change_reference_count(s, fd->params[i].first, reg, 1);
             if (this->is_one_dimensional_array(fd->params[i].first)) {
@@ -1366,9 +1368,9 @@ void Translator_LLVM::translate_function_definition(string *s, FunctionDefinitio
                 fd->body->optimized_arrays[fd->params[i].second] = len_storage;
             }
             result_register = this->create_allocate_and_store(s, fd->params[i].first, reg);
+            variables_reserve[fd->params[i].second] = this->variables[fd->params[i].second];
+            this->variables.insert_or_assign(fd->params[i].second, std::make_pair(result_register, fd->params[i].first));
         }
-        variables_reserve[fd->params[i].second] = this->variables[fd->params[i].second];
-        this->variables.insert_or_assign(fd->params[i].second, std::make_pair(result_register, fd->params[i].first));
     }
     this->translate_block(s, fd->body.get(), "");
     for (auto const &var : variables_reserve) {

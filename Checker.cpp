@@ -479,11 +479,22 @@ void Checker::populate_functions(Block *b) {
 
 void Checker::check_function_definition(FunctionDefinition* fd, Block *b) {
     this->current = fd;
-    for (auto &p : fd->params) {
-        if (p.first==&Void)
-            this->report_error(fd->line, fd->col, "Parameter can't be void");
-        Declaration *dec = new Declaration(p.first, p.second, nullptr, 0, 0);
-        fd->body->variables.insert({dec->id, dec});
+    if (fd->name=="main") {
+        if ((fd->params.size()>1) || 
+            (fd->params.size()==1 && fd->params[0].first != ArrayType::make(&String)))
+            this->report_error(fd->line, fd->col, "Incorrect main signature");
+        if (fd->params.size()==1) {
+            Declaration *dec = new Declaration(fd->params[0].first, fd->params[0].second, nullptr, 0, 0);
+            fd->body->variables.insert({dec->id, dec}); 
+        }
+        
+    } else {
+        for (auto &p : fd->params) {
+            if (p.first==&Void)
+                this->report_error(fd->line, fd->col, "Parameter can't be void");
+            Declaration *dec = new Declaration(p.first, p.second, nullptr, 0, 0);
+            fd->body->variables.insert({dec->id, dec});
+        }
     }
     fd->body->parent = b;
     b->children.push_back(fd->body->parent);

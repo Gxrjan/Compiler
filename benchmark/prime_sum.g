@@ -1,4 +1,4 @@
-void main(int argc, string[] argv) {
+void main(string[] argv) {
     int prime_count = 0;
     int result = 0;
     int i = 2;

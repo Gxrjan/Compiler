@@ -1,4 +1,4 @@
-int main(int argc, string[] argv) {
+int main(string[] argv) {
   // String permutations
 
   // Print initial string, as only the alterations will be printed later

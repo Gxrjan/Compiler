@@ -87,7 +87,7 @@ void printArray(int[] arr)
         print(arr[i]);
 }
 
-void main(int argc, string[] args)
+void main(string[] args)
 {
     int count = int.Parse(args[1]);
     int[] arr = new int[count];

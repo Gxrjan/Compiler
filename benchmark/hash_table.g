@@ -58,7 +58,7 @@ bool contains(string[] table, string s) {
 }
 
 
-void main(int argc, string[] argv) {
+void main(string[] argv) {
     rand = int.Parse(argv[2]);
     int N = int.Parse(argv[1]);
     string[] table = new string[2*N];

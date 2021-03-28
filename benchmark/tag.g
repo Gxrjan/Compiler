@@ -15,7 +15,7 @@ int iter(string s) {
     return count;
 }
 
-void main(int argc, string[] argv) {
+void main(string[] argv) {
     // Use a tag system to compute Collatz sequences.
     assign_rules();
     int n = int.Parse(argv[1]);

@@ -32,7 +32,7 @@ int SieveOfEratosthenes(int n) {
 }
 
 
-void main(int argc, string[] argv) {
+void main(string[] argv) {
     int n = int.Parse(argv[1]);
     print(SieveOfEratosthenes(n));
 }

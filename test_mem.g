@@ -125,7 +125,7 @@ string[] retstrarrelem(){
 }
 
 
-int main(int argc, string[] argv) {
+int main(string[] argv) {
 
     s1 = "ab" + "cd";
     string t1 = s1 + foo1();

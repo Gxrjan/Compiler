@@ -1261,19 +1261,20 @@ void Translator_LLVM::translate_external_declaration(string *s, Declaration *dec
 void Translator_LLVM::init_globals(string *s) {
     *s +=
         "; initilizing globals\n";
+    this->first = true;   
     for (auto &p : this->globals) {
         string expr_register = this->translate_expr(s, p.second);
         string type_reg = this->g_type_to_llvm_type(this->variables[p.first].second);
         this->create_store(s, this->variables[p.first].second, expr_register, this->variables[p.first].first);
         if (this->is_reference(p.second->type) && !dynamic_cast<StringLiteral*>(p.second)) {
             string ptr_register = this->assign_register();
-            this->change_reference_count(s, p.second->type, expr_register, 1);
+            //this->change_reference_count(s, p.second->type, expr_register, 1);
         }
         if (this->is_one_dimensional_array(p.second->type)) {
             string len_storage = this->current_prog->block->optimized_arrays[p.first];
             this->create_store(s, &Int, this->arr_len, len_storage);
         }
-                
+        this->first = true;    
     }
     *s +=
         "; beginning of main\n";

@@ -72,6 +72,6 @@ int main(int argc, char *argv[])
     string asm_code = tran.translate_program(prog.get());
     file << asm_code;
     file.close();
-    string cmd = "clang++ -g -Wno-override-module -O2 "+infile+".ll G_runtime_library.o Types.o -o "+outfile;
+    string cmd = "clang++ -g -flto -Wno-override-module -O2 "+infile+".ll G_runtime_library.o Types.o -o "+outfile;
     system(cmd.c_str());
 }

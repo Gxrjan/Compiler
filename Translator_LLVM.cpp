@@ -926,7 +926,6 @@ void Translator_LLVM::change_reference_count(string *s, g_type type, string ptr_
         "; changing reference count\n";
     if (type == &Empty)
         return;
-    string temp_register = this->assign_register();
     string conv_register = this->assign_register();
     string llvm_type = this->g_type_to_llvm_type(type);
 

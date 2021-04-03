@@ -22,20 +22,6 @@ string Assignment::to_string() {
 }
 
 
-
-
-Print::Print(unique_ptr<Expr> expr)
-{
-    this->expr = move(expr);
-}
-
-string Print::to_string() 
-{ 
-    return "(Print statement: " + this->expr->to_string() + ")"; 
-}
-
-
-
 Declaration::Declaration
 (Type *t, Id id, unique_ptr<Expr> expr, int line, int col) 
 : Statement(line, col)

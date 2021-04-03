@@ -364,13 +364,6 @@ class Assignment : public Statement {
     string to_string() override;
 };
 
-class Print : public Statement {
-  public:
-    unique_ptr<Expr> expr;
-    Print(unique_ptr<Expr> expr);
-    string to_string() override;
-};
-
 class Declaration : public Statement {
   public:
     Type *type;

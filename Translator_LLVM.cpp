@@ -319,7 +319,8 @@ string Translator_LLVM::translate_elem_access_expr(string *s, ElemAccessExpr *e)
         this->change_reference_count(s, e->expr->type, expr_register, +1);
         this->references.push({expr_register, e->expr->type});
     }
-    string index_register = this->translate_expr(s, e->index.get());
+    string temp_index_register = this->translate_expr(s, e->index.get());
+    string index_register = this->create_conversion(s, temp_index_register, e->index->type, &Int);
     if (e->expr->type == &String) {
         this->create_bounds_check(s, expr_register, index_register, &String);
         return create_getelementptr_load(s, &Char, &String, expr_register, index_register);

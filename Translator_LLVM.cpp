@@ -327,7 +327,7 @@ string Translator_LLVM::translate_elem_access_expr(string *s, ElemAccessExpr *e)
     } else {
         Variable *var = dynamic_cast<Variable*>(e->expr.get());
         auto arr_t = dynamic_cast<ArrayType *>(e->expr->type);
-        if (var && this->is_one_dimensional_array(arr_t)) {
+        if (var && this->is_one_dimensional_array(arr_t) && !this->is_global_variable(var->name)) {
             Block *b = this->is_optimized(var->name);
             this->create_bounds_check_opt(s, var->name, b, index_register);
         } else
@@ -997,7 +997,7 @@ void Translator_LLVM::translate_assignment(string *s, Assignment *asgn)
         
         auto variable = dynamic_cast<Variable *>(el->expr.get());
 
-        if (variable && this->is_one_dimensional_array(arr_t)) {
+        if (variable && this->is_one_dimensional_array(arr_t) && !this->is_global_variable(variable->name)) {
             Block *b = this->is_optimized(variable->name);
             this->create_bounds_check_opt(s, variable->name, b, index_register);
         } else

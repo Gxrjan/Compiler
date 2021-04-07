@@ -972,13 +972,38 @@ void Translator_LLVM::translate_assignment(string *s, Assignment *asgn)
         this->create_store(s, this->variables.at(var->name).second, expr_register, ptr_register);
     } else {
         auto el = dynamic_cast<ElemAccessExpr *>(asgn->id.get());
-        string expr_register = this->translate_expr(s, el->expr.get());
-        string index_register = this->translate_expr(s, el->index.get());
-        string asgn_register = this->translate_expr(s, asgn->expr.get());
-        
+
+
         auto arr_t = dynamic_cast<ArrayType *>(el->expr->type);
         string expr_llvm_type = this->g_type_to_llvm_type(arr_t);
         string asgn_llvm_type = this->g_type_to_llvm_type(arr_t->base);
+
+
+        string expr_register = this->translate_expr(s, el->expr.get());
+        if (Checker::function_inside(el->index.get())) {
+            this->change_reference_count(s, arr_t, expr_register, +1);
+            this->references.push({expr_register, arr_t});
+        }
+        if (Checker::function_inside(asgn->expr.get())) {
+            this->change_reference_count(s, arr_t, expr_register, +1);
+            this->references.push({expr_register, arr_t});
+        }
+
+        string index_register = this->translate_expr(s, el->index.get());
+        string asgn_register = this->translate_expr(s, asgn->expr.get());
+
+        
+        
+        
+        auto variable = dynamic_cast<Variable *>(el->expr.get());
+
+        if (variable && this->is_one_dimensional_array(arr_t)) {
+            Block *b = this->is_optimized(variable->name);
+            this->create_bounds_check_opt(s, variable->name, b, index_register);
+        } else
+            this->create_bounds_check(s, expr_register, index_register, arr_t);
+
+
         string ptr_register = this->create_getelementptr(s, asgn_llvm_type, expr_llvm_type, expr_register, index_register);
         string temp_register = this->create_load(s, arr_t->base, ptr_register);
         if (auto at = dynamic_cast<ArrayType*>(arr_t->base)) {

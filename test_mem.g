@@ -4,6 +4,7 @@ int[][] global_arr_int_2d = new int[5][];
 string[] rules = new string[3];
 string[][] global_arr_str_2d = new string[10][];
 string null_str = null;
+int[] global_1 = new int[10];
 
 void assign_rules() {
     rules[0] = "bc";
@@ -124,6 +125,7 @@ string[] retstrarrelem(){
     return arr_two_dim[0];
 }
 
+int foo_global_1() { global_1 = null; return 1; }
 
 int main(string[] argv) {
 
@@ -286,4 +288,6 @@ int main(string[] argv) {
     retstrarrvar();
     retstrarrelem();
     
+
+    global_1[foo_global_1()] = foo_global_1();
 }

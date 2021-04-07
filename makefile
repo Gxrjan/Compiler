@@ -36,7 +36,7 @@ gc: $(SOURCES)
 	g++ -o gc -Wall -std=c++17 -g $(SOURCES)
 
 G_runtime_library.o: G_runtime_library.cpp
-	clang++ -Wall -flto -c -g -O2 G_runtime_library.cpp 
+	clang++ -Wall -c -g -O2 G_runtime_library.cpp 
 
 Types.o: Types.cpp
 	clang++ -Wall -c -g -O2 Types.cpp

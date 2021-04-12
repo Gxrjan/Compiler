@@ -4,35 +4,77 @@ from pathlib import Path
 import functools
 import operator
 import os
+import numpy as np
+import scipy.stats
+
+
+def mean_confidence_interval(data, confidence=0.98):
+    a = 1.0 * np.array(data)
+    n = len(a)
+    m, se = np.mean(a), scipy.stats.sem(a)
+    h = se * scipy.stats.t.ppf((1 + confidence) / 2., n-1)
+    return m, m-h, m+h
+
+
+def show_confidence_intervals(g_data, cs_mono_jit_data, cs_mono_aot_data, cs_dotnet_data, cpp_data):
+    print(f'Confidence intervals: {98}%')
+    print(f'G: {1000* g_data[1]:.0f}ms - {1000 * g_data[2]:.0f}ms')
+    print(f'C#(MONO JIT): {1000 * cs_mono_jit_data[1]:.0f}ms - {1000 * cs_mono_jit_data[2]:.0f}ms')
+    print(f'C#(MONO AOT): {1000 * cs_mono_aot_data[1]:.0f}ms - {1000 * cs_mono_aot_data[2]:.0f}ms')
+    print(f'C#(.NET JIT): {1000 * cs_dotnet_data[1]:.0f}ms - {1000 * cs_dotnet_data[2]:.0f}ms')
+    print(f'C++(GCC): {1000 * cpp_data[1]:.0f}ms - {1000 * cpp_data[2]:.0f}ms')
 
 def run_tests(name, args):
     n = 3
+    confidence = 0.98
 
+    times = list()
     total = 0
     for i in range(n):
-        total = total + run_test_g(name, args)
+        time = run_test_g(name, args)
+        times.append(time)
+        total = total + time
     g_time = total / n
+    g_data = mean_confidence_interval(times, confidence)
 
+    times = list()
     total = 0
     for i in range(n):
-        total = total + run_test_cs_mono(name, args)
+        time = run_test_cs_mono(name, args)
+        times.append(time)
+        total = total + time
     cs_mono_time = total / n
+    cs_mono_jit_data = mean_confidence_interval(times, confidence)
 
+    times = list()
     total = 0
     for i in range(n):
-        total = total + run_test_cs_mono_aot(name, args)
+        time = run_test_cs_mono_aot(name, args)
+        times.append(time)
+        total = total + time
     cs_mono_aot_time = total / n
+    cs_mono_aot_data = mean_confidence_interval(times, confidence)
 
+    times = list()
     total = 0
     for i in range(n):
-        total = total + run_test_cs_dotnet(name, args)
+        time = run_test_cs_dotnet(name, args)
+        times.append(time)
+        total = total + time
     cs_dotnet_time = total / n
+    cs_dotnet_data = mean_confidence_interval(times, confidence)
 
+    times = list()
     total = 0
     for i in range(n):
-        total = total + run_test_cpp(name, args)
+        time = run_test_cpp(name, args)
+        times.append(time)
+        total = total + time
     cpp_time = total / n
-    return (g_time, cs_mono_time, cs_mono_aot_time, cs_dotnet_time, cpp_time)
+    cpp_data = mean_confidence_interval(times, confidence)
+
+    return (g_time, cs_mono_time, cs_mono_aot_time, cs_dotnet_time, cpp_time,
+            g_data, cs_mono_jit_data, cs_mono_aot_data, cs_dotnet_data, cpp_data)
 
 
 def sub(t):
@@ -112,8 +154,11 @@ def do_test(name, bin_name, args):
     benchmark_home = Path.cwd() / 'benchmark'
     print_separator()
     print(F"{name}. {args[0]} elements")
-    (g_time, cs_mono_time, cs_mono_aot_time, cs_dotnet_time, cpp_time) = run_tests(benchmark_home / bin_name, process_args(args))
+    (g_time, cs_mono_time, cs_mono_aot_time, cs_dotnet_time, cpp_time,
+    g_data, cs_mono_jit_data, cs_mono_aot_data, cs_dotnet_data, cpp_data) = run_tests(benchmark_home / bin_name, process_args(args))
     show_results(name, g_time, cs_mono_time, cs_mono_aot_time, cs_dotnet_time, cpp_time)
+    print()
+    show_confidence_intervals(g_data, cs_mono_jit_data, cs_mono_aot_data, cs_dotnet_data, cpp_data)
 
 
 

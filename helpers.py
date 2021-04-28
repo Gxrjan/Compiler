@@ -9,23 +9,23 @@ import scipy.stats
 
 
 CONFIDENCE = 0.98
-N = 3               # Number of times each benchmark will be executed
+N = 10               # Number of times each benchmark will be executed
 
 def mean_confidence_interval(data, confidence=0.98):
     a = 1.0 * np.array(data)
     n = len(a)
     m, se = np.mean(a), scipy.stats.sem(a)
     h = se * scipy.stats.t.ppf((1 + confidence) / 2., n-1)
-    return m, m-h, m+h
+    return m, h
 
 
 def show_confidence_intervals(g_data, cs_mono_jit_data, cs_mono_aot_data, cs_dotnet_data, cpp_data):
     print(f'Confidence intervals: {100 * CONFIDENCE}%')
-    print(f'G: {1000* g_data[1]:.0f}ms - {1000 * g_data[2]:.0f}ms')
-    print(f'C#(MONO JIT): {1000 * cs_mono_jit_data[1]:.0f}ms - {1000 * cs_mono_jit_data[2]:.0f}ms')
-    print(f'C#(MONO AOT): {1000 * cs_mono_aot_data[1]:.0f}ms - {1000 * cs_mono_aot_data[2]:.0f}ms')
-    print(f'C#(.NET JIT): {1000 * cs_dotnet_data[1]:.0f}ms - {1000 * cs_dotnet_data[2]:.0f}ms')
-    print(f'C++(GCC): {1000 * cpp_data[1]:.0f}ms - {1000 * cpp_data[2]:.0f}ms')
+    print(f'G: {1000 * g_data[0]:.0f} +- {1000 * g_data[1]:.0f}')
+    print(f'C#(MONO JIT): {1000 * cs_mono_jit_data[0]:.0f} +- {1000 * cs_mono_jit_data[1]:.0f}')
+    print(f'C#(MONO AOT): {1000 * cs_mono_aot_data[0]:.0f} +- {1000 * cs_mono_aot_data[1]:.0f}')
+    print(f'C#(.NET JIT): {1000 * cs_dotnet_data[0]:.0f} +- {1000 * cs_dotnet_data[1]:.0f}')
+    print(f'C++(GCC): {1000 * cpp_data[0]:.0f} +- {1000 * cpp_data[1]:.0f}')
 
 def run_tests(name, args):
 

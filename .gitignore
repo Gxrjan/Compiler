@@ -49,3 +49,4 @@ test_mem
 __pycache__
 test
 test.g
+*.syscap

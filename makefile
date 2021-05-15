@@ -66,7 +66,7 @@ ${AOT_HOME}%_cs.so: ${BENCHMARK_HOME}%_cs | ${AOT_HOME}
 	mono --aot=outfile=${@} -O=all ${<}
 
 ${BENCHMARK_HOME}%_cpp: ${BENCHMARK_HOME}%.cpp
-	clang++ -O2 -g -fno-inline-functions -fno-unroll-loops -fno-vectorize -fno-builtin -o $@ ${<}
+	clang++ -O2 -g -o $@ ${<}
 
 ${AOT_HOME}:
 	mkdir $@

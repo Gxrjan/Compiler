@@ -81,3 +81,10 @@ clean:
 	rm -f $(addsuffix .dll, $(addprefix ${BENCHMARK_HOME}, $(BENCHMARK_PROGS)))
 	rm -f $(addsuffix .runtimeconfig.json, $(addprefix ${BENCHMARK_HOME}, $(BENCHMARK_PROGS)))
 	rm -f $(addsuffix .ll, $(addprefix ${BENCHMARK_HOME}, $(BENCHMARK_PROGS)))
+
+
+install:
+	sudo cp -i gc /usr/local/bin/gcompiler
+
+uninstall:
+	sudo rm /usr/local/bin/gcompiler

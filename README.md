@@ -3,7 +3,8 @@ Dependencies:
 * Clang 11.1.0 
 * .NET 5.0.202 
 * Mono 6.12.0 
-* Python 3.9.4   
+* Python 3.9.4  
+ 
 The G compiler was built with these versions, however it might possibly work with the earlier versions as well but that's untested. 
  
 To build the compiler: `make`

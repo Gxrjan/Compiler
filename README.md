@@ -1,4 +1,4 @@
-The project was built and tested with the following version of software. Earlier versions might work as well but that is untested: 
+The project was built and tested with the following software. Earlier versions might work as well but that is untested: 
 * LLVM 11.1.9 
 * Clang 11.1.0 
 * .NET 5.0.202 

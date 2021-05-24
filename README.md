@@ -1,4 +1,4 @@
-Dependencies: LLVM 11.1.9, Clang 11.1.0, .NET 5.0.202, Mono 6.12.0, Python 3.9.4
+Dependencies: LLVM 11.1.9, Clang 11.1.0, .NET 5.0.202, Mono 6.12.0, Python 3.9.4.  
 The G compiler was build with these versions, however it might possibly work with earlier versions as well but that's untested.  
 To build the compiler: `make`
 
